@@ -1,7 +1,7 @@
 import hmac
 import json
 
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from loguru import logger
 
 from worker.bot import run_bot
@@ -27,12 +27,17 @@ async def voicelink_ws(websocket: WebSocket, token: str = ""):
 
     # VoiceLink sends `connected`, then `start` carrying the call metadata.
     start = None
-    for _ in range(5):
-        msg = json.loads(await websocket.receive_text())
-        if msg.get("event") == "start":
-            start = msg["start"]
-            start.setdefault("stream_sid", msg.get("stream_sid"))
-            break
+    try:
+        for _ in range(5):
+            msg = json.loads(await websocket.receive_text())
+            if msg.get("event") == "start":
+                start = msg["start"]
+                start.setdefault("stream_sid", msg.get("stream_sid"))
+                break
+    except WebSocketDisconnect:
+        # VoiceLink's reachability probe connects and hangs up without a call.
+        logger.info("Client disconnected before `start` (reachability probe)")
+        return
     if start is None:
         await websocket.close(code=1002)
         return
