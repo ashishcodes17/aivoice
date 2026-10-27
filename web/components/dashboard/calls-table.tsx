@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowDownLeftIcon, ArrowUpRightIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { OutcomeBadge } from "@/components/dashboard/outcome-card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { duration, formatDateTime, rupees } from "@/lib/format";
 import type { Call } from "@/lib/types";
@@ -22,6 +23,7 @@ export function CallsTable({ calls }: { calls: Call[] }) {
             <TableHead>When</TableHead>
             <TableHead>Call</TableHead>
             <TableHead>Agent</TableHead>
+            <TableHead>Outcome</TableHead>
             <TableHead className="text-right">Duration</TableHead>
             <TableHead className="text-right">Cost</TableHead>
             <TableHead>Status</TableHead>
@@ -42,6 +44,9 @@ export function CallsTable({ calls }: { calls: Call[] }) {
                   </Link>
                 </TableCell>
                 <TableCell className="text-muted-foreground">{c.agents?.name ?? "—"}</TableCell>
+                <TableCell>
+                  <OutcomeBadge outcome={c.metadata?.outcome} />
+                </TableCell>
                 <TableCell className="text-right tabular-nums">{duration(c.duration_seconds)}</TableCell>
                 <TableCell className="text-right tabular-nums">{rupees(c.cost_paise)}</TableCell>
                 <TableCell>

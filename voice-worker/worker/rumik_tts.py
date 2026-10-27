@@ -32,6 +32,8 @@ from pipecat.services.tts_service import InterruptibleTTSService
 from websockets.asyncio.client import connect as websocket_connect
 from websockets.protocol import State
 
+from .textfilter import spell_phone_numbers
+
 SAMPLE_RATE = 8000
 DEFAULT_MODEL = "mulberry"
 # mulberry takes a free-text voice description on every request (and bills its characters).
@@ -253,7 +255,7 @@ class RumikTTSService(InterruptibleTTSService):
         return payload
 
     async def run_tts(self, text: str, context_id: str) -> AsyncGenerator[Frame | None, None]:
-        text = re.sub(r"\s+", " ", text).strip()
+        text = spell_phone_numbers(re.sub(r"\s+", " ", text).strip())
         if not text:
             yield TTSStoppedFrame(context_id=context_id)
             await self.remove_audio_context(context_id)

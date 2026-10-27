@@ -21,6 +21,24 @@ def strip_stray_scripts(text: str) -> str:
     return _STRAY.sub("", text)
 
 
+_DIGIT_WORDS = {"0": "సున్నా", "1": "ఒకటి", "2": "రెండు", "3": "మూడు", "4": "నాలుగు", "5": "ఐదు", "6": "ఆరు", "7": "ఏడు", "8": "ఎనిమిది", "9": "తొమ్మిది"}
+# Seven or more digits in a row (optionally grouped by single spaces or dashes) is a phone number.
+_LONG_NUMBER = re.compile(r"(?<![\d,.])\d(?:[ -]?\d){6,}(?![\d,.])")
+
+
+def spell_phone_numbers(text: str) -> str:
+    """A TTS voice reads "9133525601" as a huge number; a phone number must be said digit by digit.
+
+    Only long digit runs are touched. Amounts and times (800, 6, 4,500) are left for the voice's
+    own number handling, which says them correctly.
+    """
+
+    def spell(m: re.Match) -> str:
+        return ", ".join(_DIGIT_WORDS[c] for c in m.group(0) if c.isdigit())
+
+    return _LONG_NUMBER.sub(spell, text)
+
+
 class ScriptFilter(FrameProcessor):
     def __init__(self, call_sid: str | None = None):
         super().__init__()

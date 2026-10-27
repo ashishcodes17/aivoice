@@ -29,6 +29,16 @@ export type CostSummary = {
   complete: boolean;
 };
 
+export type CallOutcome = {
+  outcome: "visit_requested" | "callback_requested" | "busy_call_later" | "info_only" | "not_interested" | "no_conversation";
+  name: string | null;
+  need: string | null;
+  preferred_time: string | null;
+  phone: string | null;
+  summary: string;
+  follow_up: boolean;
+};
+
 export type Call = {
   id: string;
   direction: "inbound" | "outbound";
@@ -39,7 +49,7 @@ export type Call = {
   cost_paise: number;
   created_at: string;
   agents: { name: string } | null;
-  metadata?: { cost?: CostSummary } | null;
+  metadata?: { cost?: CostSummary; outcome?: CallOutcome } | null;
 };
 
 export type LedgerEntry = {

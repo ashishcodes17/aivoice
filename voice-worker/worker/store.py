@@ -85,6 +85,14 @@ class Store:
         r = await self._http.patch("/calls", params={"id": f"eq.{call_id}"}, json={"metadata": {**existing, "cost": cost}})
         r.raise_for_status()
 
+    async def save_metadata(self, call_id: str, key: str, value: dict) -> None:
+        """Set one key of the call's metadata, keeping whatever else is there (cost, kind, ...)."""
+        r = await self._http.get("/calls", params={"id": f"eq.{call_id}", "select": "metadata"})
+        r.raise_for_status()
+        existing = (r.json() or [{}])[0].get("metadata") or {}
+        r = await self._http.patch("/calls", params={"id": f"eq.{call_id}"}, json={"metadata": {**existing, key: value}})
+        r.raise_for_status()
+
     async def get_callback(self, call_row_id: str, org_id: str | None, agent_id: str | None):
         """The call row a dashboard callback created, plus its agent, or None if it doesn't check out.
 

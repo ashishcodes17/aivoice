@@ -26,11 +26,13 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 
 from . import events
 from .config import settings
+from .context import call_context_note, national_number
 from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
 from .opening import OpeningGate, outbound_note
-from .textfilter import ScriptFilter
+from . import outcome
+from .textfilter import ScriptFilter, spell_phone_numbers
 from .transcripts import TranscriptCleaner
 from .turns import GuardedBargeInStartStrategy
 from pipecat.turns.user_start import ExternalUserTurnStartStrategy
@@ -51,6 +53,14 @@ NUDGES = {
     "hi": "हेलो, क्या आपको मेरी आवाज़ आ रही है?",
 }
 DEFAULT_NUDGE = "Hello, can you hear me?"
+
+
+class SpokenSarvamTTS(SarvamTTSService):
+    """Sarvam voice that says phone numbers digit by digit."""
+
+    async def run_tts(self, text: str, context_id: str):
+        async for frame in super().run_tts(spell_phone_numbers(text), context_id):
+            yield frame
 
 
 def _language(code: str) -> Language:
@@ -105,7 +115,7 @@ def _build_tts(agent: dict, language: Language):
     # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline; asking for
     # 8 kHz directly is optional (see settings.sarvam_tts_native_8k).
     rate = {"sample_rate": PIPELINE_SAMPLE_RATE} if settings.low_latency and settings.sarvam_tts_native_8k else {}
-    return SarvamTTSService(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
+    return SpokenSarvamTTS(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
 
 
 IDLE_TIMEOUT_SECS = 15
@@ -138,7 +148,14 @@ async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task
 
 
 async def run_bot(
-    websocket: WebSocket, start: dict, agent: dict, org_id: str, call_id: str, store: Store, direction: str = "inbound"
+    websocket: WebSocket,
+    start: dict,
+    agent: dict,
+    org_id: str,
+    call_id: str,
+    store: Store,
+    direction: str = "inbound",
+    customer_number: str | None = None,
 ) -> None:
     call_sid = start.get("call_sid")
     language = _language(agent.get("language") or "en-IN")
@@ -217,6 +234,7 @@ async def run_bot(
     )
 
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
+    system += "\n\n" + call_context_note(direction, national_number(customer_number))
     greeting = (cfg.get("outbound_first_message") if direction == "outbound" else None) or agent.get("first_message")
     if direction == "outbound" and greeting:
         system += "\n\n" + outbound_note(greeting)
@@ -245,6 +263,8 @@ async def run_bot(
     )
     user_agg, assistant_agg = aggregators.user(), aggregators.assistant()
 
+    transcript: list[tuple[str, str]] = []
+
     @user_agg.event_handler("on_user_turn_started")
     async def _user_turn_started(aggregator, strategy):
         clock.user_started()
@@ -255,6 +275,7 @@ async def run_bot(
         clock.user_stopped()
         text = message.content or ""
         timer.user_stopped()
+        transcript.append(("user", text))
         events.log("call.user_said", call_sid=call_sid, text=text[:200])
         await store.add_transcript(call_id, org_id, "user", text)
 
@@ -262,6 +283,7 @@ async def run_bot(
     async def _assistant_turn(aggregator, message):
         text = message.content or ""
         clock.agent_finished(text)
+        transcript.append(("assistant", text))
         events.log("call.agent_said", call_sid=call_sid, text=text[:200])
         await store.add_transcript(call_id, org_id, "assistant", text)
 
@@ -346,3 +368,6 @@ async def run_bot(
             await store.save_cost(call_id, summary)
         except Exception as e:  # never let bookkeeping break a call's shutdown
             events.log("call.cost_save_failed", "ERROR", call_sid=call_sid, error=f"{type(e).__name__}: {e}")
+        # After the call, in the background: the socket must close (that is the hangup) without waiting.
+        if settings.record_outcomes:
+            outcome.record_in_background(store, call_id, call_sid, transcript)

@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     llm_fallback_models: str = "deepseek/deepseek-v4.1-flash-1017,deepseek/deepseek-v4-flash"
     # OpenRouter provider routing: "latency" (time to first token) or "throughput" (tokens/s), plus
     # optional p50 floors: tokens/s, and seconds to first token.
+    # Model that reads each finished call's transcript and records its outcome.
+    record_outcomes: bool = True
+    outcome_model: str = "deepseek/deepseek-v4.1-flash"
     llm_provider_sort: str = "latency"
     llm_min_throughput_p50: float | None = 100
     llm_max_latency_p50: float | None = None

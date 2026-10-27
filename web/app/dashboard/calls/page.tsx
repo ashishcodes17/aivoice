@@ -23,7 +23,7 @@ async function CallList() {
   const { supabase, org } = await requireOrg();
   const { data } = await supabase
     .from("calls")
-    .select("id, direction, status, from_number, to_number, duration_seconds, cost_paise, created_at, agents(name)")
+    .select("id, direction, status, from_number, to_number, duration_seconds, cost_paise, created_at, metadata, agents(name)")
     .eq("org_id", org.id)
     .order("created_at", { ascending: false })
     .limit(100);

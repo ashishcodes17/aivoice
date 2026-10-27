@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
 import { CostBreakdown } from "@/components/dashboard/cost-breakdown";
+import { OutcomeCard } from "@/components/dashboard/outcome-card";
 import { Page, PageFallback } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireOrg } from "@/lib/dashboard";
@@ -70,6 +71,8 @@ async function Detail({ params }: { params: PageProps<"/dashboard/calls/[id]">["
           </div>
         ))}
       </dl>
+
+      {call.metadata?.outcome && <OutcomeCard outcome={call.metadata.outcome} />}
 
       {call.metadata?.cost && <CostBreakdown cost={call.metadata.cost} chargedPaise={call.cost_paise} />}
 
