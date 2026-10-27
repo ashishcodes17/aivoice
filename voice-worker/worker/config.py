@@ -17,8 +17,9 @@ class Settings(BaseSettings):
     ws_token: str = ""
 
     # After Sarvam's final transcript the turn-end strategy waits this long for a follow-up fragment
-    # before handing the turn to the LLM. Pipecat's default is 0.5 s, pure dead air on every turn.
-    turn_stop_timeout_secs: float = 0.1
+    # before handing the turn to the LLM. 0.1 s answered faster but split sentences with a pause in
+    # them into two turns, so the agent started replying and was cut off by the second half.
+    turn_stop_timeout_secs: float = 0.5
     # While the agent is speaking, the caller interrupts her only with at least this many words;
     # a lone sound (cough, TV, line noise) no longer cuts her off mid-sentence.
     barge_in_min_words: int = 2
@@ -49,6 +50,8 @@ class Settings(BaseSettings):
 
     # Native 8 kHz synthesis, latency-sorted LLM routing. Turn off only to compare.
     low_latency: bool = True
+    # Ask Sarvam for 8 kHz voice directly; off = Sarvam's 24 kHz, downsampled by Pipecat.
+    sarvam_tts_native_8k: bool = True
     # Reasoning models (e.g. DeepSeek V4) think before answering, which adds seconds of
     # dead air on a phone call. Ask OpenRouter to skip it.
     llm_disable_thinking: bool = True
