@@ -99,3 +99,7 @@ async def voicelink_ws(websocket: WebSocket, token: str = ""):
         raise
     finally:
         events.log("call.finished", call_sid=call_sid, seconds=round(time.monotonic() - began, 1))
+        try:
+            await websocket.close()  # VoiceLink may leave it open after `stop`
+        except Exception:
+            pass

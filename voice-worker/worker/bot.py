@@ -16,7 +16,7 @@ from pipecat.processors.aggregators.llm_response_universal import (
 )
 from pipecat.services.elevenlabs.stt import ElevenLabsRealtimeSTTService
 from pipecat.services.elevenlabs.tts import ElevenLabsTTSService
-from pipecat.services.openrouter.llm import OpenRouterLLMService
+from pipecat.services.openrouter.llm import OpenRouterLLMService  # noqa: F401  (Settings type)
 from pipecat.services.sarvam.stt import SarvamRealtimeSTTService
 from pipecat.services.sarvam.tts import SarvamTTSService
 from pipecat.transcriptions.language import Language
@@ -24,6 +24,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 
 from . import events
 from .config import settings
+from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
 from .serializer import VoiceLinkFrameSerializer
 from .store import Store
@@ -76,9 +77,16 @@ def _build_tts(agent: dict, language: Language):
     return SarvamTTSService(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options))
 
 
-async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str) -> None:
-    """Heartbeat while the call is live: shows whether audio is flowing each way."""
-    last_in = last_out = 0
+IDLE_TIMEOUT_SECS = 15
+
+
+async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task: PipelineTask) -> None:
+    """Heartbeat while the call is live, and a watchdog for calls that went silent.
+
+    VoiceLink sends caller audio continuously (about 50 frames a second), so a stretch with
+    none means the call is over even if the socket was never closed.
+    """
+    last_in = last_out = idle = 0
     while True:
         await asyncio.sleep(5)
         events.log(
@@ -90,7 +98,12 @@ async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str) -> N
             new_out=serializer.frames_out - last_out,
             interruptions=serializer.interruptions,
         )
+        idle = idle + 5 if serializer.frames_in == last_in else 0
         last_in, last_out = serializer.frames_in, serializer.frames_out
+        if idle >= IDLE_TIMEOUT_SECS:
+            events.log("call.idle_timeout", "WARNING", call_sid=call_sid, idle_seconds=idle)
+            await task.cancel()
+            return
 
 
 async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, call_id: str, store: Store) -> None:
@@ -115,9 +128,21 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
     if settings.low_latency:
         # OpenRouter's default routing favours price; ask for the fastest provider instead.
         llm_settings["provider"] = {"sort": "latency"}
+    # `usage.include` makes OpenRouter return the exact dollar cost with each completion.
+    extra_body: dict = {"usage": {"include": True}}
     if settings.llm_disable_thinking:
-        llm_settings["extra"] = {"extra_body": {"reasoning": {"enabled": False}}}
-    llm = OpenRouterLLMService(api_key=settings.openrouter_api_key, settings=OpenRouterLLMService.Settings(**llm_settings))
+        extra_body["reasoning"] = {"enabled": False}
+    llm_settings["extra"] = {"extra_body": extra_body}
+    cfg = agent.get("config") or {}
+    costs = CallCosts(
+        llm_model=llm_settings["model"],
+        stt_provider=agent.get("stt_provider") or "sarvam",
+        tts_provider=agent.get("tts_provider") or "sarvam",
+        tts_model=cfg.get("tts_model"),
+    )
+    llm = CostTrackingOpenRouterLLM(
+        costs=costs, api_key=settings.openrouter_api_key, settings=OpenRouterLLMService.Settings(**llm_settings)
+    )
     tts = _build_tts(agent, language)
     events.log(
         "pipeline.built",
@@ -156,10 +181,13 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
         events.log("call.agent_said", call_sid=call_sid, text=text[:200])
         await store.add_transcript(call_id, org_id, "assistant", text)
 
-    pipeline = Pipeline([transport.input(), stt, user_agg, llm, LLMProbe(timer), tts, transport.output(), assistant_agg])
+    pipeline = Pipeline(
+        [transport.input(), stt, user_agg, llm, LLMProbe(timer), tts, TTSUsageProbe(costs), transport.output(), assistant_agg]
+    )
     # With low latency the TTS services synthesize at the phone line's native 8 kHz, which
     # skips a 24 kHz -> 8 kHz resample (extra work and audible artifacts).
-    rates = {"audio_in_sample_rate": PIPELINE_SAMPLE_RATE}
+    # Usage metrics make the TTS report characters spoken, which is what Sarvam bills on.
+    rates = {"audio_in_sample_rate": PIPELINE_SAMPLE_RATE, "enable_usage_metrics": True}
     if settings.low_latency:
         rates["audio_out_sample_rate"] = PIPELINE_SAMPLE_RATE
     task = PipelineTask(pipeline, params=PipelineParams(**rates))
@@ -176,8 +204,21 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
         events.log("ws.disconnected", call_sid=call_sid, frames_in=serializer.frames_in, frames_out=serializer.frames_out)
         await task.cancel()
 
-    stats = asyncio.create_task(_audio_stats(serializer, call_sid))
+    async def _end_call():
+        # VoiceLink sends `stop` but leaves the socket open, so end the pipeline ourselves.
+        # Detached so the pipeline is not cancelled from inside its own input task.
+        asyncio.create_task(task.cancel())
+
+    serializer.on_stop = _end_call
+    stats = asyncio.create_task(_audio_stats(serializer, call_sid, task))
     try:
         await PipelineRunner(handle_sigint=False).run(task)
     finally:
         stats.cancel()
+        costs.stt_seconds = serializer.frames_in * 0.02  # VoiceLink frames are 20 ms each
+        summary = costs.summary()
+        events.log("call.cost", call_sid=call_sid, **{k: summary[k] for k in ("total_inr", "complete", "llm", "tts", "stt")})
+        try:
+            await store.save_cost(call_id, summary)
+        except Exception as e:  # never let bookkeeping break a call's shutdown
+            events.log("call.cost_save_failed", "ERROR", call_sid=call_sid, error=f"{type(e).__name__}: {e}")

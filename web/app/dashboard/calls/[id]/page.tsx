@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { ArrowLeftIcon } from "lucide-react";
+import { CostBreakdown } from "@/components/dashboard/cost-breakdown";
 import { Page, PageFallback } from "@/components/dashboard/page-header";
 import { Badge } from "@/components/ui/badge";
 import { requireOrg } from "@/lib/dashboard";
@@ -30,7 +31,7 @@ async function Detail({ params }: { params: PageProps<"/dashboard/calls/[id]">["
   const [callRes, linesRes] = await Promise.all([
     supabase
       .from("calls")
-      .select("id, direction, status, from_number, to_number, duration_seconds, cost_paise, created_at, agents(name)")
+      .select("id, direction, status, from_number, to_number, duration_seconds, cost_paise, created_at, metadata, agents(name)")
       .eq("id", id)
       .eq("org_id", org.id)
       .maybeSingle(),
@@ -69,6 +70,8 @@ async function Detail({ params }: { params: PageProps<"/dashboard/calls/[id]">["
           </div>
         ))}
       </dl>
+
+      {call.metadata?.cost && <CostBreakdown cost={call.metadata.cost} chargedPaise={call.cost_paise} />}
 
       <section>
         <h2 className="font-heading font-semibold text-base tracking-tight">Transcript</h2>

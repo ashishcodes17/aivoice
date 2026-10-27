@@ -79,6 +79,8 @@ class VoiceLinkFrameSerializer(FrameSerializer):
         self._out_resampler = create_stream_resampler()
         self.frames_in = 0
         self.on_audio_out = None  # callback fired for every outgoing audio frame
+        self.on_stop = None  # async callback fired once when VoiceLink says the call is over
+        self._stopped = False
         self.frames_out = 0
         self.interruptions = 0
         events.log(
@@ -130,7 +132,11 @@ class VoiceLinkFrameSerializer(FrameSerializer):
 
         event = msg.get("event")
         if event == "stop":
-            events.log("ws.stop", call_sid=self._call_sid, frames_in=self.frames_in, frames_out=self.frames_out)
+            if not self._stopped:
+                self._stopped = True
+                events.log("ws.stop", call_sid=self._call_sid, frames_in=self.frames_in, frames_out=self.frames_out)
+                if self.on_stop:
+                    await self.on_stop()
             return EndFrame()
         if event == "mark":
             logger.debug(f"VoiceLink mark: {msg.get('mark')}")

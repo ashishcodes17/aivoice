@@ -20,6 +20,15 @@ export type PhoneNumber = {
   agents: { name: string } | null;
 };
 
+export type CostSummary = {
+  usd_to_inr: number;
+  llm: { model: string; requests: number; prompt_tokens: number; completion_tokens: number; usd: number; inr: number };
+  tts: { provider: string; model: string | null; characters: number; rate_inr_per_1k_chars: number | null; inr: number | null };
+  stt: { provider: string; seconds: number; rate_inr_per_min: number | null; inr: number | null };
+  total_inr: number;
+  complete: boolean;
+};
+
 export type Call = {
   id: string;
   direction: "inbound" | "outbound";
@@ -30,6 +39,7 @@ export type Call = {
   cost_paise: number;
   created_at: string;
   agents: { name: string } | null;
+  metadata?: { cost?: CostSummary } | null;
 };
 
 export type LedgerEntry = {

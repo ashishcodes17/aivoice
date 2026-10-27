@@ -19,6 +19,11 @@ class Settings(BaseSettings):
     # Reasoning models (e.g. DeepSeek V4) think before answering, which adds seconds of
     # dead air on a phone call. Ask OpenRouter to skip it.
     llm_disable_thinking: bool = True
+
+    # Cost accounting. USD->INR converts OpenRouter's dollar figure; Sarvam bills real-time
+    # speech-to-text per minute of audio (pay-as-you-go rate).
+    usd_to_inr: float = 88.0
+    sarvam_stt_inr_per_min: float = 0.49
     # Sarvam server-side end-of-speech wait in ms. Its default (~1.2 s) is the biggest single
     # source of lag; 300 ms measured about 0.7 s faster with identical transcripts.
     sarvam_silence_ms: int | None = 300

@@ -77,5 +77,10 @@ class Store:
             json={"call_id": call_id, "org_id": org_id, "role": role, "content": content},
         )
 
+    async def save_cost(self, call_id: str, cost: dict) -> None:
+        """Keep the per-call cost breakdown on the call (calls.metadata is otherwise unused)."""
+        r = await self._http.patch("/calls", params={"id": f"eq.{call_id}"}, json={"metadata": {"cost": cost}})
+        r.raise_for_status()
+
     async def close(self) -> None:
         await self._http.aclose()
