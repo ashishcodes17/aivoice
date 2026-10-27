@@ -26,8 +26,18 @@ class Settings(BaseSettings):
     # A quiet line gets one "can you hear me?" after this long, then a hangup if still quiet.
     nudge_secs: int = 7
     hangup_after_nudge_secs: int = 10
+    # The agent said goodbye but forgot end_call: hang up if nobody speaks for this long.
+    goodbye_grace_secs: float = 4
     # Outbound: how long to wait for the person's "hello" before speaking first.
     outbound_wait_secs: float = 1.2
+
+    # LLM resilience: OpenRouter falls back to these models (comma-separated) if the agent's model
+    # fails, and a request that produces no text within the timeout is re-sent once.
+    llm_fallback_models: str = "deepseek/deepseek-v4-flash"
+    llm_retry_timeout_secs: float = 3.0
+
+    # Pipecat logs every LLM request in full at DEBUG, which is a lot of I/O on a live call.
+    log_level: str = "INFO"
 
     # Native 8 kHz synthesis, latency-sorted LLM routing. Turn off only to compare.
     low_latency: bool = True

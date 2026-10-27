@@ -1,14 +1,19 @@
 import hmac
 import json
+import sys
 import time
 
 from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
+from loguru import logger
 
 from worker import events
 from worker.bot import run_bot
 from worker.config import settings
 from worker.store import Store
+
+logger.remove()
+logger.add(sys.stderr, level=settings.log_level.upper())
 
 app = FastAPI()
 store = Store()

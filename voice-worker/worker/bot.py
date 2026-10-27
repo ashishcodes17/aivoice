@@ -30,6 +30,7 @@ from .config import settings
 from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
+from .opening import OpeningGate, outbound_note
 from .textfilter import ScriptFilter
 from .transcripts import TranscriptCleaner
 from .serializer import VoiceLinkFrameSerializer
@@ -100,7 +101,10 @@ def _build_tts(agent: dict, language: Language):
         options["model"] = cfg["tts_model"]
     if cfg.get("tts_pace"):
         options["pace"] = float(cfg["tts_pace"])
-    return SarvamTTSService(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options))
+    # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline, so ask for
+    # the phone line's 8 kHz explicitly: a third of the bytes over the network and no resampling.
+    rate = {"sample_rate": PIPELINE_SAMPLE_RATE} if settings.low_latency else {}
+    return SarvamTTSService(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
 
 
 IDLE_TIMEOUT_SECS = 15
@@ -170,6 +174,10 @@ async def run_bot(
     extra_body: dict = {"usage": {"include": True}}
     if settings.llm_disable_thinking:
         extra_body["reasoning"] = {"enabled": False}
+    # If the main model is down or erroring, OpenRouter moves on to the fallbacks in this order.
+    fallbacks = [m.strip() for m in settings.llm_fallback_models.split(",") if m.strip() and m.strip() != llm_settings["model"]]
+    if fallbacks:
+        extra_body["models"] = [llm_settings["model"], *fallbacks]
     llm_settings["extra"] = {"extra_body": extra_body}
     cfg = agent.get("config") or {}
     costs = CallCosts(
@@ -179,7 +187,13 @@ async def run_bot(
         tts_model=cfg.get("tts_model"),
     )
     llm = CostTrackingOpenRouterLLM(
-        costs=costs, api_key=settings.openrouter_api_key, settings=OpenRouterLLMService.Settings(**llm_settings)
+        costs=costs,
+        api_key=settings.openrouter_api_key,
+        settings=OpenRouterLLMService.Settings(**llm_settings),
+        # A provider that accepts the request and then sends nothing would leave the caller in
+        # silence; re-ask once if no text has arrived by then (first words normally take ~0.6 s).
+        retry_on_timeout=True,
+        retry_timeout_secs=settings.llm_retry_timeout_secs,
     )
     register_end_call(llm, call_sid)
     tts = _build_tts(agent, language)
@@ -190,24 +204,15 @@ async def run_bot(
         llm=agent.get("llm_model"),
         tts=agent.get("tts_provider"),
         voice=agent.get("tts_voice"),
-        tts_model=(agent.get("config") or {}).get("tts_model", "default"),
-        tts_pace=(agent.get("config") or {}).get("tts_pace", 1.0),
+        tts_model=cfg.get("tts_model", "default"),
+        tts_pace=cfg.get("tts_pace", 1.0),
         language=str(language),
     )
 
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
-    cfg = agent.get("config") or {}
     greeting = (cfg.get("outbound_first_message") if direction == "outbound" else None) or agent.get("first_message")
-    if direction == "outbound":
-        system += (
-            "\n\nYou placed this call yourself because the person asked for a callback. The person has just "
-            "picked up. Do not talk before they do: their first words are usually hello. Reply to that with your "
-            "opening, which must say who you are, why you are calling, and ask whether they can talk now. "
-            f"Your opening is: \"{greeting}\". Say it in those words, do not ask the same question twice, and "
-            "do not greet them separately. If your opening is already in the conversation (you spoke first because "
-            "the line was quiet), never say it again: if they then say hello, just answer briefly that you are "
-            "here, for example \"హా, చెప్పండి\", and carry on from what they say."
-        )
+    if direction == "outbound" and greeting:
+        system += "\n\n" + outbound_note(greeting)
     system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most
     # Sarvam's own VAD decides when a turn starts and ends (Pipecat picks the same strategies for us),
     # but its stop strategy adds a 0.5 s wait after the transcript. Supply it with a shorter one.
@@ -217,15 +222,15 @@ async def run_bot(
             start=[ExternalUserTurnStartStrategy(enable_interruptions=True)],
             stop=[ExternalUserTurnStopStrategy(timeout=settings.turn_stop_timeout_secs)],
         )
+    # Local voice detection only matters when we decide turns ourselves; with Sarvam's server-side
+    # endpointing it would just burn CPU on every audio frame of every call.
+    vad = None
+    if turn_strategies is None:
+        vad = SileroVADAnalyzer(params=VADParams(start_secs=settings.vad_start_secs, stop_secs=settings.vad_stop_secs))
     context = LLMContext(messages=[{"role": "system", "content": system}], tools=END_CALL_TOOLS)
     aggregators = LLMContextAggregatorPair(
         context,
-        user_params=LLMUserAggregatorParams(
-            user_turn_strategies=turn_strategies,
-            vad_analyzer=SileroVADAnalyzer(
-                params=VADParams(start_secs=settings.vad_start_secs, stop_secs=settings.vad_stop_secs)
-            )
-        ),
+        user_params=LLMUserAggregatorParams(user_turn_strategies=turn_strategies, vad_analyzer=vad),
     )
     user_agg, assistant_agg = aggregators.user(), aggregators.assistant()
 
@@ -245,15 +250,18 @@ async def run_bot(
     @assistant_agg.event_handler("on_assistant_turn_stopped")
     async def _assistant_turn(aggregator, message):
         text = message.content or ""
+        clock.agent_finished(text)
         events.log("call.agent_said", call_sid=call_sid, text=text[:200])
         await store.add_transcript(call_id, org_id, "assistant", text)
 
+    gate = OpeningGate(greeting if direction == "outbound" else None)
     pipeline = Pipeline(
         [
             transport.input(),
             stt,
             TranscriptCleaner(call_sid),
             user_agg,
+            gate,
             llm,
             LLMProbe(timer),
             ScriptFilter(call_sid),
@@ -272,14 +280,15 @@ async def run_bot(
     task = PipelineTask(pipeline, params=PipelineParams(**rates))
 
     async def _open_outbound() -> None:
-        # Pick-up is followed by "hello?"; talking over it sounds like a robot. Wait for it, and only
-        # speak first when the line stays quiet (a slow pickup, or a handset that opens muted).
+        # Wait briefly for "hello?" (the gate answers it with the opening); if the line stays quiet,
+        # a slow pickup or a handset that opens muted, speak first.
         try:
             await asyncio.wait_for(heard_user.wait(), settings.outbound_wait_secs)
         except asyncio.TimeoutError:
-            events.log("call.outbound_spoke_first", call_sid=call_sid)
-            if greeting:
-                await task.queue_frames([TTSSpeakFrame(greeting)])
+            opening = gate.take()
+            if opening:
+                events.log("call.outbound_spoke_first", call_sid=call_sid)
+                await task.queue_frames([TTSSpeakFrame(opening)])
 
     @transport.event_handler("on_client_connected")
     async def _connected(transport, ws):
@@ -309,7 +318,7 @@ async def run_bot(
     guard = asyncio.create_task(
         guard_call(
             clock, task, call_sid, settings.max_call_secs, settings.silence_hangup_secs,
-            settings.nudge_secs, _nudge, settings.hangup_after_nudge_secs,
+            settings.nudge_secs, _nudge, settings.hangup_after_nudge_secs, settings.goodbye_grace_secs,
         )
     )
     try:

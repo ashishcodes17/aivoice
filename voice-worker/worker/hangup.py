@@ -5,6 +5,7 @@ leaves the line (and the bill) running.
 """
 
 import asyncio
+import re
 import time
 
 from pipecat.adapters.llm.schemas.function_schema import FunctionSchema
@@ -52,6 +53,21 @@ def register_end_call(llm, call_sid: str) -> None:
     llm.register_function("end_call", end_call)
 
 
+# Closing lines the model sometimes says without calling end_call. Telugu words are matched as whole
+# words (బై must not match బైక్).
+_TE = "\u0C00-\u0C7F"
+_FAREWELL = re.compile(
+    rf"(?<![{_TE}])(బై|టేక్ కేర్|జాగ్రత్త(గా)?\s*ఉండండి|గుడ్\s*బై|వీడ్కోలు)(?![{_TE}])"
+    r"|\b(bye|goodbye|take care|have a (good|nice) day)\b"
+    r"|अलविदा|(?<![\u0900-\u097F])बाय(?![\u0900-\u097F])",
+    re.IGNORECASE,
+)
+
+
+def is_farewell(text: str) -> bool:
+    return bool(_FAREWELL.search(text or ""))
+
+
 class CallClock:
     """Tracks who spoke last so a silent line can be nudged, then hung up."""
 
@@ -59,6 +75,7 @@ class CallClock:
         self.last_activity = time.monotonic()
         self.user_speaking = False
         self.nudges = 0  # nudges sent since the caller last spoke
+        self.said_goodbye = False  # the agent's last turn was a closing line
 
     def touch(self) -> None:
         self.last_activity = time.monotonic()
@@ -66,7 +83,11 @@ class CallClock:
     def user_started(self) -> None:
         self.user_speaking = True
         self.nudges = 0
+        self.said_goodbye = False
         self.touch()
+
+    def agent_finished(self, text: str) -> None:
+        self.said_goodbye = is_farewell(text)
 
     def user_stopped(self) -> None:
         self.user_speaking = False
@@ -82,6 +103,7 @@ async def guard_call(
     nudge_secs: int = 0,
     nudge=None,
     hangup_after_nudge_secs: int = 12,
+    goodbye_grace_secs: float = 4,
 ) -> None:
     """Check in on a quiet line like a person would, then hang up; also cap the call length."""
     started = time.monotonic()
@@ -95,6 +117,11 @@ async def guard_call(
         if clock.user_speaking:
             continue
         quiet = now - clock.last_activity
+        if clock.said_goodbye and quiet >= goodbye_grace_secs:
+            # The agent said goodbye but did not call end_call; nobody is saying anything more.
+            events.log("call.goodbye_hangup", call_sid=call_sid, quiet_seconds=round(quiet, 1))
+            await task.stop_when_done()
+            return
         if nudge and nudge_secs and clock.nudges == 0 and quiet >= nudge_secs:
             clock.nudges += 1
             events.log("call.nudge", call_sid=call_sid, quiet_seconds=round(quiet))
