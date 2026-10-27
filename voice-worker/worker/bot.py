@@ -102,8 +102,8 @@ def _build_tts(agent: dict, language: Language):
         options["model"] = cfg["tts_model"]
     if cfg.get("tts_pace"):
         options["pace"] = float(cfg["tts_pace"])
-    # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline, so ask for
-    # the phone line's 8 kHz explicitly: a third of the bytes over the network and no resampling.
+    # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline; asking for
+    # 8 kHz directly is optional (see settings.sarvam_tts_native_8k).
     rate = {"sample_rate": PIPELINE_SAMPLE_RATE} if settings.low_latency and settings.sarvam_tts_native_8k else {}
     return SarvamTTSService(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
 

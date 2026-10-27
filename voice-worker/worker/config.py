@@ -50,8 +50,10 @@ class Settings(BaseSettings):
 
     # Native 8 kHz synthesis, latency-sorted LLM routing. Turn off only to compare.
     low_latency: bool = True
-    # Ask Sarvam for 8 kHz voice directly; off = Sarvam's 24 kHz, downsampled by Pipecat.
-    sarvam_tts_native_8k: bool = True
+    # Ask Sarvam for 8 kHz voice directly (off = Sarvam's 24 kHz, downsampled by Pipecat). Off by
+    # default: Sarvam's 8 kHz output had 15-35% more short breaks inside words than the downsampled
+    # 24 kHz voice, and the voice was reported breaking only after switching to it.
+    sarvam_tts_native_8k: bool = False
     # Reasoning models (e.g. DeepSeek V4) think before answering, which adds seconds of
     # dead air on a phone call. Ask OpenRouter to skip it.
     llm_disable_thinking: bool = True
