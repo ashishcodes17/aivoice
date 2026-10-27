@@ -19,11 +19,14 @@ export const STT_PROVIDERS = [
 ];
 
 export const SARVAM_TTS_MODELS = [
-  { value: "bulbul:v3", label: "Bulbul v3" },
-  { value: "bulbul:v4-flash", label: "Bulbul v4 Flash" },
+  { value: "bulbul:v3", label: "Sarvam Bulbul v3" },
+  { value: "bulbul:v4-flash", label: "Sarvam Bulbul v4 Flash" },
+  { value: "mulberry", label: "Rumik Mulberry (Hindi, English)" },
+  { value: "muga", label: "Rumik Muga (Hindi, English)" },
 ];
 
 export const TTS_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },
+  { value: "rumik", label: "Rumik" },
 ];

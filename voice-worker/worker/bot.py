@@ -29,6 +29,7 @@ from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
 from .transcripts import TranscriptCleaner
 from .serializer import VoiceLinkFrameSerializer
+from .rumik_tts import RumikTTSService
 from .store import Store
 
 VOICE_RULES = (
@@ -68,6 +69,18 @@ def _build_tts(agent: dict, language: Language):
         return ElevenLabsTTSService(
             api_key=settings.elevenlabs_api_key,
             settings=ElevenLabsTTSService.Settings(model="eleven_flash_v2_5", voice=voice, language=language),
+        )
+    if agent.get("tts_provider") == "rumik":
+        cfg = agent.get("config") or {}
+        return RumikTTSService(
+            api_key=settings.rumik_api_key,
+            gateway_url=settings.rumik_gateway_url,
+            settings=RumikTTSService.Settings(
+                model=cfg.get("tts_model") or "mulberry",
+                voice=voice,
+                language=None,
+                description=cfg.get("tts_description"),
+            ),
         )
     # Per-agent options live in agents.config. Note v3 and v4-flash have different voice names.
     cfg = agent.get("config") or {}

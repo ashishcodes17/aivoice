@@ -18,6 +18,10 @@ from .config import settings
 
 # INR per 1,000 characters of synthesized speech.
 SARVAM_TTS_INR_PER_1K_CHARS = {"bulbul:v3": 3.00, "bulbul:v3-beta": 3.00, "bulbul:v4-flash": 1.00}
+# Rumik, same unit. Excludes mulberry's per-request voice description (about 65 characters billed
+# on each reply, roughly 6% extra), which we do not count here.
+RUMIK_TTS_INR_PER_1K_CHARS = {"mulberry": 0.50, "muga": 0.99}
+DEFAULT_RUMIK_TTS_MODEL = "mulberry"
 DEFAULT_SARVAM_TTS_MODEL = "bulbul:v3"  # what Sarvam uses when the agent does not choose one
 
 
@@ -53,6 +57,11 @@ class CallCosts:
         if self.tts_provider == "sarvam":
             model = self.tts_model or DEFAULT_SARVAM_TTS_MODEL
             tts_rate = SARVAM_TTS_INR_PER_1K_CHARS.get(model)
+            tts_inr = self.tts_chars / 1000 * tts_rate if tts_rate is not None else None
+
+        if self.tts_provider == "rumik":
+            model = self.tts_model or DEFAULT_RUMIK_TTS_MODEL
+            tts_rate = RUMIK_TTS_INR_PER_1K_CHARS.get(model)
             tts_inr = self.tts_chars / 1000 * tts_rate if tts_rate is not None else None
 
         stt_rate = settings.sarvam_stt_inr_per_min if self.stt_provider == "sarvam" else None

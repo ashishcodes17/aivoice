@@ -94,16 +94,16 @@ export function AgentForm({ agent }: { agent?: Agent }) {
         <Field>
           <FieldLabel>Voice</FieldLabel>
           <Input name="tts_voice" defaultValue={v.tts_voice ?? ""} placeholder="shubh" />
-          <FieldDescription>A Sarvam speaker such as shubh, or an ElevenLabs voice ID.</FieldDescription>
+          <FieldDescription>A Sarvam speaker such as shubh, an ElevenLabs voice ID, or a Rumik speaker such as siya or aisha. Rumik speaks Hindi and English only.</FieldDescription>
         </Field>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2">
-        <Choice name="tts_model" label="Sarvam voice model" items={SARVAM_TTS_MODELS} defaultValue={v.config?.tts_model ?? "bulbul:v3"} />
+        <Choice name="tts_model" label="Voice model" items={SARVAM_TTS_MODELS} defaultValue={v.config?.tts_model ?? "bulbul:v3"} />
         <Field>
           <FieldLabel>Speaking speed</FieldLabel>
           <Input name="tts_pace" type="number" step="0.05" min="0.5" max="2" defaultValue={v.config?.tts_pace ?? 1} />
-          <FieldDescription>1 is normal. Try 1.1 for a slightly quicker voice. v4 voices have their own names, like kavitha_te_conversation.</FieldDescription>
+          <FieldDescription>1 is normal. Try 1.1 for a slightly quicker voice. Sarvam only. v4 voices have their own names, like kavitha_te_conversation.</FieldDescription>
         </Field>
       </div>
 
