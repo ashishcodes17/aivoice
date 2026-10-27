@@ -10,7 +10,7 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LANGUAGES, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
+import { LANGUAGES, SARVAM_TTS_MODELS, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 import type { Agent } from "@/lib/types";
 
 const defaults: Omit<Agent, "id" | "created_at"> = {
@@ -20,6 +20,7 @@ const defaults: Omit<Agent, "id" | "created_at"> = {
   stt_provider: "sarvam",
   tts_provider: "sarvam",
   tts_voice: "shubh",
+  config: { tts_model: "bulbul:v3", tts_pace: 1 } as Agent["config"],
   first_message: "Hello! Thanks for calling. How can I help you today?",
   system_prompt:
     "You are a friendly receptionist. Greet callers, answer simple questions, and politely ask for their name and reason for calling. Keep every reply to one or two short sentences.",
@@ -85,6 +86,15 @@ export function AgentForm({ agent }: { agent?: Agent }) {
           <FieldLabel>Voice</FieldLabel>
           <Input name="tts_voice" defaultValue={v.tts_voice ?? ""} placeholder="shubh" />
           <FieldDescription>A Sarvam speaker such as shubh, or an ElevenLabs voice ID.</FieldDescription>
+        </Field>
+      </div>
+
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Choice name="tts_model" label="Sarvam voice model" items={SARVAM_TTS_MODELS} defaultValue={v.config?.tts_model ?? "bulbul:v3"} />
+        <Field>
+          <FieldLabel>Speaking speed</FieldLabel>
+          <Input name="tts_pace" type="number" step="0.05" min="0.5" max="2" defaultValue={v.config?.tts_pace ?? 1} />
+          <FieldDescription>1 is normal. Try 1.1 for a slightly quicker voice. v4 voices have their own names, like kavitha_te_conversation.</FieldDescription>
         </Field>
       </div>
 

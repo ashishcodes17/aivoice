@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireOrg } from "@/lib/dashboard";
-import { LANGUAGES, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
+import { LANGUAGES, SARVAM_TTS_MODELS, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 
 export type ActionState = { error?: string };
 
@@ -33,6 +33,8 @@ const AgentSchema = z.object({
   stt_provider: z.enum(STT_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_provider: z.enum(TTS_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_voice: z.string().trim().max(120),
+  tts_model: z.enum(SARVAM_TTS_MODELS.map((m) => m.value) as [string, ...string[]]),
+  tts_pace: z.coerce.number().min(0.5, "Speed must be between 0.5 and 2.").max(2, "Speed must be between 0.5 and 2."),
 });
 
 export async function saveAgent(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -41,7 +43,8 @@ export async function saveAgent(_prev: ActionState, formData: FormData): Promise
 
   const { supabase, org } = await requireOrg();
   const id = String(formData.get("id") ?? "");
-  const row = { ...parsed.data, tts_voice: parsed.data.tts_voice || null };
+  const { tts_model, tts_pace, ...fields } = parsed.data;
+  const row = { ...fields, tts_voice: fields.tts_voice || null, config: { tts_model, tts_pace } };
 
   // RLS also enforces org membership; org_id comes from the session, never the form.
   const { error } = id

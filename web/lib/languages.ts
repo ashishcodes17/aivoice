@@ -18,6 +18,11 @@ export const STT_PROVIDERS = [
   { value: "elevenlabs", label: "ElevenLabs" },
 ];
 
+export const SARVAM_TTS_MODELS = [
+  { value: "bulbul:v3", label: "Bulbul v3" },
+  { value: "bulbul:v4-flash", label: "Bulbul v4 Flash" },
+];
+
 export const TTS_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },

@@ -66,10 +66,14 @@ def _build_tts(agent: dict, language: Language):
             api_key=settings.elevenlabs_api_key,
             settings=ElevenLabsTTSService.Settings(model="eleven_flash_v2_5", voice=voice, language=language),
         )
-    return SarvamTTSService(
-        api_key=settings.sarvam_api_key,
-        settings=SarvamTTSService.Settings(voice=voice, language=language),
-    )
+    # Per-agent options live in agents.config. Note v3 and v4-flash have different voice names.
+    cfg = agent.get("config") or {}
+    options = {"voice": voice, "language": language}
+    if cfg.get("tts_model"):
+        options["model"] = cfg["tts_model"]
+    if cfg.get("tts_pace"):
+        options["pace"] = float(cfg["tts_pace"])
+    return SarvamTTSService(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options))
 
 
 async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str) -> None:
@@ -122,6 +126,8 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
         llm=agent.get("llm_model"),
         tts=agent.get("tts_provider"),
         voice=agent.get("tts_voice"),
+        tts_model=(agent.get("config") or {}).get("tts_model", "default"),
+        tts_pace=(agent.get("config") or {}).get("tts_pace", 1.0),
         language=str(language),
     )
 
