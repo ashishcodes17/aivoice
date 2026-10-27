@@ -3,10 +3,11 @@ import { Button } from "@/components/ui/button";
 import { LogoMark } from "./logo";
 
 const links = [
-  { href: "#product", label: "Product" },
-  { href: "#languages", label: "Languages" },
-  { href: "#how", label: "How it works" },
-  { href: "#faq", label: "FAQ" },
+  { href: "/#product", label: "Product" },
+  { href: "/#languages", label: "Languages" },
+  { href: "/#how", label: "How it works" },
+  { href: "/pricing", label: "Pricing" },
+  { href: "/#faq", label: "FAQ" },
 ];
 
 export function Header() {

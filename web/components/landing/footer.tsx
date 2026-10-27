@@ -20,12 +20,15 @@ export function Footer() {
           <Link href="/login" className="transition-colors hover:text-foreground">
             Sign in
           </Link>
-          <a href="#product" className="transition-colors hover:text-foreground">
+          <Link href="/#product" className="transition-colors hover:text-foreground">
             Product
-          </a>
-          <a href="#faq" className="transition-colors hover:text-foreground">
+          </Link>
+          <Link href="/pricing" className="transition-colors hover:text-foreground">
+            Pricing
+          </Link>
+          <Link href="/#faq" className="transition-colors hover:text-foreground">
             FAQ
-          </a>
+          </Link>
         </nav>
         <p className="text-muted-foreground text-xs">© <Year /> Lynksy. All rights reserved.</p>
       </div>
