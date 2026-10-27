@@ -29,7 +29,8 @@ export async function placeCall(args: {
         country_code: "91",
         // The API wants this as a JSON string, not an object.
         custom_parameters: JSON.stringify(args.params),
-        call_limit: 1,
+        // Deliberately no `call_limit`: VoiceLink documents it only as "maximum call limit for all
+        // leads", and sending 1 ended every answered call exactly one second after pickup.
       }),
       signal: AbortSignal.timeout(20_000),
     });
