@@ -5,6 +5,7 @@ export type Agent = {
   first_message: string;
   language: string;
   llm_model: string;
+  stt_provider: string;
   tts_provider: string;
   tts_voice: string | null;
   created_at: string;

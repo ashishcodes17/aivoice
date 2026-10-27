@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireOrg } from "@/lib/dashboard";
-import { LANGUAGES, TTS_PROVIDERS } from "@/lib/languages";
+import { LANGUAGES, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 
 export type ActionState = { error?: string };
 
@@ -30,6 +30,7 @@ const AgentSchema = z.object({
   first_message: z.string().trim().max(500),
   system_prompt: z.string().trim().min(1, "Write a prompt describing how the agent should behave.").max(8000),
   llm_model: z.string().trim().min(1, "Enter a model, for example openai/gpt-4o-mini.").max(120),
+  stt_provider: z.enum(STT_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_provider: z.enum(TTS_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_voice: z.string().trim().max(120),
 });

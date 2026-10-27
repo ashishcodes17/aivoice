@@ -10,13 +10,14 @@ import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { LANGUAGES, TTS_PROVIDERS } from "@/lib/languages";
+import { LANGUAGES, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 import type { Agent } from "@/lib/types";
 
 const defaults: Omit<Agent, "id" | "created_at"> = {
   name: "",
   language: "en-IN",
   llm_model: "openai/gpt-4o-mini",
+  stt_provider: "sarvam",
   tts_provider: "sarvam",
   tts_voice: "shubh",
   first_message: "Hello! Thanks for calling. How can I help you today?",
@@ -75,14 +76,17 @@ export function AgentForm({ agent }: { agent?: Agent }) {
 
       <div className="grid gap-6 sm:grid-cols-2">
         <Choice name="language" label="Language" items={LANGUAGES} defaultValue={v.language} />
-        <Choice name="tts_provider" label="Voice provider" items={TTS_PROVIDERS} defaultValue={v.tts_provider} />
+        <Choice name="stt_provider" label="Speech recognition" items={STT_PROVIDERS} defaultValue={v.stt_provider} />
       </div>
 
-      <Field>
-        <FieldLabel>Voice</FieldLabel>
-        <Input name="tts_voice" defaultValue={v.tts_voice ?? ""} placeholder="shubh" />
-        <FieldDescription>A Sarvam speaker name such as shubh, or an ElevenLabs voice ID.</FieldDescription>
-      </Field>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <Choice name="tts_provider" label="Voice provider" items={TTS_PROVIDERS} defaultValue={v.tts_provider} />
+        <Field>
+          <FieldLabel>Voice</FieldLabel>
+          <Input name="tts_voice" defaultValue={v.tts_voice ?? ""} placeholder="shubh" />
+          <FieldDescription>A Sarvam speaker such as shubh, or an ElevenLabs voice ID.</FieldDescription>
+        </Field>
+      </div>
 
       <Field>
         <FieldLabel>First message</FieldLabel>

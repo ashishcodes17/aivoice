@@ -13,6 +13,11 @@ export const LANGUAGES = [
   { value: "od-IN", label: "Odia" },
 ];
 
+export const STT_PROVIDERS = [
+  { value: "sarvam", label: "Sarvam" },
+  { value: "elevenlabs", label: "ElevenLabs" },
+];
+
 export const TTS_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },

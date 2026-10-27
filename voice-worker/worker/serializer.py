@@ -1,64 +1,169 @@
-"""VoiceLink WebSocket protocol <-> Pipecat frames.
+"""VoiceLink WebSocket media protocol <-> Pipecat frames.
 
-Audio on the wire is base64 A-law, 8 kHz, mono, in both directions.
+Written against VoiceLink's own Pipecat SDK, which was built from frames captured on real
+calls, because VoiceLink's public docs are wrong in several places:
+
+* No `connected` event is sent; `start` arrives first.
+* The bot's configured audio format is advisory. The `start` frame's `media_format` is the
+  only truth, so the codec and rate are resolved from it.
+* Key casing is inconsistent (`stream_sid` on start, `streamSid` on media/stop), and it is
+  unproven which spelling VoiceLink reads on outbound frames, so both are sent.
 """
 
 import base64
 import json
+from typing import Any
 
 from loguru import logger
-from pipecat.audio.utils import alaw_to_pcm, create_stream_resampler, pcm_to_alaw
+from pipecat.audio.utils import (
+    alaw_to_pcm,
+    create_stream_resampler,
+    pcm_to_alaw,
+    pcm_to_ulaw,
+    ulaw_to_pcm,
+)
 from pipecat.frames.frames import (
     AudioRawFrame,
+    EndFrame,
     Frame,
     InputAudioRawFrame,
     InterruptionFrame,
+    OutputTransportMessageFrame,
+    OutputTransportMessageUrgentFrame,
 )
 from pipecat.processors.frame_processor import FrameProcessorSetup
 from pipecat.serializers.base_serializer import FrameSerializer
 
+from . import events
+
+# (encoding name without "audio/", sample rate) -> (codec, rate)
+_WIRE_FORMATS = {
+    ("alaw", 8000): "alaw",
+    ("pcma", 8000): "alaw",
+    ("ulaw", 8000): "ulaw",
+    ("mulaw", 8000): "ulaw",
+    ("pcmu", 8000): "ulaw",
+    ("l16", 8000): "l16",
+    ("l16", 16000): "l16",
+    ("pcm", 8000): "l16",
+    ("pcm", 16000): "l16",
+}
+
+
+def resolve_format(media_format: dict[str, Any] | None) -> tuple[str, int]:
+    """Codec and sample rate actually streamed, from the `start` frame's media_format."""
+    fmt = media_format or {}
+    encoding = str(fmt.get("encoding") or "audio/alaw").strip().lower().removeprefix("audio/")
+    try:
+        rate = int(fmt.get("sample_rate") or 8000)
+    except (TypeError, ValueError):
+        rate = 8000
+    codec = _WIRE_FORMATS.get((encoding, rate))
+    if codec is None:
+        # Guessing would feed noise to the transcriber for the whole call.
+        raise ValueError(f"Unsupported VoiceLink media_format: encoding={encoding!r} sample_rate={rate}")
+    return codec, rate
+
 
 class VoiceLinkFrameSerializer(FrameSerializer):
     class InputParams(FrameSerializer.InputParams):
-        voicelink_sample_rate: int = 8000
         sample_rate: int | None = None
 
-    def __init__(self, stream_sid: str, params: InputParams | None = None, **kwargs):
+    def __init__(self, start: dict[str, Any], params: InputParams | None = None, **kwargs):
         super().__init__(params or VoiceLinkFrameSerializer.InputParams(), **kwargs)
-        self._stream_sid = stream_sid
-        self._wire_rate = self._params.voicelink_sample_rate
+        self._stream_sid: str | None = start.get("stream_sid") or start.get("streamSid")
+        self._call_sid: str | None = start.get("call_sid") or start.get("callSid")
+        self._codec, self._wire_rate = resolve_format(start.get("media_format"))
         self._sample_rate = 0  # pipeline input rate, set in setup()
-        self._input_resampler = create_stream_resampler()
-        self._output_resampler = create_stream_resampler()
+        self._in_resampler = create_stream_resampler()
+        self._out_resampler = create_stream_resampler()
+        self.frames_in = 0
+        self.frames_out = 0
+        self.interruptions = 0
+        events.log(
+            "audio.format",
+            call_sid=self._call_sid,
+            codec=self._codec,
+            wire_rate=self._wire_rate,
+            stream_sid=self._stream_sid,
+        )
 
     async def setup(self, setup: FrameProcessorSetup):
         self._sample_rate = self._params.sample_rate or setup.audio_in_sample_rate
 
     async def serialize(self, frame: Frame) -> str | bytes | None:
         if isinstance(frame, InterruptionFrame):
-            # Barge-in: drop audio VoiceLink has queued but not yet played.
-            return json.dumps({"event": "clear", "stream_sid": self._stream_sid})
+            self.interruptions += 1
+            return json.dumps({"event": "clear", "stream_sid": self._stream_sid, "streamSid": self._stream_sid})
         if isinstance(frame, AudioRawFrame):
-            alaw = await pcm_to_alaw(frame.audio, frame.sample_rate, self._wire_rate, self._output_resampler)
-            if not alaw:
+            wire = await self._from_pcm(frame.audio, frame.sample_rate)
+            if not wire:
                 return None
-            payload = base64.b64encode(alaw).decode("utf-8")
-            return json.dumps({"event": "media", "media": {"payload": payload}})
+            if self.frames_out == 0:
+                events.log("audio.first_out", call_sid=self._call_sid, bytes=len(wire))
+            self.frames_out += 1
+            return json.dumps(
+                {
+                    "event": "media",
+                    "stream_sid": self._stream_sid,
+                    "streamSid": self._stream_sid,
+                    "media": {"payload": base64.b64encode(wire).decode("ascii")},
+                }
+            )
+        if isinstance(frame, (OutputTransportMessageFrame, OutputTransportMessageUrgentFrame)):
+            if self.should_ignore_frame(frame):
+                return None
+            return json.dumps(frame.message)
         return None
 
     async def deserialize(self, data: str | bytes) -> Frame | None:
         try:
-            message = json.loads(data)
-        except json.JSONDecodeError:
-            logger.warning(f"Unparseable VoiceLink message: {data!r}")
+            msg = json.loads(data)
+        except (ValueError, TypeError):
+            logger.warning(f"Skipping unparseable VoiceLink message: {data!r}")
+            return None
+        if not isinstance(msg, dict):
             return None
 
-        if message.get("event") != "media":
+        event = msg.get("event")
+        if event == "stop":
+            events.log("ws.stop", call_sid=self._call_sid, frames_in=self.frames_in, frames_out=self.frames_out)
+            return EndFrame()
+        if event == "mark":
+            logger.debug(f"VoiceLink mark: {msg.get('mark')}")
             return None
-        payload = message.get("media", {}).get("payload")
+        if event != "media":
+            return None
+
+        media = msg.get("media") if isinstance(msg.get("media"), dict) else {}
+        # Caller audio is labelled "inbound"; ignore any echo of our own output.
+        if media.get("track") not in (None, "inbound"):
+            return None
+        payload = media.get("payload")
         if not payload:
             return None
-        pcm = await alaw_to_pcm(base64.b64decode(payload), self._wire_rate, self._sample_rate, self._input_resampler)
+        try:
+            pcm = await self._to_pcm(base64.b64decode(payload))
+        except ValueError:
+            logger.warning("Skipping undecodable VoiceLink media frame")
+            return None
         if not pcm:
             return None
+        if self.frames_in == 0:
+            events.log("audio.first_in", call_sid=self._call_sid, bytes=len(payload))
+        self.frames_in += 1
         return InputAudioRawFrame(audio=pcm, num_channels=1, sample_rate=self._sample_rate)
+
+    async def _to_pcm(self, audio: bytes) -> bytes:
+        if self._codec == "alaw":
+            return await alaw_to_pcm(audio, self._wire_rate, self._sample_rate, self._in_resampler)
+        if self._codec == "ulaw":
+            return await ulaw_to_pcm(audio, self._wire_rate, self._sample_rate, self._in_resampler)
+        return await self._in_resampler.resample(audio, self._wire_rate, self._sample_rate)
+
+    async def _from_pcm(self, pcm: bytes, in_rate: int) -> bytes:
+        if self._codec == "alaw":
+            return await pcm_to_alaw(pcm, in_rate, self._wire_rate, self._out_resampler)
+        if self._codec == "ulaw":
+            return await pcm_to_ulaw(pcm, in_rate, self._wire_rate, self._out_resampler)
+        return await self._out_resampler.resample(pcm, in_rate, self._wire_rate)
