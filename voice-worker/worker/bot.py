@@ -144,7 +144,15 @@ async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task
             new_in=serializer.frames_in - last_in,
             new_out=serializer.frames_out - last_out,
             interruptions=serializer.interruptions,
+            # What VoiceLink sent versus what became audio (see VoiceLinkFrameSerializer).
+            received=dict(serializer.msgs),
+            tracks=dict(serializer.tracks),
+            dropped=dict(serializer.dropped),
+            longest_gap_ms=serializer.max_gap_ms,
+            out_stutters=serializer.out_stutters,  # 120-1500 ms pauses in what we send while speaking
+            longest_out_gap_ms=serializer.longest_out_gap_ms,
         )
+        serializer.max_gap_ms = 0
         idle = idle + 5 if serializer.frames_in == last_in else 0
         last_in, last_out = serializer.frames_in, serializer.frames_out
         if idle >= IDLE_TIMEOUT_SECS:

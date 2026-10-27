@@ -12,6 +12,8 @@ calls, because VoiceLink's public docs are wrong in several places:
 
 import base64
 import json
+import time
+from collections import Counter
 from typing import Any
 
 from loguru import logger
@@ -83,6 +85,18 @@ class VoiceLinkFrameSerializer(FrameSerializer):
         self._stopped = False
         self.frames_out = 0
         self.interruptions = 0
+        # What VoiceLink actually sent us, so "no audio" can be told apart from "audio we discarded".
+        self.msgs = Counter()      # every inbound message, by event name
+        self.tracks = Counter()    # media messages, by track label
+        self.dropped = Counter()   # media messages that did not become audio, by reason
+        self._last_media = None
+        self.max_gap_ms = 0        # longest silence between two media messages since the last heartbeat
+        self._unusual_logged = 0
+        # Our own sending: a pause of 120-1500 ms between two outgoing audio frames is a stutter the
+        # caller can hear (shorter is normal pacing, longer is the gap between sentences or turns).
+        self._last_out = None
+        self.out_stutters = 0
+        self.longest_out_gap_ms = 0
         events.log(
             "audio.format",
             call_sid=self._call_sid,
@@ -105,6 +119,13 @@ class VoiceLinkFrameSerializer(FrameSerializer):
             if self.frames_out == 0:
                 events.log("audio.first_out", call_sid=self._call_sid, bytes=len(wire))
             self.frames_out += 1
+            out_now = time.monotonic()
+            if self._last_out is not None:
+                gap = int((out_now - self._last_out) * 1000)
+                if 120 <= gap <= 1500:
+                    self.out_stutters += 1
+                    self.longest_out_gap_ms = max(self.longest_out_gap_ms, gap)
+            self._last_out = out_now
             if self.on_audio_out:
                 self.on_audio_out()
             return json.dumps(
@@ -131,6 +152,7 @@ class VoiceLinkFrameSerializer(FrameSerializer):
             return None
 
         event = msg.get("event")
+        self.msgs[str(event)] += 1
         if event == "stop":
             if not self._stopped:
                 self._stopped = True
@@ -142,21 +164,36 @@ class VoiceLinkFrameSerializer(FrameSerializer):
             logger.debug(f"VoiceLink mark: {msg.get('mark')}")
             return None
         if event != "media":
+            if self._unusual_logged < 3 and event not in ("mark",):
+                self._unusual_logged += 1
+                events.log("audio.unusual", "WARNING", call_sid=self._call_sid, event=event, keys=sorted(msg.keys()))
             return None
 
         media = msg.get("media") if isinstance(msg.get("media"), dict) else {}
+        now = time.monotonic()
+        if self._last_media is not None:
+            self.max_gap_ms = max(self.max_gap_ms, int((now - self._last_media) * 1000))
+        self._last_media = now
+        self.tracks[str(media.get("track"))] += 1
         # Caller audio is labelled "inbound"; ignore any echo of our own output.
         if media.get("track") not in (None, "inbound"):
+            self.dropped["other_track"] += 1
+            if self._unusual_logged < 3:
+                self._unusual_logged += 1
+                events.log("audio.unusual", "WARNING", call_sid=self._call_sid, track=media.get("track"), keys=sorted(msg.keys()), media_keys=sorted(media.keys()))
             return None
         payload = media.get("payload")
         if not payload:
+            self.dropped["empty_payload"] += 1
             return None
         try:
             pcm = await self._to_pcm(base64.b64decode(payload))
         except ValueError:
+            self.dropped["undecodable"] += 1
             logger.warning("Skipping undecodable VoiceLink media frame")
             return None
         if not pcm:
+            self.dropped["empty_pcm"] += 1
             return None
         if self.frames_in == 0:
             events.log("audio.first_in", call_sid=self._call_sid, bytes=len(payload))
