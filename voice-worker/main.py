@@ -11,6 +11,7 @@ from worker import events
 from worker.bot import run_bot
 from worker.config import settings
 from worker.store import Store
+from worker.voices import apply_voice_override
 
 logger.remove()
 logger.add(sys.stderr, level=settings.log_level.upper())
@@ -95,6 +96,7 @@ async def voicelink_ws(websocket: WebSocket, token: str = ""):
 
     if callback:
         agent, org_id, direction, call_id = callback["agents"], callback["org_id"], "outbound", callback["id"]
+        agent = apply_voice_override(agent, (callback.get("metadata") or {}).get("voice"), call_sid)
         await store.attach_call(call_id, call_sid)
     else:
         number, direction = await store.find_agent(start.get("to"), start.get("from"))

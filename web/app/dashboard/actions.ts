@@ -8,6 +8,7 @@ import { requireOrg } from "@/lib/dashboard";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseIndianMobile } from "@/lib/phone";
 import { placeCall } from "@/lib/voicelink";
+import { CALL_LANGUAGES, CALL_PROVIDERS, isSupported } from "@/lib/call-voices";
 import { LANGUAGES, SARVAM_TTS_MODELS, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 
 export type ActionState = { error?: string; message?: string };
@@ -109,6 +110,9 @@ const CallbackSchema = z.object({
   phone_number_id: z.string().uuid("Choose which number the agent should call from."),
   to: z.string().min(1, "Enter the number to call."),
   consent: z.string().refine((v) => v === "on", "Please confirm you have permission to call this number."),
+  // "agent" = use whatever the agent itself is set to.
+  tts_provider: z.enum(["agent", ...CALL_PROVIDERS.map((p) => p.value)] as [string, ...string[]]).default("agent"),
+  language: z.enum(["agent", ...CALL_LANGUAGES.map((l) => l.value)] as [string, ...string[]]).default("agent"),
 });
 
 export async function requestCallback(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -116,8 +120,16 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     phone_number_id: formData.get("phone_number_id"),
     to: formData.get("to") ?? "",
     consent: formData.get("consent") ?? "",
+    tts_provider: formData.get("tts_provider") ?? "agent",
+    language: formData.get("language") ?? "agent",
   });
   if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { tts_provider, language } = parsed.data;
+  // Only a provider chosen together with a language it speaks, or either one alone.
+  if (tts_provider !== "agent" && language !== "agent" && !isSupported(tts_provider, language)) {
+    return { error: "That voice provider does not speak that language. Pick another combination." };
+  }
+  const voice = tts_provider === "agent" && language === "agent" ? undefined : { tts_provider, language };
   const dest = parseIndianMobile(parsed.data.to);
   if ("error" in dest) return { error: dest.error };
 
@@ -172,7 +184,9 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
       status: "initiated",
       from_number: number.did_number,
       to_number: dest.national,
-      metadata: { kind: "callback", requested_by: user.id },
+      // The worker reads the voice choice from here, not from the call's parameters, so it is
+      // something this server decided and checked.
+      metadata: { kind: "callback", requested_by: user.id, ...(voice ? { voice } : {}) },
     })
     .select("id")
     .single();
@@ -184,11 +198,14 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     params: { call_row_id: call.id, org_id: org.id, agent_id: number.agent_id, kind: "callback" },
   });
   if (!result.ok) {
-    await admin.from("calls").update({ status: "failed", metadata: { kind: "callback", requested_by: user.id, error: result.error } }).eq("id", call.id);
+    await admin.from("calls").update({ status: "failed", metadata: { kind: "callback", requested_by: user.id, ...(voice ? { voice } : {}), error: result.error } }).eq("id", call.id);
     revalidatePath("/dashboard", "layout");
     return { error: result.error };
   }
-  await admin.from("calls").update({ metadata: { kind: "callback", requested_by: user.id, queue_id: result.queueId ?? null } }).eq("id", call.id);
+  await admin.from("calls").update({ metadata: { kind: "callback", requested_by: user.id, ...(voice ? { voice } : {}), queue_id: result.queueId ?? null } }).eq("id", call.id);
   revalidatePath("/dashboard", "layout");
-  return { message: `Calling +91 ${dest.national} now. Your phone should ring within a few seconds.` };
+  const how = voice
+    ? ` (${[language !== "agent" && CALL_LANGUAGES.find((l) => l.value === language)?.label, tts_provider !== "agent" && CALL_PROVIDERS.find((p) => p.value === tts_provider)?.label].filter(Boolean).join(", ")})`
+    : "";
+  return { message: `Calling +91 ${dest.national} now${how}. Your phone should ring within a few seconds.` };
 }

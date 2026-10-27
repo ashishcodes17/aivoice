@@ -9,12 +9,21 @@ from pipecat.frames.frames import Frame, LLMContextFrame, TTSSpeakFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 
-def outbound_note(greeting: str) -> str:
+def outbound_note(greeting: str | None) -> str:
+    base = "You placed this call yourself because the person asked for a callback. "
+    if greeting:
+        return (
+            base
+            + f'Your opening line is spoken for you automatically: "{greeting}". It is already in the '
+            "conversation, so never say it again. If they say hello or ask who is calling after it, answer "
+            "briefly that it is you (your name and the clinic, a few words), and carry on from what they say."
+        )
+    # No scripted opening in this language: the model opens, in the call's language.
     return (
-        "You placed this call yourself because the person asked for a callback. Your opening line is "
-        f'spoken for you automatically: "{greeting}". It is already in the conversation, so never say it '
-        "again. If they say hello or ask who is calling after it, answer briefly that it is you, for example "
-        '"హా అండి, నేను కుముద, Sunrise Dental నుంచి", and carry on from what they say.'
+        base
+        + "The person has just picked up and said hello. Open now, in the language of this call: say who "
+        "you are and which clinic you are calling from, why you are calling (they asked for a callback), and "
+        "ask whether they can talk now. Keep it to two short sentences, and never say it twice."
     )
 
 

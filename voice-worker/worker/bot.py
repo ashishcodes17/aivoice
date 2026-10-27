@@ -5,7 +5,7 @@ import asyncio
 from fastapi import WebSocket
 from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
-from pipecat.frames.frames import TTSSpeakFrame
+from pipecat.frames.frames import LLMRunFrame, TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
@@ -234,9 +234,11 @@ async def run_bot(
     )
 
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
-    system += "\n\n" + call_context_note(direction, national_number(customer_number))
+    if agent.get("language_note"):
+        system += "\n\n" + agent["language_note"]
+    system += "\n\n" + call_context_note(direction, national_number(customer_number), language=language.value)
     greeting = (cfg.get("outbound_first_message") if direction == "outbound" else None) or agent.get("first_message")
-    if direction == "outbound" and greeting:
+    if direction == "outbound":
         system += "\n\n" + outbound_note(greeting)
     system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most
     # Sarvam's own VAD decides when a turn starts and ends (Pipecat picks the same strategies for us),
@@ -319,9 +321,12 @@ async def run_bot(
             await asyncio.wait_for(heard_user.wait(), settings.outbound_wait_secs)
         except asyncio.TimeoutError:
             opening = gate.take()
+            events.log("call.outbound_spoke_first", call_sid=call_sid, scripted=bool(opening))
             if opening:
-                events.log("call.outbound_spoke_first", call_sid=call_sid)
                 await task.queue_frames([TTSSpeakFrame(opening)])
+            elif not greeting:
+                # No scripted opening: have the model speak first.
+                await task.queue_frames([LLMRunFrame()])
 
     @transport.event_handler("on_client_connected")
     async def _connected(transport, ws):

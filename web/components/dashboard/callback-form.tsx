@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { startTransition, useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef, useState } from "react";
 import { AlertCircleIcon, CheckCircle2Icon, PhoneOutgoingIcon } from "lucide-react";
 import { requestCallback, type ActionState } from "@/app/dashboard/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -9,13 +9,28 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { CALL_LANGUAGES, CALL_PROVIDERS, isSupported } from "@/lib/call-voices";
+
+const AGENT_DEFAULT = "agent";
+const providerItems = [{ value: AGENT_DEFAULT, label: "Agent's own voice" }, ...CALL_PROVIDERS];
 
 export function CallbackForm({ numbers }: { numbers: { value: string; label: string }[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(requestCallback, {});
   const formRef = useRef<HTMLFormElement>(null);
+  const [provider, setProvider] = useState(AGENT_DEFAULT);
+  const [language, setLanguage] = useState(AGENT_DEFAULT);
+  // Offer only languages the chosen provider speaks.
+  const languageItems = [
+    { value: AGENT_DEFAULT, label: "Agent's own language" },
+    ...CALL_LANGUAGES.filter((l) => provider === AGENT_DEFAULT || isSupported(provider, l.value)),
+  ];
   // After a call is requested, clear the number and ask for permission again next time.
   useEffect(() => {
-    if (state.message) formRef.current?.reset();
+    if (state.message) {
+      formRef.current?.reset();
+      setProvider(AGENT_DEFAULT);
+      setLanguage(AGENT_DEFAULT);
+    }
   }, [state]);
   return (
     <form
@@ -75,6 +90,50 @@ export function CallbackForm({ numbers }: { numbers: { value: string; label: str
           <PhoneOutgoingIcon />
           Call me
         </Button>
+      </div>
+      <div className="grid gap-5 sm:grid-cols-2">
+        <Field>
+          <FieldLabel>Voice</FieldLabel>
+          <Select
+            name="tts_provider"
+            items={providerItems}
+            value={provider}
+            onValueChange={(v) => {
+              const next = String(v);
+              setProvider(next);
+              // Drop a language the new provider cannot speak.
+              if (next !== AGENT_DEFAULT && language !== AGENT_DEFAULT && !isSupported(next, language)) setLanguage(AGENT_DEFAULT);
+            }}
+          >
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup>
+              {providerItems.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  {p.label}
+                </SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
+          <FieldDescription>Try a different voice for this call only.</FieldDescription>
+        </Field>
+        <Field>
+          <FieldLabel>Language</FieldLabel>
+          <Select name="language" items={languageItems} value={language} onValueChange={(v) => setLanguage(String(v))}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectPopup>
+              {languageItems.map((l) => (
+                <SelectItem key={l.value} value={l.value}>
+                  {l.label}
+                </SelectItem>
+              ))}
+            </SelectPopup>
+          </Select>
+          <FieldDescription>The agent speaks this language on this call only.</FieldDescription>
+        </Field>
       </div>
       <label className="flex items-start gap-2.5 text-muted-foreground text-sm">
         <input type="checkbox" name="consent" className="mt-0.5 size-4 rounded border-input" />

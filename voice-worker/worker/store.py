@@ -101,7 +101,7 @@ class Store:
         """
         r = await self._http.get(
             "/calls",
-            params={"id": f"eq.{call_row_id}", "select": "id,org_id,agent_id,agents(*)", "limit": "1"},
+            params={"id": f"eq.{call_row_id}", "select": "id,org_id,agent_id,metadata,agents(*)", "limit": "1"},
         )
         r.raise_for_status()
         rows = r.json()
