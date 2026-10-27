@@ -51,7 +51,7 @@ class Settings(BaseSettings):
     llm_provider_sort: str = "latency"
     llm_min_throughput_p50: float | None = 100
     llm_max_latency_p50: float | None = None
-    llm_retry_timeout_secs: float = 3.0
+    llm_retry_timeout_secs: float = 1.5
 
     # Pipecat logs every LLM request in full at DEBUG, which is a lot of I/O on a live call.
     log_level: str = "INFO"

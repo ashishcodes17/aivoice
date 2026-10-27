@@ -7,6 +7,9 @@ from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 from . import events
 
+# A model that takes longer than this to its first words makes the caller hear dead air.
+SLOW_LLM_MS = 1500
+
 
 class TurnTimer:
     """Stamps the three moments of a turn and logs the breakdown once audio leaves."""
@@ -19,6 +22,16 @@ class TurnTimer:
         self._audio: float | None = None
 
     def user_stopped(self) -> None:
+        if self._stop is not None and self._audio is None:
+            # The caller spoke again before the last turn was answered: they sat in silence.
+            events.log(
+                "latency.unanswered",
+                "WARNING",
+                call_sid=self.call_sid,
+                turn=self.turn,
+                waited_ms=round((time.monotonic() - self._stop) * 1000),
+                llm_started=self._llm is not None,
+            )
         self.turn += 1
         self._stop, self._llm, self._audio = time.monotonic(), None, None
 
@@ -31,8 +44,10 @@ class TurnTimer:
             return
         self._audio = time.monotonic()
         llm = self._llm if self._llm is not None else self._audio
+        slow = (llm - self._stop) * 1000 > SLOW_LLM_MS
         events.log(
             "latency",
+            "WARNING" if slow else "INFO",
             call_sid=self.call_sid,
             turn=self.turn,
             turn_end_to_llm_first_token_ms=round((llm - self._stop) * 1000),
