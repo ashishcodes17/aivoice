@@ -20,7 +20,6 @@ from pipecat.services.openrouter.llm import OpenRouterLLMService  # noqa: F401  
 from pipecat.services.sarvam.stt import SarvamRealtimeSTTService
 from pipecat.services.sarvam.tts import SarvamTTSService
 from pipecat.transcriptions.language import Language
-from pipecat.turns.user_start import ExternalUserTurnStartStrategy
 from pipecat.turns.user_stop import ExternalUserTurnStopStrategy
 from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPIWebsocketTransport
@@ -33,6 +32,8 @@ from .latency import LLMProbe, TurnTimer
 from .opening import OpeningGate, outbound_note
 from .textfilter import ScriptFilter
 from .transcripts import TranscriptCleaner
+from .turns import GuardedBargeInStartStrategy
+from pipecat.turns.user_start import ExternalUserTurnStartStrategy
 from .serializer import VoiceLinkFrameSerializer
 from .rumik_tts import RumikTTSService
 from .store import Store
@@ -225,7 +226,11 @@ async def run_bot(
     turn_strategies = None
     if agent.get("stt_provider", "sarvam") == "sarvam" and settings.sarvam_endpointing == "vad":
         turn_strategies = UserTurnStrategies(
-            start=[ExternalUserTurnStartStrategy(enable_interruptions=True)],
+            start=[
+                GuardedBargeInStartStrategy(min_words=settings.barge_in_min_words, call_sid=call_sid)
+                if settings.barge_in_min_words > 0
+                else ExternalUserTurnStartStrategy(enable_interruptions=True)  # 0: any sound interrupts
+            ],
             stop=[ExternalUserTurnStopStrategy(timeout=settings.turn_stop_timeout_secs)],
         )
     # Local voice detection only matters when we decide turns ourselves; with Sarvam's server-side
