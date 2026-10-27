@@ -4,6 +4,7 @@ import asyncio
 
 from fastapi import WebSocket
 from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.frames.frames import TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
@@ -23,6 +24,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 
 from . import events
 from .config import settings
+from .latency import LLMProbe, TurnTimer
 from .serializer import VoiceLinkFrameSerializer
 from .store import Store
 
@@ -48,10 +50,12 @@ def _build_stt(agent: dict, language: Language):
             sample_rate=PIPELINE_SAMPLE_RATE,
             settings=ElevenLabsRealtimeSTTService.Settings(language=language),
         )
+    extra = {"silence_duration_ms": settings.sarvam_silence_ms} if settings.sarvam_silence_ms else {}
     return SarvamRealtimeSTTService(
         api_key=settings.sarvam_api_key,
         sample_rate=PIPELINE_SAMPLE_RATE,
-        settings=SarvamRealtimeSTTService.Settings(language=language),
+        endpointing=settings.sarvam_endpointing,
+        settings=SarvamRealtimeSTTService.Settings(language=language, **extra),
     )
 
 
@@ -89,6 +93,8 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
     call_sid = start.get("call_sid")
     language = _language(agent.get("language") or "en-IN")
     serializer = VoiceLinkFrameSerializer(start)
+    timer = TurnTimer(call_sid)
+    serializer.on_audio_out = timer.audio_out
 
     transport = FastAPIWebsocketTransport(
         websocket=websocket,
@@ -101,10 +107,13 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
     )
 
     stt = _build_stt(agent, language)
-    llm = OpenRouterLLMService(
-        api_key=settings.openrouter_api_key,
-        settings=OpenRouterLLMService.Settings(model=agent.get("llm_model") or "openai/gpt-4o-mini"),
-    )
+    llm_settings = {"model": agent.get("llm_model") or "openai/gpt-4o-mini"}
+    if settings.low_latency:
+        # OpenRouter's default routing favours price; ask for the fastest provider instead.
+        llm_settings["provider"] = {"sort": "latency"}
+    if settings.llm_disable_thinking:
+        llm_settings["extra"] = {"extra_body": {"reasoning": {"enabled": False}}}
+    llm = OpenRouterLLMService(api_key=settings.openrouter_api_key, settings=OpenRouterLLMService.Settings(**llm_settings))
     tts = _build_tts(agent, language)
     events.log(
         "pipeline.built",
@@ -119,13 +128,19 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
     context = LLMContext(messages=[{"role": "system", "content": system}])
     aggregators = LLMContextAggregatorPair(
-        context, user_params=LLMUserAggregatorParams(vad_analyzer=SileroVADAnalyzer())
+        context,
+        user_params=LLMUserAggregatorParams(
+            vad_analyzer=SileroVADAnalyzer(
+                params=VADParams(start_secs=settings.vad_start_secs, stop_secs=settings.vad_stop_secs)
+            )
+        ),
     )
     user_agg, assistant_agg = aggregators.user(), aggregators.assistant()
 
     @user_agg.event_handler("on_user_turn_stopped")
     async def _user_turn(aggregator, strategy, message):
         text = message.content or ""
+        timer.user_stopped()
         events.log("call.user_said", call_sid=call_sid, text=text[:200])
         await store.add_transcript(call_id, org_id, "user", text)
 
@@ -135,8 +150,13 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
         events.log("call.agent_said", call_sid=call_sid, text=text[:200])
         await store.add_transcript(call_id, org_id, "assistant", text)
 
-    pipeline = Pipeline([transport.input(), stt, user_agg, llm, tts, transport.output(), assistant_agg])
-    task = PipelineTask(pipeline, params=PipelineParams(audio_in_sample_rate=PIPELINE_SAMPLE_RATE))
+    pipeline = Pipeline([transport.input(), stt, user_agg, llm, LLMProbe(timer), tts, transport.output(), assistant_agg])
+    # With low latency the TTS services synthesize at the phone line's native 8 kHz, which
+    # skips a 24 kHz -> 8 kHz resample (extra work and audible artifacts).
+    rates = {"audio_in_sample_rate": PIPELINE_SAMPLE_RATE}
+    if settings.low_latency:
+        rates["audio_out_sample_rate"] = PIPELINE_SAMPLE_RATE
+    task = PipelineTask(pipeline, params=PipelineParams(**rates))
 
     @transport.event_handler("on_client_connected")
     async def _connected(transport, ws):

@@ -16,7 +16,7 @@ _buffer: deque[dict[str, Any]] = deque(maxlen=500)
 
 
 def log(kind: str, level: str = "INFO", **fields: Any) -> None:
-    entry = {"t": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + "Z", "kind": kind, **fields}
+    entry = {"t": time.strftime("%Y-%m-%dT%H:%M:%S", time.gmtime()) + "Z", "ts": round(time.time(), 3), "kind": kind, **fields}
     _buffer.append(entry)
     logger.log(level, f"[{kind}] " + json.dumps(fields, default=str, ensure_ascii=False))
 

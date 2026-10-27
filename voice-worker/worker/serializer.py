@@ -78,6 +78,7 @@ class VoiceLinkFrameSerializer(FrameSerializer):
         self._in_resampler = create_stream_resampler()
         self._out_resampler = create_stream_resampler()
         self.frames_in = 0
+        self.on_audio_out = None  # callback fired for every outgoing audio frame
         self.frames_out = 0
         self.interruptions = 0
         events.log(
@@ -102,6 +103,8 @@ class VoiceLinkFrameSerializer(FrameSerializer):
             if self.frames_out == 0:
                 events.log("audio.first_out", call_sid=self._call_sid, bytes=len(wire))
             self.frames_out += 1
+            if self.on_audio_out:
+                self.on_audio_out()
             return json.dumps(
                 {
                     "event": "media",

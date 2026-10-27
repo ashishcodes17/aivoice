@@ -18,3 +18,4 @@ web/supabase/.temp/
 web/supabase/.branches/
 
 .DS_Store
+voice-samples/
