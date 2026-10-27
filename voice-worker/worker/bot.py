@@ -26,6 +26,7 @@ from . import events
 from .config import settings
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
+from .transcripts import TranscriptCleaner
 from .serializer import VoiceLinkFrameSerializer
 from .store import Store
 
@@ -189,7 +190,18 @@ async def run_bot(
         await store.add_transcript(call_id, org_id, "assistant", text)
 
     pipeline = Pipeline(
-        [transport.input(), stt, user_agg, llm, LLMProbe(timer), tts, TTSUsageProbe(costs), transport.output(), assistant_agg]
+        [
+            transport.input(),
+            stt,
+            TranscriptCleaner(call_sid),
+            user_agg,
+            llm,
+            LLMProbe(timer),
+            tts,
+            TTSUsageProbe(costs),
+            transport.output(),
+            assistant_agg,
+        ]
     )
     # With low latency the TTS services synthesize at the phone line's native 8 kHz, which
     # skips a 24 kHz -> 8 kHz resample (extra work and audible artifacts).
