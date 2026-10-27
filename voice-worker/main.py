@@ -7,11 +7,11 @@ from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from worker import events
+from worker import events, version
 from worker.bot import run_bot
 from worker.config import settings
 from worker.store import Store
-from worker.voices import apply_voice_override
+from worker.voices import apply_voice_override, ensure_provider_ready
 
 logger.remove()
 logger.add(sys.stderr, level=settings.log_level.upper())
@@ -27,6 +27,14 @@ def _token_ok(token: str) -> bool:
 @app.get("/healthz")
 async def healthz():
     return {"ok": True}
+
+
+@app.get("/debug/status")
+async def debug_status(token: str = ""):
+    """Which code is running and which provider keys are set (booleans only)."""
+    if not _token_ok(token):
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    return version.status()
 
 
 @app.get("/debug/events")
@@ -113,6 +121,7 @@ async def voicelink_ws(websocket: WebSocket, token: str = ""):
             from_number=start.get("from"),
             to_number=start.get("to"),
         )
+    agent = ensure_provider_ready(agent, call_sid)
     events.log("agent.matched", call_sid=call_sid, agent=agent["name"], direction=direction, call_id=call_id, callback=bool(callback))
 
     began = time.monotonic()

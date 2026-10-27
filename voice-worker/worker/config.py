@@ -23,6 +23,9 @@ class Settings(BaseSettings):
     # While the agent is speaking, the caller interrupts her only with at least this many words;
     # a lone sound (cough, TV, line noise) no longer cuts her off mid-sentence.
     barge_in_min_words: int = 2
+    # Also protect the reply for this long after the caller finishes, while it is being written.
+    # 0 turns that off.
+    barge_in_thinking_secs: float = 4.0
 
     # Safety nets for calls the agent does not end itself (VoiceLink never hangs up on its own).
     max_call_secs: int = 600

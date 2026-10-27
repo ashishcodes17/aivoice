@@ -6,6 +6,38 @@ line and language instructions for the duration of that one call.
 """
 
 from . import events
+from .config import settings
+
+_KEYS = {"sarvam": "sarvam_api_key", "elevenlabs": "elevenlabs_api_key", "rumik": "rumik_api_key"}
+
+
+def provider_ready(provider: str | None) -> bool:
+    """Is there a key for this voice provider? (A key can still be wrong; failover covers that.)"""
+    attr = _KEYS.get(provider or "sarvam")
+    return bool(attr and (getattr(settings, attr, "") or "").strip())
+
+
+def fallback_agent(agent: dict) -> dict | None:
+    """The same agent speaking the same language with Sarvam, or None if Sarvam cannot do it."""
+    language = agent.get("language") or "en-IN"
+    choice = VOICES.get(("sarvam", language))
+    if not choice:
+        return None
+    cfg = {k: v for k, v in (agent.get("config") or {}).items() if k not in ("tts_model", "tts_pace", "tts_description")}
+    if choice.get("model"):
+        cfg["tts_model"] = choice["model"]
+    if choice.get("pace"):
+        cfg["tts_pace"] = choice["pace"]
+    return {**agent, "tts_provider": "sarvam", "tts_voice": choice["voice"], "config": cfg}
+
+
+def ensure_provider_ready(agent: dict, call_sid: str | None = None) -> dict:
+    """If the agent's voice provider has no key, speak with Sarvam instead of staying silent."""
+    provider = agent.get("tts_provider") or "sarvam"
+    if provider_ready(provider):
+        return agent
+    events.log("voice.provider_unavailable", "ERROR", call_sid=call_sid, provider=provider, reason="no API key configured", using="sarvam")
+    return fallback_agent(agent) or agent
 
 # (provider, language) -> how to speak that language with that provider. Only pairs that were
 # measured to work are listed; anything else is refused and the agent's own voice is used.

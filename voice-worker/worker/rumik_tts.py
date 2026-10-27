@@ -125,7 +125,10 @@ class RumikTTSService(InterruptibleTTSService):
             await self._call_event_handler("on_connected")
         except Exception as e:
             self._websocket = None
-            await self.push_error(error_msg=f"Rumik WS connect failed: {e}", exception=e)
+            # A rejected key never starts working mid-call: say so, so the call can move to a backup
+            # voice at once instead of after several silent sentences.
+            rejected = any(f"HTTP {code}" in str(e) for code in (401, 403))
+            await self.push_error(error_msg=f"Rumik WS connect failed: {e}", exception=e, force_treat_as_permanent=rejected)
             await self._call_event_handler("on_connection_error", f"{e}")
 
     async def _disconnect_websocket(self):

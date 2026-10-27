@@ -7,6 +7,7 @@ from pipecat.audio.vad.silero import SileroVADAnalyzer
 from pipecat.audio.vad.vad_analyzer import VADParams
 from pipecat.frames.frames import LLMRunFrame, TTSSpeakFrame
 from pipecat.pipeline.pipeline import Pipeline
+from pipecat.pipeline.service_switcher import ServiceSwitcher, ServiceSwitcherStrategyFailover
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.llm_context import LLMContext
@@ -39,6 +40,7 @@ from pipecat.turns.user_start import ExternalUserTurnStartStrategy
 from .serializer import VoiceLinkFrameSerializer
 from .rumik_tts import RumikTTSService
 from .store import Store
+from .voices import fallback_agent, provider_ready
 
 VOICE_RULES = (
     "You are speaking on a phone call. Reply in short, natural spoken sentences. "
@@ -86,11 +88,14 @@ def _build_stt(agent: dict, language: Language):
     )
 
 
-def _build_tts(agent: dict, language: Language):
+def _build_tts(agent: dict, language: Language, has_backup: bool = False):
     voice = agent.get("tts_voice")
+    # With a backup voice standing by, one sentence that comes out silent is already one too many.
+    strict = {"max_consecutive_zero_audio_contexts": 1} if has_backup else {}
     if agent.get("tts_provider") == "elevenlabs":
         return ElevenLabsTTSService(
             api_key=settings.elevenlabs_api_key,
+            **strict,
             settings=ElevenLabsTTSService.Settings(model="eleven_flash_v2_5", voice=voice, language=language),
         )
     if agent.get("tts_provider") == "rumik":
@@ -98,6 +103,7 @@ def _build_tts(agent: dict, language: Language):
         return RumikTTSService(
             api_key=settings.rumik_api_key,
             gateway_url=settings.rumik_gateway_url,
+            **strict,
             settings=RumikTTSService.Settings(
                 model=cfg.get("tts_model") or "mulberry",
                 voice=voice,
@@ -220,7 +226,27 @@ async def run_bot(
         retry_timeout_secs=settings.llm_retry_timeout_secs,
     )
     register_end_call(llm, call_sid)
-    tts = _build_tts(agent, language)
+    # Any voice other than Sarvam has Sarvam standing by: if it cannot speak (bad key, outage),
+    # the call switches over instead of going silent.
+    backup = fallback_agent(agent) if (agent.get("tts_provider") or "sarvam") != "sarvam" and provider_ready("sarvam") else None
+    tts_primary = _build_tts(agent, language, has_backup=bool(backup))
+    tts = tts_primary
+    if backup:
+        tts_backup = _build_tts(backup, language)
+        tts = ServiceSwitcher([tts_primary, tts_backup], strategy_type=ServiceSwitcherStrategyFailover)
+
+        @tts.strategy.event_handler("on_service_switched")
+        async def _tts_failover(strategy, service):
+            bcfg = backup.get("config") or {}
+            costs.tts_provider, costs.tts_model = "sarvam", bcfg.get("tts_model")
+            events.log("tts.failover", "ERROR", call_sid=call_sid, failed=agent.get("tts_provider"), now="sarvam", voice=backup.get("tts_voice"))
+            # If the failed voice never got a word out, the caller has heard nothing at all: say
+            # the opening again with the backup voice rather than leave a silent line.
+            if serializer.frames_out == 0:
+                events.log("tts.failover_respeak", call_sid=call_sid)
+                opening = greeting
+                gate.take()  # the opening is being said now, not by the gate later
+                await task.queue_frames([TTSSpeakFrame(opening)] if opening else [LLMRunFrame()])
     events.log(
         "pipeline.built",
         call_sid=call_sid,
@@ -247,7 +273,9 @@ async def run_bot(
     if agent.get("stt_provider", "sarvam") == "sarvam" and settings.sarvam_endpointing == "vad":
         turn_strategies = UserTurnStrategies(
             start=[
-                GuardedBargeInStartStrategy(min_words=settings.barge_in_min_words, call_sid=call_sid)
+                GuardedBargeInStartStrategy(
+                    min_words=settings.barge_in_min_words, thinking_secs=settings.barge_in_thinking_secs, call_sid=call_sid
+                )
                 if settings.barge_in_min_words > 0
                 else ExternalUserTurnStartStrategy(enable_interruptions=True)  # 0: any sound interrupts
             ],
