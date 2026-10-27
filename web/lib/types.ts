@@ -8,7 +8,7 @@ export type Agent = {
   stt_provider: string;
   tts_provider: string;
   tts_voice: string | null;
-  config: { tts_model?: string; tts_pace?: number } | null;
+  config: { tts_model?: string; tts_pace?: number; outbound_first_message?: string } | null;
   created_at: string;
 };
 

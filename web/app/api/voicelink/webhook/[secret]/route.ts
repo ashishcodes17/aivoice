@@ -23,7 +23,20 @@ function normalize(body: Record<string, unknown>) {
     duration: Math.max(0, Math.round(num(c.durationSec ?? c.duration_sec ?? c.duration) ?? 0)),
     status: str(c.status ?? c.callStatus),
     hangup: str(c.hangupReason ?? c.hangupCause),
+    // What we passed to add_lead (VoiceLink returns it as customParameters; sometimes as a JSON string).
+    custom: parseCustom(c.customParameters ?? c.custom_parameters),
   };
+}
+
+function parseCustom(v: unknown): Record<string, unknown> {
+  if (typeof v === "string") {
+    try {
+      return JSON.parse(v);
+    } catch {
+      return {};
+    }
+  }
+  return v && typeof v === "object" ? (v as Record<string, unknown>) : {};
 }
 
 // VoiceLink may send +91…, 0… or bare digits; match on the full digits and the last 10.
@@ -69,6 +82,13 @@ export async function POST(req: Request, ctx: { params: Promise<{ secret: string
 
   const supabase = createAdminClient();
 
+  // A dashboard callback created its call row before dialling. If the call never reached the worker
+  // (no answer), nothing else ties VoiceLink's id to that row, so do it here.
+  const rowId = str(e.custom.call_row_id);
+  if (rowId) {
+    await supabase.from("calls").update({ voicelink_call_sid: e.callId }).eq("id", rowId).is("voicelink_call_sid", null);
+  }
+
   // Mark the call answered as soon as VoiceLink says so (the worker creates the row).
   if (e.event === "call.answered") {
     await supabase.from("calls").update({ status: "answered" }).eq("voicelink_call_sid", e.callId);
@@ -81,7 +101,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ secret: string
   }
 
   // The org owns the DID: the callee on inbound calls, the caller on outbound ones.
-  const side = e.direction === "outbound" ? [e.from] : e.direction === "inbound" ? [e.to] : [e.to, e.from];
+  // For outbound calls it is not certain which side VoiceLink reports the DID on, so try both.
+  const side = e.direction === "inbound" ? [e.to] : [e.from, e.to];
   const { data: number } = await supabase
     .from("phone_numbers")
     .select("org_id, did_number")

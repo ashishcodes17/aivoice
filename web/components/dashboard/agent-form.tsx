@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { startTransition, useActionState } from "react";
 import { AlertCircleIcon } from "lucide-react";
 import { saveAgent, type ActionState } from "@/app/dashboard/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -61,7 +61,16 @@ export function AgentForm({ agent }: { agent?: Agent }) {
   const v = agent ?? defaults;
 
   return (
-    <form action={action} className="max-w-2xl space-y-6">
+    <form
+      onSubmit={(e) => {
+        // Submit through a handler instead of `action=`, because React clears an action's form
+        // when it finishes, which would wipe what the user typed after a validation error.
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="max-w-2xl space-y-6"
+    >
       {agent && <input type="hidden" name="id" value={agent.id} />}
       {state.error && (
         <Alert variant="error">
@@ -102,6 +111,12 @@ export function AgentForm({ agent }: { agent?: Agent }) {
         <FieldLabel>First message</FieldLabel>
         <Input name="first_message" defaultValue={v.first_message} placeholder="Hello! How can I help you today?" />
         <FieldDescription>What the agent says as soon as it picks up. Leave empty to wait for the caller.</FieldDescription>
+      </Field>
+
+      <Field>
+        <FieldLabel>Outbound greeting</FieldLabel>
+        <Input name="outbound_first_message" defaultValue={v.config?.outbound_first_message ?? ""} placeholder="Hi, this is Sunrise Dental calling as you asked. Is now a good time?" />
+        <FieldDescription>What the agent says when it calls someone. Leave empty to use the first message.</FieldDescription>
       </Field>
 
       <Field>

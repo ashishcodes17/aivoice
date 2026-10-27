@@ -74,26 +74,43 @@ async def voicelink_ws(websocket: WebSocket, token: str = ""):
         custom_parameters=start.get("custom_parameters"),
     )
 
-    number, direction = await store.find_agent(start.get("to"), start.get("from"))
-    if number is None:
-        events.log("agent.not_found", "WARNING", call_sid=call_sid, from_=start.get("from"), to=start.get("to"))
-        await websocket.close(code=1008)
-        return
+    # A call the dashboard asked VoiceLink to place carries the ids of its call row, so use that
+    # instead of guessing from the numbers (which side is the DID differs between directions).
+    params = start.get("custom_parameters") or {}
+    if isinstance(params, str):
+        try:
+            params = json.loads(params)
+        except ValueError:
+            params = {}
+    callback = None
+    if params.get("call_row_id"):
+        callback = await store.get_callback(params["call_row_id"], params.get("org_id"), params.get("agent_id"))
+        if callback is None:
+            events.log("callback.rejected", "WARNING", call_sid=call_sid, call_row_id=params.get("call_row_id"))
 
-    agent = number["agents"]
-    call_id = await store.upsert_call(
-        org_id=number["org_id"],
-        agent_id=agent["id"],
-        call_sid=call_sid,
-        direction=direction,
-        from_number=start.get("from"),
-        to_number=start.get("to"),
-    )
-    events.log("agent.matched", call_sid=call_sid, agent=agent["name"], direction=direction, call_id=call_id)
+    if callback:
+        agent, org_id, direction, call_id = callback["agents"], callback["org_id"], "outbound", callback["id"]
+        await store.attach_call(call_id, call_sid)
+    else:
+        number, direction = await store.find_agent(start.get("to"), start.get("from"))
+        if number is None:
+            events.log("agent.not_found", "WARNING", call_sid=call_sid, from_=start.get("from"), to=start.get("to"))
+            await websocket.close(code=1008)
+            return
+        agent, org_id = number["agents"], number["org_id"]
+        call_id = await store.upsert_call(
+            org_id=org_id,
+            agent_id=agent["id"],
+            call_sid=call_sid,
+            direction=direction,
+            from_number=start.get("from"),
+            to_number=start.get("to"),
+        )
+    events.log("agent.matched", call_sid=call_sid, agent=agent["name"], direction=direction, call_id=call_id, callback=bool(callback))
 
     began = time.monotonic()
     try:
-        await run_bot(websocket, start, agent, number["org_id"], call_id, store)
+        await run_bot(websocket, start, agent, org_id, call_id, store, direction=direction)
     except Exception as e:  # keep the process alive; the log line explains what went wrong
         events.log("call.error", "ERROR", call_sid=call_sid, error=f"{type(e).__name__}: {e}")
         raise

@@ -5,9 +5,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireOrg } from "@/lib/dashboard";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { parseIndianMobile } from "@/lib/phone";
+import { placeCall } from "@/lib/voicelink";
 import { LANGUAGES, SARVAM_TTS_MODELS, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 
-export type ActionState = { error?: string };
+export type ActionState = { error?: string; message?: string };
 
 export async function createOrganization(formData: FormData) {
   const name = String(formData.get("name") ?? "").trim();
@@ -34,6 +37,7 @@ const AgentSchema = z.object({
   tts_provider: z.enum(TTS_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_voice: z.string().trim().max(120),
   tts_model: z.enum(SARVAM_TTS_MODELS.map((m) => m.value) as [string, ...string[]]),
+  outbound_first_message: z.string().trim().max(500),
   tts_pace: z.coerce.number().min(0.5, "Speed must be between 0.5 and 2.").max(2, "Speed must be between 0.5 and 2."),
 });
 
@@ -43,8 +47,12 @@ export async function saveAgent(_prev: ActionState, formData: FormData): Promise
 
   const { supabase, org } = await requireOrg();
   const id = String(formData.get("id") ?? "");
-  const { tts_model, tts_pace, ...fields } = parsed.data;
-  const row = { ...fields, tts_voice: fields.tts_voice || null, config: { tts_model, tts_pace } };
+  const { tts_model, tts_pace, outbound_first_message, ...fields } = parsed.data;
+  const row = {
+    ...fields,
+    tts_voice: fields.tts_voice || null,
+    config: { tts_model, tts_pace, ...(outbound_first_message ? { outbound_first_message } : {}) },
+  };
 
   // RLS also enforces org membership; org_id comes from the session, never the form.
   const { error } = id
@@ -88,4 +96,92 @@ export async function removeNumber(id: string) {
   const { supabase, org } = await requireOrg();
   await supabase.from("phone_numbers").delete().eq("id", id).eq("org_id", org.id);
   revalidatePath("/dashboard", "layout");
+}
+
+// ---- Request a call: the agent dials a number the user enters --------------------------------
+
+const MAX_CALLBACKS_PER_HOUR = 5; // per organization
+const MAX_CALLBACKS_PER_NUMBER_PER_HOUR = 2;
+
+const CallbackSchema = z.object({
+  phone_number_id: z.string().uuid("Choose which number the agent should call from."),
+  to: z.string().min(1, "Enter the number to call."),
+  consent: z.string().refine((v) => v === "on", "Please confirm you have permission to call this number."),
+});
+
+export async function requestCallback(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = CallbackSchema.safeParse({
+    phone_number_id: formData.get("phone_number_id"),
+    to: formData.get("to") ?? "",
+    consent: formData.get("consent") ?? "",
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const dest = parseIndianMobile(parsed.data.to);
+  if ("error" in dest) return { error: dest.error };
+
+  const { supabase, org, user } = await requireOrg();
+  const { data: number } = await supabase
+    .from("phone_numbers")
+    .select("id, did_number, agent_id, agents(name)")
+    .eq("id", parsed.data.phone_number_id)
+    .eq("org_id", org.id)
+    .maybeSingle();
+  if (!number?.agent_id) return { error: "That number has no agent connected to it." };
+
+  // Callbacks spend money. Off by default while billing is being set up; set
+  // ENFORCE_WALLET_CHECK=true to require at least one minute of balance first.
+  if (process.env.ENFORCE_WALLET_CHECK === "true") {
+    const minutePaise = Number(process.env.CALL_RATE_PAISE_PER_MIN ?? 300);
+    const { data: bal } = await supabase.from("wallet_balances").select("balance_paise").eq("org_id", org.id).maybeSingle();
+    if (Number(bal?.balance_paise ?? 0) < minutePaise) {
+      return { error: "Your wallet balance is too low to place a call. Add funds in Wallet first." };
+    }
+  }
+
+  // Rate limits (callbacks are recorded as calls tagged metadata.kind = callback).
+  const admin = createAdminClient();
+  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  const recent = await admin
+    .from("calls")
+    .select("to_number")
+    .eq("org_id", org.id)
+    .eq("metadata->>kind", "callback")
+    .gte("created_at", since);
+  const rows = recent.data ?? [];
+  if (rows.length >= MAX_CALLBACKS_PER_HOUR) {
+    return { error: `You can request up to ${MAX_CALLBACKS_PER_HOUR} calls per hour. Please try again later.` };
+  }
+  if (rows.filter((r) => r.to_number === dest.national).length >= MAX_CALLBACKS_PER_NUMBER_PER_HOUR) {
+    return { error: "That number was called recently. Please wait before requesting another call." };
+  }
+
+  // Record the call first; its id travels with the call so the worker can attach to this row.
+  const { data: call, error: insertError } = await admin
+    .from("calls")
+    .insert({
+      org_id: org.id,
+      agent_id: number.agent_id,
+      direction: "outbound",
+      status: "initiated",
+      from_number: number.did_number,
+      to_number: dest.national,
+      metadata: { kind: "callback", requested_by: user.id },
+    })
+    .select("id")
+    .single();
+  if (insertError || !call) return { error: "Could not start the call. Please try again." };
+
+  const result = await placeCall({
+    did: number.did_number,
+    customerNumber: dest.national,
+    params: { call_row_id: call.id, org_id: org.id, agent_id: number.agent_id, kind: "callback" },
+  });
+  if (!result.ok) {
+    await admin.from("calls").update({ status: "failed", metadata: { kind: "callback", requested_by: user.id, error: result.error } }).eq("id", call.id);
+    revalidatePath("/dashboard", "layout");
+    return { error: result.error };
+  }
+  await admin.from("calls").update({ metadata: { kind: "callback", requested_by: user.id, queue_id: result.queueId ?? null } }).eq("id", call.id);
+  revalidatePath("/dashboard", "layout");
+  return { message: `Calling +91 ${dest.national} now. Your phone should ring within a few seconds.` };
 }

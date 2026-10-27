@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef } from "react";
+import { startTransition, useActionState, useEffect, useRef } from "react";
 import { AlertCircleIcon, PlusIcon } from "lucide-react";
 import { addNumber, type ActionState } from "@/app/dashboard/actions";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -21,7 +21,17 @@ export function NumberForm({ agents }: { agents: { value: string; label: string 
   }, [pending, state.error]);
 
   return (
-    <form ref={ref} action={action} className="space-y-5 rounded-xl border bg-card p-5">
+    <form
+      ref={ref}
+      onSubmit={(e) => {
+        // Submit through a handler instead of `action=`, because React clears an action's form
+        // when it finishes, which would wipe what the user typed after a validation error.
+        e.preventDefault();
+        const data = new FormData(e.currentTarget);
+        startTransition(() => action(data));
+      }}
+      className="space-y-5 rounded-xl border bg-card p-5"
+    >
       <h2 className="font-medium text-sm">Connect a number</h2>
       {state.error && (
         <Alert variant="error">

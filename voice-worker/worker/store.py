@@ -78,8 +78,39 @@ class Store:
         )
 
     async def save_cost(self, call_id: str, cost: dict) -> None:
-        """Keep the per-call cost breakdown on the call (calls.metadata is otherwise unused)."""
-        r = await self._http.patch("/calls", params={"id": f"eq.{call_id}"}, json={"metadata": {"cost": cost}})
+        """Keep the per-call cost breakdown on the call, alongside anything else in metadata."""
+        r = await self._http.get("/calls", params={"id": f"eq.{call_id}", "select": "metadata"})
+        r.raise_for_status()
+        existing = (r.json() or [{}])[0].get("metadata") or {}
+        r = await self._http.patch("/calls", params={"id": f"eq.{call_id}"}, json={"metadata": {**existing, "cost": cost}})
+        r.raise_for_status()
+
+    async def get_callback(self, call_row_id: str, org_id: str | None, agent_id: str | None):
+        """The call row a dashboard callback created, plus its agent, or None if it doesn't check out.
+
+        The ids arrive in the call's custom parameters, so confirm the row really belongs to
+        that org and agent before trusting them.
+        """
+        r = await self._http.get(
+            "/calls",
+            params={"id": f"eq.{call_row_id}", "select": "id,org_id,agent_id,agents(*)", "limit": "1"},
+        )
+        r.raise_for_status()
+        rows = r.json()
+        if not rows or not rows[0].get("agents"):
+            return None
+        row = rows[0]
+        if (org_id and row["org_id"] != org_id) or (agent_id and row["agent_id"] != agent_id):
+            return None
+        return row
+
+    async def attach_call(self, call_row_id: str, call_sid: str) -> None:
+        """Tie VoiceLink's call id to the row the dashboard created, so webhooks update the same row."""
+        r = await self._http.patch(
+            "/calls",
+            params={"id": f"eq.{call_row_id}"},
+            json={"voicelink_call_sid": call_sid, "status": "answered", "started_at": datetime.now(timezone.utc).isoformat()},
+        )
         r.raise_for_status()
 
     async def close(self) -> None:

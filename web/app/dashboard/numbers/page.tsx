@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { BotIcon, PhoneIcon, Trash2Icon } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
+import { CallbackForm } from "@/components/dashboard/callback-form";
 import { NumberForm } from "@/components/dashboard/number-form";
 import { Page, PageFallback, PageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
@@ -45,9 +46,14 @@ async function Numbers() {
     );
   }
 
+  const callable = numbers
+    .filter((n) => n.agent_id)
+    .map((n) => ({ value: n.id, label: `+${n.did_number} → ${n.agents?.name ?? "agent"}` }));
+
   return (
     <>
       <NumberForm agents={agents} />
+      {callable.length > 0 && <CallbackForm numbers={callable} />}
       {numbers.length ? (
         <div className="overflow-hidden rounded-xl border">
           <Table>

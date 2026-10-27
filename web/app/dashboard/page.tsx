@@ -46,7 +46,7 @@ async function Overview() {
   const steps = [
     { done: (agents.count ?? 0) > 0, title: "Create an agent", body: "Write a prompt and pick a language and voice.", href: "/dashboard/agents/new", cta: "New agent" },
     { done: (numbers.count ?? 0) > 0, title: "Connect a number", body: "Point a phone number at your agent.", href: "/dashboard/numbers", cta: "Add number" },
-    { done: (callCount.count ?? 0) > 0, title: "Take your first call", body: "Call your number and talk to your agent.", href: "/dashboard/calls", cta: "View calls" },
+    { done: (callCount.count ?? 0) > 0, title: "Take your first call", body: "Call your number, or have your agent call you.", href: "/dashboard/numbers", cta: "Get a call" },
   ];
 
   return (

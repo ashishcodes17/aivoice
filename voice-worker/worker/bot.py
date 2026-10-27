@@ -106,7 +106,9 @@ async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task
             return
 
 
-async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, call_id: str, store: Store) -> None:
+async def run_bot(
+    websocket: WebSocket, start: dict, agent: dict, org_id: str, call_id: str, store: Store, direction: str = "inbound"
+) -> None:
     call_sid = start.get("call_sid")
     language = _language(agent.get("language") or "en-IN")
     serializer = VoiceLinkFrameSerializer(start)
@@ -157,6 +159,11 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
     )
 
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
+    if direction == "outbound":
+        system += (
+            "\n\nYou placed this call yourself because the person asked for a callback. "
+            "Open by confirming it is a good time to talk, then help with what they need."
+        )
     context = LLMContext(messages=[{"role": "system", "content": system}])
     aggregators = LLMContextAggregatorPair(
         context,
@@ -194,7 +201,9 @@ async def run_bot(websocket: WebSocket, start: dict, agent: dict, org_id: str, c
 
     @transport.event_handler("on_client_connected")
     async def _connected(transport, ws):
-        greeting = agent.get("first_message")
+        # When the agent is the one calling, "thanks for calling" would be wrong.
+        greeting = (agent.get("config") or {}).get("outbound_first_message") if direction == "outbound" else None
+        greeting = greeting or agent.get("first_message")
         events.log("call.pipeline_started", call_sid=call_sid, greeting=bool(greeting))
         if greeting:
             await task.queue_frames([TTSSpeakFrame(greeting)])
