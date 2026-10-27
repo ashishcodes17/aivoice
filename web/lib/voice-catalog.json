@@ -1,0 +1,1223 @@
+{
+ "generated": "2026-10-27",
+ "voices": [
+  {
+   "provider": "elevenlabs",
+   "voice": "pNInz6obpgDQGcFmaJgB",
+   "label": "Adam",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.2,
+     "clarity": 0.97,
+     "pitch_hz": 144,
+     "file": "/voices/elevenlabs/en-IN/pNInz6obpgDQGcFmaJgB.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.7,
+     "clarity": 0.97,
+     "pitch_hz": 113,
+     "file": "/voices/elevenlabs/hi-IN/pNInz6obpgDQGcFmaJgB.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "Xb7hH8MSUJpSbSDYk0k2",
+   "label": "Alice",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.6,
+     "clarity": 0.98,
+     "pitch_hz": 250,
+     "file": "/voices/elevenlabs/en-IN/Xb7hH8MSUJpSbSDYk0k2.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.7,
+     "clarity": 0.97,
+     "pitch_hz": 267,
+     "file": "/voices/elevenlabs/hi-IN/Xb7hH8MSUJpSbSDYk0k2.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "ErXwobaYiN019PkySvjV",
+   "label": "Antoni",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.1,
+     "clarity": 0.97,
+     "pitch_hz": 140,
+     "file": "/voices/elevenlabs/en-IN/ErXwobaYiN019PkySvjV.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.0,
+     "clarity": 0.97,
+     "pitch_hz": 127,
+     "file": "/voices/elevenlabs/hi-IN/ErXwobaYiN019PkySvjV.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "nPczCjzI2devNBz1zQrb",
+   "label": "Brian",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.4,
+     "clarity": 0.98,
+     "pitch_hz": 101,
+     "file": "/voices/elevenlabs/en-IN/nPczCjzI2devNBz1zQrb.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.6,
+     "clarity": 0.97,
+     "pitch_hz": 118,
+     "file": "/voices/elevenlabs/hi-IN/nPczCjzI2devNBz1zQrb.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "iP95p4xoKVk53GoZ742B",
+   "label": "Chris",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.3,
+     "clarity": 0.97,
+     "pitch_hz": 119,
+     "file": "/voices/elevenlabs/en-IN/iP95p4xoKVk53GoZ742B.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.2,
+     "clarity": 0.97,
+     "pitch_hz": 125,
+     "file": "/voices/elevenlabs/hi-IN/iP95p4xoKVk53GoZ742B.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "onwK4e9ZLuTAKqWW03F9",
+   "label": "Daniel",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 8.3,
+     "clarity": 0.99,
+     "pitch_hz": 133,
+     "file": "/voices/elevenlabs/en-IN/onwK4e9ZLuTAKqWW03F9.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.0,
+     "clarity": 0.95,
+     "pitch_hz": 131,
+     "file": "/voices/elevenlabs/hi-IN/onwK4e9ZLuTAKqWW03F9.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "cjVigY5qzO86Huf0OWal",
+   "label": "Eric",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 5.6,
+     "clarity": 0.98,
+     "pitch_hz": 157,
+     "file": "/voices/elevenlabs/en-IN/cjVigY5qzO86Huf0OWal.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.2,
+     "clarity": 0.98,
+     "pitch_hz": 160,
+     "file": "/voices/elevenlabs/hi-IN/cjVigY5qzO86Huf0OWal.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "JBFqnCBsd6RMkjVDRZzb",
+   "label": "George",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.6,
+     "clarity": 0.98,
+     "pitch_hz": 129,
+     "file": "/voices/elevenlabs/en-IN/JBFqnCBsd6RMkjVDRZzb.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.4,
+     "clarity": 0.97,
+     "pitch_hz": 123,
+     "file": "/voices/elevenlabs/hi-IN/JBFqnCBsd6RMkjVDRZzb.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "cgSgspJ2msm6clMCkdW9",
+   "label": "Jessica",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.7,
+     "clarity": 0.98,
+     "pitch_hz": 211,
+     "file": "/voices/elevenlabs/en-IN/cgSgspJ2msm6clMCkdW9.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.3,
+     "clarity": 0.94,
+     "pitch_hz": 222,
+     "file": "/voices/elevenlabs/hi-IN/cgSgspJ2msm6clMCkdW9.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "FGY2WhTYpPnrIDTdsKH5",
+   "label": "Laura",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.2,
+     "clarity": 0.98,
+     "pitch_hz": 200,
+     "file": "/voices/elevenlabs/en-IN/FGY2WhTYpPnrIDTdsKH5.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.8,
+     "clarity": 0.97,
+     "pitch_hz": 211,
+     "file": "/voices/elevenlabs/hi-IN/FGY2WhTYpPnrIDTdsKH5.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "pFZP5JQG7iQjIQuC4Bku",
+   "label": "Lily",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.9,
+     "clarity": 0.98,
+     "pitch_hz": 170,
+     "file": "/voices/elevenlabs/en-IN/pFZP5JQG7iQjIQuC4Bku.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.7,
+     "clarity": 0.97,
+     "pitch_hz": 235,
+     "file": "/voices/elevenlabs/hi-IN/pFZP5JQG7iQjIQuC4Bku.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "XrExE9yKIg1WjnnlVkGX",
+   "label": "Matilda",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.2,
+     "clarity": 0.99,
+     "pitch_hz": 216,
+     "file": "/voices/elevenlabs/en-IN/XrExE9yKIg1WjnnlVkGX.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.9,
+     "clarity": 0.97,
+     "pitch_hz": 242,
+     "file": "/voices/elevenlabs/hi-IN/XrExE9yKIg1WjnnlVkGX.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "SAz9YHcvj6GT2YYXdXww",
+   "label": "River",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 5.7,
+     "clarity": 0.97,
+     "pitch_hz": 211,
+     "file": "/voices/elevenlabs/en-IN/SAz9YHcvj6GT2YYXdXww.m4a"
+    },
+    "hi-IN": {
+     "seconds": 6.9,
+     "clarity": 0.98,
+     "pitch_hz": 205,
+     "file": "/voices/elevenlabs/hi-IN/SAz9YHcvj6GT2YYXdXww.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "CwhRBWXzGAHq8TQ4Fs17",
+   "label": "Roger",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.5,
+     "clarity": 0.97,
+     "pitch_hz": 117,
+     "file": "/voices/elevenlabs/en-IN/CwhRBWXzGAHq8TQ4Fs17.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.4,
+     "clarity": 0.97,
+     "pitch_hz": 110,
+     "file": "/voices/elevenlabs/hi-IN/CwhRBWXzGAHq8TQ4Fs17.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "elevenlabs",
+   "voice": "EXAVITQu4vr4xnSDxMaL",
+   "label": "Sarah",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.2,
+     "clarity": 0.98,
+     "pitch_hz": 200,
+     "file": "/voices/elevenlabs/en-IN/EXAVITQu4vr4xnSDxMaL.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.3,
+     "clarity": 0.97,
+     "pitch_hz": 222,
+     "file": "/voices/elevenlabs/hi-IN/EXAVITQu4vr4xnSDxMaL.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "adam",
+   "label": "Adam",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 6.9,
+     "clarity": 0.98,
+     "pitch_hz": 158,
+     "file": "/voices/rumik/en-IN/adam.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.3,
+     "clarity": 0.96,
+     "pitch_hz": 126,
+     "file": "/voices/rumik/hi-IN/adam.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "rumik",
+   "voice": "aisha",
+   "label": "Aisha",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.3,
+     "clarity": 0.99,
+     "pitch_hz": 190,
+     "file": "/voices/rumik/en-IN/aisha.m4a"
+    },
+    "hi-IN": {
+     "seconds": 10.2,
+     "clarity": 0.99,
+     "pitch_hz": 186,
+     "file": "/voices/rumik/hi-IN/aisha.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "ava",
+   "label": "Ava",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.0,
+     "clarity": 1.0,
+     "pitch_hz": 222,
+     "file": "/voices/rumik/en-IN/ava.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.7,
+     "clarity": 0.97,
+     "pitch_hz": 195,
+     "file": "/voices/rumik/hi-IN/ava.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "emma",
+   "label": "Emma",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.9,
+     "clarity": 1.0,
+     "pitch_hz": 216,
+     "file": "/voices/rumik/en-IN/emma.m4a"
+    },
+    "hi-IN": {
+     "seconds": 10.0,
+     "clarity": 0.97,
+     "pitch_hz": 195,
+     "file": "/voices/rumik/hi-IN/emma.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "ira",
+   "label": "Ira",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 8.1,
+     "clarity": 0.99,
+     "pitch_hz": 242,
+     "file": "/voices/rumik/en-IN/ira.m4a"
+    },
+    "hi-IN": {
+     "seconds": 10.8,
+     "clarity": 0.98,
+     "pitch_hz": 250,
+     "file": "/voices/rumik/hi-IN/ira.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "lucas",
+   "label": "Lucas",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.4,
+     "clarity": 0.99,
+     "pitch_hz": 133,
+     "file": "/voices/rumik/en-IN/lucas.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.8,
+     "clarity": 0.96,
+     "pitch_hz": 118,
+     "file": "/voices/rumik/hi-IN/lucas.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "rumik",
+   "voice": "mia",
+   "label": "Mia",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.7,
+     "clarity": 0.99,
+     "pitch_hz": 250,
+     "file": "/voices/rumik/en-IN/mia.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.7,
+     "clarity": 0.99,
+     "pitch_hz": 216,
+     "file": "/voices/rumik/hi-IN/mia.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "noah",
+   "label": "Noah",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.5,
+     "clarity": 0.99,
+     "pitch_hz": 222,
+     "file": "/voices/rumik/en-IN/noah.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.0,
+     "clarity": 0.99,
+     "pitch_hz": 143,
+     "file": "/voices/rumik/hi-IN/noah.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "siya",
+   "label": "Siya",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.9,
+     "clarity": 0.99,
+     "pitch_hz": 250,
+     "file": "/voices/rumik/en-IN/siya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 10.2,
+     "clarity": 0.96,
+     "pitch_hz": 216,
+     "file": "/voices/rumik/hi-IN/siya.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "sophia",
+   "label": "Sophia",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.3,
+     "clarity": 1.0,
+     "pitch_hz": 216,
+     "file": "/voices/rumik/en-IN/sophia.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.0,
+     "clarity": 0.99,
+     "pitch_hz": 200,
+     "file": "/voices/rumik/hi-IN/sophia.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "rumik",
+   "voice": "theo",
+   "label": "Theo",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.4,
+     "clarity": 1.0,
+     "pitch_hz": 163,
+     "file": "/voices/rumik/en-IN/theo.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.0,
+     "clarity": 0.99,
+     "pitch_hz": 145,
+     "file": "/voices/rumik/hi-IN/theo.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "rumik",
+   "voice": "zoya",
+   "label": "Zoya",
+   "model": null,
+   "languages": {
+    "en-IN": {
+     "seconds": 7.3,
+     "clarity": 0.99,
+     "pitch_hz": 296,
+     "file": "/voices/rumik/en-IN/zoya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.4,
+     "clarity": 0.97,
+     "pitch_hz": 267,
+     "file": "/voices/rumik/hi-IN/zoya.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "aayan",
+   "label": "Aayan",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 7.9,
+     "clarity": 0.99,
+     "pitch_hz": 157,
+     "file": "/voices/sarvam/te-IN/aayan.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.0,
+     "clarity": 0.95,
+     "pitch_hz": 136,
+     "file": "/voices/sarvam/en-IN/aayan.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.0,
+     "clarity": 0.99,
+     "pitch_hz": 145,
+     "file": "/voices/sarvam/hi-IN/aayan.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "aditya",
+   "label": "Aditya",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 11.4,
+     "clarity": 0.99,
+     "pitch_hz": 104,
+     "file": "/voices/sarvam/te-IN/aditya.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.4,
+     "clarity": 0.99,
+     "pitch_hz": 105,
+     "file": "/voices/sarvam/en-IN/aditya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.9,
+     "clarity": 0.98,
+     "pitch_hz": 140,
+     "file": "/voices/sarvam/hi-IN/aditya.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "advait",
+   "label": "Advait",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.5,
+     "clarity": 0.96,
+     "pitch_hz": 136,
+     "file": "/voices/sarvam/te-IN/advait.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.7,
+     "clarity": 0.98,
+     "pitch_hz": 134,
+     "file": "/voices/sarvam/en-IN/advait.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.5,
+     "clarity": 0.97,
+     "pitch_hz": 154,
+     "file": "/voices/sarvam/hi-IN/advait.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "amit",
+   "label": "Amit",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.0,
+     "clarity": 1.0,
+     "pitch_hz": 119,
+     "file": "/voices/sarvam/te-IN/amit.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.7,
+     "clarity": 0.98,
+     "pitch_hz": 136,
+     "file": "/voices/sarvam/en-IN/amit.m4a"
+    },
+    "hi-IN": {
+     "seconds": 10.1,
+     "clarity": 0.98,
+     "pitch_hz": 127,
+     "file": "/voices/sarvam/hi-IN/amit.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "ashutosh",
+   "label": "Ashutosh",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 11.1,
+     "clarity": 1.0,
+     "pitch_hz": 157,
+     "file": "/voices/sarvam/te-IN/ashutosh.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.2,
+     "clarity": 0.99,
+     "pitch_hz": 172,
+     "file": "/voices/sarvam/en-IN/ashutosh.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.7,
+     "clarity": 0.95,
+     "pitch_hz": 167,
+     "file": "/voices/sarvam/hi-IN/ashutosh.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "dev",
+   "label": "Dev",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.6,
+     "clarity": 1.0,
+     "pitch_hz": 186,
+     "file": "/voices/sarvam/te-IN/dev.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.1,
+     "clarity": 0.99,
+     "pitch_hz": 229,
+     "file": "/voices/sarvam/en-IN/dev.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.5,
+     "clarity": 0.97,
+     "pitch_hz": 222,
+     "file": "/voices/sarvam/hi-IN/dev.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "ishita",
+   "label": "Ishita",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.0,
+     "clarity": 1.0,
+     "pitch_hz": 216,
+     "file": "/voices/sarvam/te-IN/ishita.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.3,
+     "clarity": 0.99,
+     "pitch_hz": 267,
+     "file": "/voices/sarvam/en-IN/ishita.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.9,
+     "clarity": 0.99,
+     "pitch_hz": 258,
+     "file": "/voices/sarvam/hi-IN/ishita.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "kabir",
+   "label": "Kabir",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.9,
+     "clarity": 0.99,
+     "pitch_hz": 110,
+     "file": "/voices/sarvam/te-IN/kabir.m4a"
+    },
+    "en-IN": {
+     "seconds": 9.8,
+     "clarity": 0.99,
+     "pitch_hz": 101,
+     "file": "/voices/sarvam/en-IN/kabir.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.8,
+     "clarity": 0.97,
+     "pitch_hz": 116,
+     "file": "/voices/sarvam/hi-IN/kabir.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "kavitha",
+   "label": "Kavitha",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.5,
+     "clarity": 1.0,
+     "pitch_hz": 267,
+     "file": "/voices/sarvam/te-IN/kavitha.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "kavitha_te_conversation",
+   "label": "Kavitha (conversation)",
+   "model": "bulbul:v4-flash",
+   "languages": {
+    "te-IN": {
+     "seconds": 10.2,
+     "clarity": 0.98,
+     "pitch_hz": 250,
+     "file": "/voices/sarvam/te-IN/kavitha_te_conversation.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "kavya",
+   "label": "Kavya",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.5,
+     "clarity": 0.98,
+     "pitch_hz": 242,
+     "file": "/voices/sarvam/te-IN/kavya.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.7,
+     "clarity": 0.98,
+     "pitch_hz": 267,
+     "file": "/voices/sarvam/en-IN/kavya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.4,
+     "clarity": 0.98,
+     "pitch_hz": 235,
+     "file": "/voices/sarvam/hi-IN/kavya.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "manan",
+   "label": "Manan",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.8,
+     "clarity": 1.0,
+     "pitch_hz": 160,
+     "file": "/voices/sarvam/te-IN/manan.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.6,
+     "clarity": 0.98,
+     "pitch_hz": 176,
+     "file": "/voices/sarvam/en-IN/manan.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.0,
+     "clarity": 0.98,
+     "pitch_hz": 160,
+     "file": "/voices/sarvam/hi-IN/manan.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "neha",
+   "label": "Neha",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 12.6,
+     "clarity": 0.99,
+     "pitch_hz": 154,
+     "file": "/voices/sarvam/te-IN/neha.m4a"
+    },
+    "en-IN": {
+     "seconds": 8.3,
+     "clarity": 0.99,
+     "pitch_hz": 182,
+     "file": "/voices/sarvam/en-IN/neha.m4a"
+    },
+    "hi-IN": {
+     "seconds": 12.9,
+     "clarity": 0.98,
+     "pitch_hz": 174,
+     "file": "/voices/sarvam/hi-IN/neha.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "pooja",
+   "label": "Pooja",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 10.1,
+     "clarity": 0.99,
+     "pitch_hz": 229,
+     "file": "/voices/sarvam/te-IN/pooja.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.1,
+     "clarity": 0.98,
+     "pitch_hz": 258,
+     "file": "/voices/sarvam/en-IN/pooja.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.8,
+     "clarity": 0.97,
+     "pitch_hz": 258,
+     "file": "/voices/sarvam/hi-IN/pooja.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "priya",
+   "label": "Priya",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 10.2,
+     "clarity": 1.0,
+     "pitch_hz": 200,
+     "file": "/voices/sarvam/te-IN/priya.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.3,
+     "clarity": 0.99,
+     "pitch_hz": 235,
+     "file": "/voices/sarvam/en-IN/priya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 10.6,
+     "clarity": 0.98,
+     "pitch_hz": 229,
+     "file": "/voices/sarvam/hi-IN/priya.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "rahul",
+   "label": "Rahul",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 10.3,
+     "clarity": 1.0,
+     "pitch_hz": 130,
+     "file": "/voices/sarvam/te-IN/rahul.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.8,
+     "clarity": 0.99,
+     "pitch_hz": 138,
+     "file": "/voices/sarvam/en-IN/rahul.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.2,
+     "clarity": 0.98,
+     "pitch_hz": 154,
+     "file": "/voices/sarvam/hi-IN/rahul.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "ratan",
+   "label": "Ratan",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.2,
+     "clarity": 0.99,
+     "pitch_hz": 107,
+     "file": "/voices/sarvam/te-IN/ratan.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.3,
+     "clarity": 1.0,
+     "pitch_hz": 140,
+     "file": "/voices/sarvam/en-IN/ratan.m4a"
+    },
+    "hi-IN": {
+     "seconds": 6.8,
+     "clarity": 0.97,
+     "pitch_hz": 127,
+     "file": "/voices/sarvam/hi-IN/ratan.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "ritu",
+   "label": "Ritu",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.9,
+     "clarity": 0.98,
+     "pitch_hz": 235,
+     "file": "/voices/sarvam/te-IN/ritu.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.3,
+     "clarity": 0.98,
+     "pitch_hz": 258,
+     "file": "/voices/sarvam/en-IN/ritu.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.1,
+     "clarity": 0.98,
+     "pitch_hz": 242,
+     "file": "/voices/sarvam/hi-IN/ritu.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "rohan",
+   "label": "Rohan",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 11.1,
+     "clarity": 1.0,
+     "pitch_hz": 163,
+     "file": "/voices/sarvam/te-IN/rohan.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.0,
+     "clarity": 0.97,
+     "pitch_hz": 200,
+     "file": "/voices/sarvam/en-IN/rohan.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.4,
+     "clarity": 0.97,
+     "pitch_hz": 186,
+     "file": "/voices/sarvam/hi-IN/rohan.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "roopa",
+   "label": "Roopa",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.4,
+     "clarity": 1.0,
+     "pitch_hz": 222,
+     "file": "/voices/sarvam/te-IN/roopa.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.3,
+     "clarity": 0.98,
+     "pitch_hz": 258,
+     "file": "/voices/sarvam/en-IN/roopa.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.9,
+     "clarity": 0.96,
+     "pitch_hz": 250,
+     "file": "/voices/sarvam/hi-IN/roopa.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "shreya",
+   "label": "Shreya",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.1,
+     "clarity": 0.99,
+     "pitch_hz": 222,
+     "file": "/voices/sarvam/te-IN/shreya.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.8,
+     "clarity": 0.98,
+     "pitch_hz": 229,
+     "file": "/voices/sarvam/en-IN/shreya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.4,
+     "clarity": 0.98,
+     "pitch_hz": 258,
+     "file": "/voices/sarvam/hi-IN/shreya.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "shubh",
+   "label": "Shubh",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.2,
+     "clarity": 0.99,
+     "pitch_hz": 119,
+     "file": "/voices/sarvam/te-IN/shubh.m4a"
+    },
+    "en-IN": {
+     "seconds": 5.8,
+     "clarity": 1.0,
+     "pitch_hz": 116,
+     "file": "/voices/sarvam/en-IN/shubh.m4a"
+    },
+    "hi-IN": {
+     "seconds": 6.3,
+     "clarity": 0.97,
+     "pitch_hz": 125,
+     "file": "/voices/sarvam/hi-IN/shubh.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "simran",
+   "label": "Simran",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 10.3,
+     "clarity": 1.0,
+     "pitch_hz": 211,
+     "file": "/voices/sarvam/te-IN/simran.m4a"
+    },
+    "en-IN": {
+     "seconds": 5.8,
+     "clarity": 0.98,
+     "pitch_hz": 229,
+     "file": "/voices/sarvam/en-IN/simran.m4a"
+    },
+    "hi-IN": {
+     "seconds": 6.9,
+     "clarity": 0.98,
+     "pitch_hz": 222,
+     "file": "/voices/sarvam/hi-IN/simran.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "sumit",
+   "label": "Sumit",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.3,
+     "clarity": 1.0,
+     "pitch_hz": 136,
+     "file": "/voices/sarvam/te-IN/sumit.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.4,
+     "clarity": 1.0,
+     "pitch_hz": 145,
+     "file": "/voices/sarvam/en-IN/sumit.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.6,
+     "clarity": 0.98,
+     "pitch_hz": 148,
+     "file": "/voices/sarvam/hi-IN/sumit.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "sarvam",
+   "voice": "varun",
+   "label": "Varun",
+   "model": "bulbul:v3",
+   "languages": {
+    "te-IN": {
+     "seconds": 10.9,
+     "clarity": 0.99,
+     "pitch_hz": 98,
+     "file": "/voices/sarvam/te-IN/varun.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.8,
+     "clarity": 0.98,
+     "pitch_hz": 92,
+     "file": "/voices/sarvam/en-IN/varun.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.9,
+     "clarity": 0.96,
+     "pitch_hz": 98,
+     "file": "/voices/sarvam/hi-IN/varun.m4a"
+    }
+   },
+   "gender": "male"
+  }
+ ]
+}

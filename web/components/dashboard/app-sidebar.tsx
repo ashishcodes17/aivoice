@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BotIcon, LayoutDashboardIcon, LogOutIcon, PhoneCallIcon, PhoneIcon, WalletIcon } from "lucide-react";
+import { BotIcon, LayoutDashboardIcon, LogOutIcon, PhoneCallIcon, PhoneIcon, WalletIcon, AudioLinesIcon } from "lucide-react";
 import { LogoMark } from "@/components/landing/logo";
 import { Button } from "@/components/ui/button";
 import {
@@ -24,6 +24,7 @@ const nav = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboardIcon, exact: true },
   { href: "/dashboard/agents", label: "Agents", icon: BotIcon },
   { href: "/dashboard/numbers", label: "Numbers", icon: PhoneIcon },
+  { href: "/dashboard/voices", label: "Voices", icon: AudioLinesIcon },
   { href: "/dashboard/calls", label: "Calls", icon: PhoneCallIcon },
   { href: "/dashboard/wallet", label: "Wallet", icon: WalletIcon },
 ];

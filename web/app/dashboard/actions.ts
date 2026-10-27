@@ -9,6 +9,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseIndianMobile } from "@/lib/phone";
 import { placeCall } from "@/lib/voicelink";
 import { CALL_LANGUAGES, CALL_PROVIDERS, isSupported } from "@/lib/call-voices";
+import { findVoice, languageLabel, providerLabel, voiceConfig } from "@/lib/voices";
 import { LANGUAGES, SARVAM_TTS_MODELS, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 
 export type ActionState = { error?: string; message?: string };
@@ -208,4 +209,48 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     ? ` (${[language !== "agent" && CALL_LANGUAGES.find((l) => l.value === language)?.label, tts_provider !== "agent" && CALL_PROVIDERS.find((p) => p.value === tts_provider)?.label].filter(Boolean).join(", ")})`
     : "";
   return { message: `Calling +91 ${dest.national} now${how}. Your phone should ring within a few seconds.` };
+}
+
+// ---- Voices: pick a voice from the gallery for one of your agents -------------------------------
+
+const VoiceSchema = z.object({
+  agent_id: z.string().uuid("Choose an agent."),
+  provider: z.string().min(1),
+  voice: z.string().min(1),
+  language: z.string().min(1),
+});
+
+export async function setAgentVoice(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = VoiceSchema.safeParse({
+    agent_id: formData.get("agent_id"),
+    provider: formData.get("provider"),
+    voice: formData.get("voice"),
+    language: formData.get("language"),
+  });
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+  const { agent_id, provider, voice, language } = parsed.data;
+
+  const choice = findVoice(provider, voice, language);
+  if (!choice) return { error: "That voice is not available for this language." };
+
+  const { supabase, org } = await requireOrg();
+  const { data: agent } = await supabase.from("agents").select("id, name, language, config").eq("id", agent_id).eq("org_id", org.id).maybeSingle();
+  if (!agent) return { error: "That agent was not found." };
+  // A voice only suits the language the agent's prompt and speech recognition are set up for.
+  if (agent.language !== language) {
+    return { error: `${agent.name} speaks ${languageLabel(agent.language)}, so it needs a ${languageLabel(agent.language)} voice.` };
+  }
+
+  // Replace the old voice's settings (model, speed, style) with the new voice's, keep everything else.
+  const rest = Object.fromEntries(
+    Object.entries((agent.config ?? {}) as Record<string, unknown>).filter(([k]) => !["tts_model", "tts_pace", "tts_description"].includes(k)),
+  );
+  const { error } = await supabase
+    .from("agents")
+    .update({ tts_provider: provider, tts_voice: voice, config: { ...rest, ...voiceConfig(choice, language) } })
+    .eq("id", agent_id)
+    .eq("org_id", org.id);
+  if (error) return { error: "Could not save the voice. Please try again." };
+  revalidatePath("/dashboard", "layout");
+  return { message: `${agent.name} now speaks with ${choice.label} (${providerLabel(provider)}). It applies to the next call.` };
 }

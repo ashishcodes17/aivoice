@@ -17,20 +17,9 @@ const providerItems = [{ value: AGENT_DEFAULT, label: "Agent's own voice" }, ...
 export function CallbackForm({ numbers }: { numbers: { value: string; label: string }[] }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(requestCallback, {});
   const formRef = useRef<HTMLFormElement>(null);
-  const [provider, setProvider] = useState(AGENT_DEFAULT);
-  const [language, setLanguage] = useState(AGENT_DEFAULT);
-  // Offer only languages the chosen provider speaks.
-  const languageItems = [
-    { value: AGENT_DEFAULT, label: "Agent's own language" },
-    ...CALL_LANGUAGES.filter((l) => provider === AGENT_DEFAULT || isSupported(provider, l.value)),
-  ];
   // After a call is requested, clear the number and ask for permission again next time.
   useEffect(() => {
-    if (state.message) {
-      formRef.current?.reset();
-      setProvider(AGENT_DEFAULT);
-      setLanguage(AGENT_DEFAULT);
-    }
+    if (state.message) formRef.current?.reset();
   }, [state]);
   return (
     <form
@@ -91,7 +80,26 @@ export function CallbackForm({ numbers }: { numbers: { value: string; label: str
           Call me
         </Button>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2">
+      {/* Remounted after a call is placed, which puts both dropdowns back to the agent's own settings. */}
+      <VoiceFields key={state.message ?? "idle"} />
+      <label className="flex items-start gap-2.5 text-muted-foreground text-sm">
+        <input type="checkbox" name="consent" className="mt-0.5 size-4 rounded border-input" />
+        <span>This number is mine, or I have permission to call it.</span>
+      </label>
+    </form>
+  );
+}
+
+function VoiceFields() {
+  const [provider, setProvider] = useState(AGENT_DEFAULT);
+  const [language, setLanguage] = useState(AGENT_DEFAULT);
+  // Offer only languages the chosen provider speaks.
+  const languageItems = [
+    { value: AGENT_DEFAULT, label: "Agent's own language" },
+    ...CALL_LANGUAGES.filter((l) => provider === AGENT_DEFAULT || isSupported(provider, l.value)),
+  ];
+  return (
+    <div className="grid gap-5 sm:grid-cols-2">
         <Field>
           <FieldLabel>Voice</FieldLabel>
           <Select
@@ -135,10 +143,5 @@ export function CallbackForm({ numbers }: { numbers: { value: string; label: str
           <FieldDescription>The agent speaks this language on this call only.</FieldDescription>
         </Field>
       </div>
-      <label className="flex items-start gap-2.5 text-muted-foreground text-sm">
-        <input type="checkbox" name="consent" className="mt-0.5 size-4 rounded border-input" />
-        <span>This number is mine, or I have permission to call it.</span>
-      </label>
-    </form>
   );
 }

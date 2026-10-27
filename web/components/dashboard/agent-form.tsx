@@ -94,7 +94,9 @@ export function AgentForm({ agent }: { agent?: Agent }) {
         <Field>
           <FieldLabel>Voice</FieldLabel>
           <Input name="tts_voice" defaultValue={v.tts_voice ?? ""} placeholder="shubh" />
-          <FieldDescription>A Sarvam speaker such as shubh, an ElevenLabs voice ID, or a Rumik speaker such as siya or aisha. Rumik speaks Hindi and English only.</FieldDescription>
+          <FieldDescription>
+            Not sure which? <Link href="/dashboard/voices" className="font-medium underline underline-offset-4">Listen to the voices</Link> and pick one. Or type a Sarvam speaker, an ElevenLabs voice ID, or a Rumik speaker.
+          </FieldDescription>
         </Field>
       </div>
 
