@@ -182,12 +182,13 @@ async def run_bot(
         language=str(language),
     )
 
-    system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES} {END_CALL_RULE}".strip()
+    system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
     if direction == "outbound":
         system += (
             "\n\nYou placed this call yourself because the person asked for a callback. "
             "Open by confirming it is a good time to talk, then help with what they need."
         )
+    system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most
     context = LLMContext(messages=[{"role": "system", "content": system}], tools=END_CALL_TOOLS)
     aggregators = LLMContextAggregatorPair(
         context,

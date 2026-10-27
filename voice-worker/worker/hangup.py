@@ -16,10 +16,14 @@ from pipecat.services.llm_service import FunctionCallParams
 
 from . import events
 
+# The model forgets the tool when this sits mid-prompt (0 of 8 tries on a real call), so it is
+# worded as a duty with a cost and bot.py puts it last.
 END_CALL_RULE = (
-    "When the conversation is finished, say a short goodbye and call the end_call tool in the same "
-    "turn. Finished means the caller has nothing more to ask, or has said goodbye or thanks. "
-    "Never call end_call while the caller is mid-question or still needs something."
+    "HANGING UP: you are the only one who can end the call; the line stays open and costs money until "
+    "you call the end_call tool. Every time you say a closing line, such as goodbye, thanks and the team "
+    "will call you, or take care, you MUST call end_call in that same reply, after the words. Once the "
+    "details are confirmed and the next step is agreed, close the call this way. Never say goodbye "
+    "without calling end_call. Do not call it while the caller is still asking or answering something."
 )
 
 END_CALL_TOOLS = ToolsSchema(
