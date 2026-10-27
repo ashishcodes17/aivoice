@@ -35,7 +35,7 @@ const RUMIK_STYLE: Record<string, string> = {
   "hi-IN": "A warm, friendly, confident young woman speaking natural conversational Hindi at a brisk, easy pace.",
 };
 export function voiceConfig(v: CatalogVoice, language: string): Record<string, string | number> {
-  if (v.provider === "sarvam") return { tts_model: v.model ?? "bulbul:v3", ...(v.voice === "kavitha_te_conversation" ? { tts_pace: 1.2 } : {}) };
+  if (v.provider === "sarvam") return { tts_model: v.model ?? "bulbul:v3", ...(v.voice === "kavitha_te_conversation" ? { tts_pace: 1.2 } : {}), ...(v.voice === "pooja" && language === "te-IN" ? { tts_pace: 1.1, tts_temperature: 0.9 } : {}) };
   if (v.provider === "rumik") return { tts_model: "mulberry", tts_description: RUMIK_STYLE[language] ?? RUMIK_STYLE["en-IN"] };
   return {};
 }

@@ -18,6 +18,7 @@ from pipecat.processors.aggregators.llm_response_universal import (
 from pipecat.services.elevenlabs.stt import ElevenLabsRealtimeSTTService
 from pipecat.services.elevenlabs.tts import ElevenLabsTTSService
 from pipecat.services.openrouter.llm import OpenRouterLLMService  # noqa: F401  (Settings type)
+from pipecat.services.sarvam.llm import SarvamLLMService
 from pipecat.services.sarvam.stt import SarvamRealtimeSTTService
 from pipecat.services.sarvam.tts import SarvamTTSService
 from pipecat.transcriptions.language import Language
@@ -28,6 +29,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 from . import events
 from .config import settings
 from .context import call_context_note, national_number
+from .llm_sarvam import SarvamLLMWithBackup, is_sarvam_llm
 from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
@@ -44,7 +46,9 @@ from .voices import fallback_agent, provider_ready
 
 VOICE_RULES = (
     "You are speaking on a phone call. Reply in short, natural spoken sentences. "
-    "Never use markdown, lists, emojis or URLs. Ask one question at a time."
+    "Never use markdown, lists, emojis or URLs. Ask one question at a time. "
+    "Never repeat a sentence or question you already used earlier in this call: if you need to ask the "
+    "same thing again, put it in different words, or move the conversation forward instead."
 )
 
 PIPELINE_SAMPLE_RATE = 8000
@@ -123,6 +127,9 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
         options["model"] = cfg["tts_model"]
     if cfg.get("tts_pace"):
         options["pace"] = float(cfg["tts_pace"])
+    if cfg.get("tts_temperature"):
+        # Higher temperature = more varied intonation; the default sounds flat on some voices.
+        options["temperature"] = float(cfg["tts_temperature"])
     # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline; asking for
     # 8 kHz directly is optional (see settings.sarvam_tts_native_8k).
     rate = {"sample_rate": PIPELINE_SAMPLE_RATE} if settings.low_latency and settings.sarvam_tts_native_8k else {}
@@ -203,7 +210,10 @@ async def run_bot(
     )
 
     stt = _build_stt(agent, language)
-    llm_settings = {"model": agent.get("llm_model") or "openai/gpt-4o-mini"}
+    agent_llm = agent.get("llm_model") or "openai/gpt-4o-mini"
+    # A Sarvam model runs on Sarvam's own API, with an OpenRouter model standing by.
+    sarvam_llm = is_sarvam_llm(agent_llm) and bool((settings.sarvam_api_key or "").strip())
+    llm_settings = {"model": settings.sarvam_llm_backup_model if sarvam_llm else agent_llm}
     if settings.low_latency:
         # OpenRouter's default routing favours price; route for speed instead. Providers below the
         # optional speed floors are tried last, not excluded.
@@ -226,7 +236,7 @@ async def run_bot(
     llm_settings["extra"] = {"extra_body": extra_body}
     cfg = agent.get("config") or {}
     costs = CallCosts(
-        llm_model=llm_settings["model"],
+        llm_model=agent_llm if sarvam_llm else llm_settings["model"],
         stt_provider=agent.get("stt_provider") or "sarvam",
         tts_provider=agent.get("tts_provider") or "sarvam",
         tts_model=cfg.get("tts_model"),
@@ -240,7 +250,17 @@ async def run_bot(
         retry_on_timeout=True,
         retry_timeout_secs=settings.llm_retry_timeout_secs,
     )
-    register_end_call(llm, call_sid)
+    if sarvam_llm:
+        llm = SarvamLLMWithBackup(
+            costs=costs,
+            backup=llm,
+            call_sid=call_sid,
+            start_timeout_secs=settings.llm_retry_timeout_secs,
+            api_key=settings.sarvam_api_key,
+            settings=SarvamLLMService.Settings(model=agent_llm, temperature=0.5, max_tokens=300),
+        )
+    llm_probe = LLMProbe(timer)
+    register_end_call(llm, call_sid, language.value, lambda: llm_probe.spoke)
     # Any voice other than Sarvam has Sarvam standing by: if it cannot speak (bad key, outage),
     # the call switches over instead of going silent.
     backup = fallback_agent(agent) if (agent.get("tts_provider") or "sarvam") != "sarvam" and provider_ready("sarvam") else None
@@ -341,7 +361,7 @@ async def run_bot(
             user_agg,
             gate,
             llm,
-            LLMProbe(timer),
+            llm_probe,
             ScriptFilter(call_sid),
             tts,
             TTSUsageProbe(costs),

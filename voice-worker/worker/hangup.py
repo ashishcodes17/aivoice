@@ -10,7 +10,7 @@ import time
 
 from pipecat.adapters.llm.schemas.function_schema import FunctionSchema
 from pipecat.adapters.llm.schemas.tools_schema import ToolsSchema
-from pipecat.frames.frames import EndWorkerFrame, FunctionCallResultProperties
+from pipecat.frames.frames import EndWorkerFrame, FunctionCallResultProperties, TTSSpeakFrame
 from pipecat.pipeline.task import PipelineTask
 from pipecat.processors.frame_processor import FrameDirection
 from pipecat.services.llm_service import FunctionCallParams
@@ -24,7 +24,8 @@ END_CALL_RULE = (
     "you call the end_call tool. Every time you say a closing line, such as goodbye, thanks and the team "
     "will call you, or take care, you MUST call end_call in that same reply, after the words. Once the "
     "details are confirmed and the next step is agreed, close the call this way. Never say goodbye "
-    "without calling end_call. Do not call it while the caller is still asking or answering something."
+    "without calling end_call, and never call end_call without saying a short goodbye first, even when "
+    "the caller has already said bye: the call must not end in silence. Do not call it while the caller is still asking or answering something."
 )
 
 END_CALL_TOOLS = ToolsSchema(
@@ -42,9 +43,22 @@ END_CALL_TOOLS = ToolsSchema(
 )
 
 
-def register_end_call(llm, call_sid: str) -> None:
+GOODBYES = {
+    "te": "సరే అండి, థాంక్స్! బై!",
+    "hi": "ठीक है जी, धन्यवाद! नमस्ते!",
+    "en": "Alright, thank you! Bye!",
+}
+
+
+def register_end_call(llm, call_sid: str, language: str = "en-IN", spoke=lambda: True) -> None:
+    """`spoke()` says whether the model said anything in this reply. Some models hang up with only
+    the tool call when the caller says bye first, which would end the call in silence."""
+
     async def end_call(params: FunctionCallParams) -> None:
         events.log("call.end_requested", call_sid=call_sid, by="agent")
+        if not spoke():
+            events.log("call.goodbye_added", call_sid=call_sid)
+            await params.llm.push_frame(TTSSpeakFrame(GOODBYES.get(language.split("-")[0], GOODBYES["en"])))
         # No follow-up completion: the goodbye was already spoken in this turn.
         await params.result_callback(None, properties=FunctionCallResultProperties(run_llm=False))
         # EndWorkerFrame is turned into an EndFrame that queues behind the goodbye audio.

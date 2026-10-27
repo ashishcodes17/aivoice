@@ -52,6 +52,8 @@ class Settings(BaseSettings):
     llm_min_throughput_p50: float | None = 100
     llm_max_latency_p50: float | None = None
     llm_retry_timeout_secs: float = 1.5
+    # When an agent uses a Sarvam LLM ("sarvam-..."), this OpenRouter model takes over if it fails.
+    sarvam_llm_backup_model: str = "deepseek/deepseek-v4.1-flash"
 
     # Pipecat logs every LLM request in full at DEBUG, which is a lot of I/O on a live call.
     log_level: str = "INFO"

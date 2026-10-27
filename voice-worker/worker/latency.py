@@ -2,7 +2,7 @@
 
 import time
 
-from pipecat.frames.frames import Frame, LLMTextFrame
+from pipecat.frames.frames import Frame, LLMFullResponseStartFrame, LLMTextFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 from . import events
@@ -62,9 +62,16 @@ class LLMProbe(FrameProcessor):
     def __init__(self, timer: TurnTimer):
         super().__init__()
         self._timer = timer
+        # Has the model said anything in the reply being generated? (A reply that is only a tool
+        # call, such as hanging up, has no words.)
+        self.spoke = False
 
     async def process_frame(self, frame: Frame, direction: FrameDirection):
         await super().process_frame(frame, direction)
+        if isinstance(frame, LLMFullResponseStartFrame):
+            self.spoke = False
         if isinstance(frame, LLMTextFrame):
             self._timer.llm_token()
+            if frame.text.strip():
+                self.spoke = True
         await self.push_frame(frame, direction)

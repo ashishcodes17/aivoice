@@ -16,6 +16,8 @@ FEATURES = (
     "call_context",
     "voice_override",
     "tts_failover",
+    "sarvam_llm",
+    "sarvam_tts_temperature",
 )
 
 

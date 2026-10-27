@@ -22,6 +22,9 @@ SARVAM_TTS_INR_PER_1K_CHARS = {"bulbul:v3": 3.00, "bulbul:v3-beta": 3.00, "bulbu
 # on each reply, roughly 6% extra), which we do not count here.
 RUMIK_TTS_INR_PER_1K_CHARS = {"mulberry": 0.50, "muga": 0.99}
 DEFAULT_RUMIK_TTS_MODEL = "mulberry"
+# Sarvam's own chat models, INR per 1M tokens (input, output). The "-conversations" variant is not on
+# the price page; it is billed here at the 105B rate until Sarvam's invoice says otherwise.
+SARVAM_LLM_INR_PER_M_TOKENS = {"sarvam-105b": (15.0, 60.0), "sarvam-105b-conversations": (15.0, 60.0)}
 DEFAULT_SARVAM_TTS_MODEL = "bulbul:v3"  # what Sarvam uses when the agent does not choose one
 
 
@@ -38,6 +41,14 @@ class CallCosts:
     llm_cost_missing: int = 0  # completions where the provider reported no cost
     tts_chars: int = 0
     stt_seconds: float = 0.0
+
+    def add_sarvam_llm(self, prompt: int, completion: int) -> None:
+        """A completion from Sarvam's own LLM: no cost comes back, so price it from the tokens."""
+        rate_in, rate_out = SARVAM_LLM_INR_PER_M_TOKENS.get(self.llm_model, (None, None))
+        usd = None
+        if rate_in is not None:
+            usd = ((prompt or 0) * rate_in + (completion or 0) * rate_out) / 1_000_000 / settings.usd_to_inr
+        self.add_llm(prompt, completion, usd)
 
     def add_llm(self, prompt: int, completion: int, usd: float | None) -> None:
         self.llm_requests += 1
@@ -98,13 +109,11 @@ class CallCosts:
         }
 
 
-class CostTrackingOpenRouterLLM(OpenRouterLLMService):
-    """OpenRouter service that records the dollar cost OpenRouter reports for each completion."""
+class _RecordsLLMUsage:
+    """Mixin: after each completion, add its tokens (and cost, if the provider reports one) to the call."""
 
-    def __init__(self, *, costs: CallCosts, **kwargs):
-        super().__init__(**kwargs)
-        self._costs = costs
-        self._last_cost: float | None = None
+    _costs: CallCosts
+    _last_cost: float | None = None
 
     def _token_usage(self, usage):
         # Some providers send a running total on every chunk, so keep only the latest.
@@ -113,10 +122,21 @@ class CostTrackingOpenRouterLLM(OpenRouterLLMService):
             self._last_cost = float(cost)
         return super()._token_usage(usage)
 
-    async def start_llm_usage_metrics(self, tokens):
+    def _record_llm_usage(self, tokens) -> None:
         self._costs.add_llm(tokens.prompt_tokens, tokens.completion_tokens, self._last_cost)
         self._last_cost = None
+
+    async def start_llm_usage_metrics(self, tokens):
+        self._record_llm_usage(tokens)
         await super().start_llm_usage_metrics(tokens)
+
+
+class CostTrackingOpenRouterLLM(_RecordsLLMUsage, OpenRouterLLMService):
+    """OpenRouter service that records the dollar cost OpenRouter reports for each completion."""
+
+    def __init__(self, *, costs: CallCosts, **kwargs):
+        super().__init__(**kwargs)
+        self._costs = costs
 
 
 class TTSUsageProbe(FrameProcessor):
