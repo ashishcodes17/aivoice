@@ -204,7 +204,9 @@ async def run_bot(
             "picked up. Do not talk before they do: their first words are usually hello. Reply to that with your "
             "opening, which must say who you are, why you are calling, and ask whether they can talk now. "
             f"Your opening is: \"{greeting}\". Say it in those words, do not ask the same question twice, and "
-            "do not greet them separately."
+            "do not greet them separately. If your opening is already in the conversation (you spoke first because "
+            "the line was quiet), never say it again: if they then say hello, just answer briefly that you are "
+            "here, for example \"హా, చెప్పండి\", and carry on from what they say."
         )
     system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most
     # Sarvam's own VAD decides when a turn starts and ends (Pipecat picks the same strategies for us),
