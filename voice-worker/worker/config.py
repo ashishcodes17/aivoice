@@ -27,7 +27,7 @@ class Settings(BaseSettings):
     nudge_secs: int = 7
     hangup_after_nudge_secs: int = 10
     # Outbound: how long to wait for the person's "hello" before speaking first.
-    outbound_wait_secs: float = 3.5
+    outbound_wait_secs: float = 1.2
 
     # Native 8 kHz synthesis, latency-sorted LLM routing. Turn off only to compare.
     low_latency: bool = True
