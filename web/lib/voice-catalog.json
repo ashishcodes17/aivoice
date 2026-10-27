@@ -11,13 +11,15 @@
      "seconds": 6.2,
      "clarity": 0.97,
      "pitch_hz": 144,
-     "file": "/voices/elevenlabs/en-IN/pNInz6obpgDQGcFmaJgB.m4a"
+     "file": "/voices/elevenlabs/en-IN/pNInz6obpgDQGcFmaJgB.m4a",
+     "pitch_sd": 3.15
     },
     "hi-IN": {
      "seconds": 8.7,
      "clarity": 0.97,
      "pitch_hz": 113,
-     "file": "/voices/elevenlabs/hi-IN/pNInz6obpgDQGcFmaJgB.m4a"
+     "file": "/voices/elevenlabs/hi-IN/pNInz6obpgDQGcFmaJgB.m4a",
+     "pitch_sd": 2.62
     }
    },
    "gender": "male"
@@ -32,13 +34,15 @@
      "seconds": 6.6,
      "clarity": 0.98,
      "pitch_hz": 250,
-     "file": "/voices/elevenlabs/en-IN/Xb7hH8MSUJpSbSDYk0k2.m4a"
+     "file": "/voices/elevenlabs/en-IN/Xb7hH8MSUJpSbSDYk0k2.m4a",
+     "pitch_sd": 3.71
     },
     "hi-IN": {
      "seconds": 8.7,
      "clarity": 0.97,
      "pitch_hz": 267,
-     "file": "/voices/elevenlabs/hi-IN/Xb7hH8MSUJpSbSDYk0k2.m4a"
+     "file": "/voices/elevenlabs/hi-IN/Xb7hH8MSUJpSbSDYk0k2.m4a",
+     "pitch_sd": 3.52
     }
    },
    "gender": "female"
@@ -53,13 +57,15 @@
      "seconds": 7.1,
      "clarity": 0.97,
      "pitch_hz": 140,
-     "file": "/voices/elevenlabs/en-IN/ErXwobaYiN019PkySvjV.m4a"
+     "file": "/voices/elevenlabs/en-IN/ErXwobaYiN019PkySvjV.m4a",
+     "pitch_sd": 2.82
     },
     "hi-IN": {
      "seconds": 8.0,
      "clarity": 0.97,
      "pitch_hz": 127,
-     "file": "/voices/elevenlabs/hi-IN/ErXwobaYiN019PkySvjV.m4a"
+     "file": "/voices/elevenlabs/hi-IN/ErXwobaYiN019PkySvjV.m4a",
+     "pitch_sd": 2.73
     }
    },
    "gender": "male"
@@ -74,13 +80,15 @@
      "seconds": 7.4,
      "clarity": 0.98,
      "pitch_hz": 101,
-     "file": "/voices/elevenlabs/en-IN/nPczCjzI2devNBz1zQrb.m4a"
+     "file": "/voices/elevenlabs/en-IN/nPczCjzI2devNBz1zQrb.m4a",
+     "pitch_sd": 3.33
     },
     "hi-IN": {
      "seconds": 7.6,
      "clarity": 0.97,
      "pitch_hz": 118,
-     "file": "/voices/elevenlabs/hi-IN/nPczCjzI2devNBz1zQrb.m4a"
+     "file": "/voices/elevenlabs/hi-IN/nPczCjzI2devNBz1zQrb.m4a",
+     "pitch_sd": 3.31
     }
    },
    "gender": "male"
@@ -95,13 +103,15 @@
      "seconds": 6.3,
      "clarity": 0.97,
      "pitch_hz": 119,
-     "file": "/voices/elevenlabs/en-IN/iP95p4xoKVk53GoZ742B.m4a"
+     "file": "/voices/elevenlabs/en-IN/iP95p4xoKVk53GoZ742B.m4a",
+     "pitch_sd": 3.19
     },
     "hi-IN": {
      "seconds": 8.2,
      "clarity": 0.97,
      "pitch_hz": 125,
-     "file": "/voices/elevenlabs/hi-IN/iP95p4xoKVk53GoZ742B.m4a"
+     "file": "/voices/elevenlabs/hi-IN/iP95p4xoKVk53GoZ742B.m4a",
+     "pitch_sd": 3.15
     }
    },
    "gender": "male"
@@ -116,13 +126,15 @@
      "seconds": 8.3,
      "clarity": 0.99,
      "pitch_hz": 133,
-     "file": "/voices/elevenlabs/en-IN/onwK4e9ZLuTAKqWW03F9.m4a"
+     "file": "/voices/elevenlabs/en-IN/onwK4e9ZLuTAKqWW03F9.m4a",
+     "pitch_sd": 3.88
     },
     "hi-IN": {
      "seconds": 9.0,
      "clarity": 0.95,
      "pitch_hz": 131,
-     "file": "/voices/elevenlabs/hi-IN/onwK4e9ZLuTAKqWW03F9.m4a"
+     "file": "/voices/elevenlabs/hi-IN/onwK4e9ZLuTAKqWW03F9.m4a",
+     "pitch_sd": 3.1
     }
    },
    "gender": "male"
@@ -137,13 +149,15 @@
      "seconds": 5.6,
      "clarity": 0.98,
      "pitch_hz": 157,
-     "file": "/voices/elevenlabs/en-IN/cjVigY5qzO86Huf0OWal.m4a"
+     "file": "/voices/elevenlabs/en-IN/cjVigY5qzO86Huf0OWal.m4a",
+     "pitch_sd": 3.84
     },
     "hi-IN": {
      "seconds": 8.2,
      "clarity": 0.98,
      "pitch_hz": 160,
-     "file": "/voices/elevenlabs/hi-IN/cjVigY5qzO86Huf0OWal.m4a"
+     "file": "/voices/elevenlabs/hi-IN/cjVigY5qzO86Huf0OWal.m4a",
+     "pitch_sd": 3.8
     }
    },
    "gender": "male"
@@ -158,13 +172,15 @@
      "seconds": 6.6,
      "clarity": 0.98,
      "pitch_hz": 129,
-     "file": "/voices/elevenlabs/en-IN/JBFqnCBsd6RMkjVDRZzb.m4a"
+     "file": "/voices/elevenlabs/en-IN/JBFqnCBsd6RMkjVDRZzb.m4a",
+     "pitch_sd": 3.03
     },
     "hi-IN": {
      "seconds": 9.4,
      "clarity": 0.97,
      "pitch_hz": 123,
-     "file": "/voices/elevenlabs/hi-IN/JBFqnCBsd6RMkjVDRZzb.m4a"
+     "file": "/voices/elevenlabs/hi-IN/JBFqnCBsd6RMkjVDRZzb.m4a",
+     "pitch_sd": 3.31
     }
    },
    "gender": "male"
@@ -179,13 +195,15 @@
      "seconds": 6.7,
      "clarity": 0.98,
      "pitch_hz": 211,
-     "file": "/voices/elevenlabs/en-IN/cgSgspJ2msm6clMCkdW9.m4a"
+     "file": "/voices/elevenlabs/en-IN/cgSgspJ2msm6clMCkdW9.m4a",
+     "pitch_sd": 2.53
     },
     "hi-IN": {
      "seconds": 8.3,
      "clarity": 0.94,
      "pitch_hz": 222,
-     "file": "/voices/elevenlabs/hi-IN/cgSgspJ2msm6clMCkdW9.m4a"
+     "file": "/voices/elevenlabs/hi-IN/cgSgspJ2msm6clMCkdW9.m4a",
+     "pitch_sd": 2.26
     }
    },
    "gender": "female"
@@ -200,13 +218,15 @@
      "seconds": 6.2,
      "clarity": 0.98,
      "pitch_hz": 200,
-     "file": "/voices/elevenlabs/en-IN/FGY2WhTYpPnrIDTdsKH5.m4a"
+     "file": "/voices/elevenlabs/en-IN/FGY2WhTYpPnrIDTdsKH5.m4a",
+     "pitch_sd": 3.86
     },
     "hi-IN": {
      "seconds": 7.8,
      "clarity": 0.97,
      "pitch_hz": 211,
-     "file": "/voices/elevenlabs/hi-IN/FGY2WhTYpPnrIDTdsKH5.m4a"
+     "file": "/voices/elevenlabs/hi-IN/FGY2WhTYpPnrIDTdsKH5.m4a",
+     "pitch_sd": 2.51
     }
    },
    "gender": "female"
@@ -221,13 +241,15 @@
      "seconds": 7.9,
      "clarity": 0.98,
      "pitch_hz": 170,
-     "file": "/voices/elevenlabs/en-IN/pFZP5JQG7iQjIQuC4Bku.m4a"
+     "file": "/voices/elevenlabs/en-IN/pFZP5JQG7iQjIQuC4Bku.m4a",
+     "pitch_sd": 4.59
     },
     "hi-IN": {
      "seconds": 7.7,
      "clarity": 0.97,
      "pitch_hz": 235,
-     "file": "/voices/elevenlabs/hi-IN/pFZP5JQG7iQjIQuC4Bku.m4a"
+     "file": "/voices/elevenlabs/hi-IN/pFZP5JQG7iQjIQuC4Bku.m4a",
+     "pitch_sd": 2.9
     }
    },
    "gender": "female"
@@ -242,13 +264,15 @@
      "seconds": 7.2,
      "clarity": 0.99,
      "pitch_hz": 216,
-     "file": "/voices/elevenlabs/en-IN/XrExE9yKIg1WjnnlVkGX.m4a"
+     "file": "/voices/elevenlabs/en-IN/XrExE9yKIg1WjnnlVkGX.m4a",
+     "pitch_sd": 4.22
     },
     "hi-IN": {
      "seconds": 8.9,
      "clarity": 0.97,
      "pitch_hz": 242,
-     "file": "/voices/elevenlabs/hi-IN/XrExE9yKIg1WjnnlVkGX.m4a"
+     "file": "/voices/elevenlabs/hi-IN/XrExE9yKIg1WjnnlVkGX.m4a",
+     "pitch_sd": 3.89
     }
    },
    "gender": "female"
@@ -263,13 +287,15 @@
      "seconds": 5.7,
      "clarity": 0.97,
      "pitch_hz": 211,
-     "file": "/voices/elevenlabs/en-IN/SAz9YHcvj6GT2YYXdXww.m4a"
+     "file": "/voices/elevenlabs/en-IN/SAz9YHcvj6GT2YYXdXww.m4a",
+     "pitch_sd": 2.25
     },
     "hi-IN": {
      "seconds": 6.9,
      "clarity": 0.98,
      "pitch_hz": 205,
-     "file": "/voices/elevenlabs/hi-IN/SAz9YHcvj6GT2YYXdXww.m4a"
+     "file": "/voices/elevenlabs/hi-IN/SAz9YHcvj6GT2YYXdXww.m4a",
+     "pitch_sd": 3.05
     }
    },
    "gender": "female"
@@ -284,13 +310,15 @@
      "seconds": 6.5,
      "clarity": 0.97,
      "pitch_hz": 117,
-     "file": "/voices/elevenlabs/en-IN/CwhRBWXzGAHq8TQ4Fs17.m4a"
+     "file": "/voices/elevenlabs/en-IN/CwhRBWXzGAHq8TQ4Fs17.m4a",
+     "pitch_sd": 3.85
     },
     "hi-IN": {
      "seconds": 7.4,
      "clarity": 0.97,
      "pitch_hz": 110,
-     "file": "/voices/elevenlabs/hi-IN/CwhRBWXzGAHq8TQ4Fs17.m4a"
+     "file": "/voices/elevenlabs/hi-IN/CwhRBWXzGAHq8TQ4Fs17.m4a",
+     "pitch_sd": 2.83
     }
    },
    "gender": "male"
@@ -305,13 +333,15 @@
      "seconds": 6.2,
      "clarity": 0.98,
      "pitch_hz": 200,
-     "file": "/voices/elevenlabs/en-IN/EXAVITQu4vr4xnSDxMaL.m4a"
+     "file": "/voices/elevenlabs/en-IN/EXAVITQu4vr4xnSDxMaL.m4a",
+     "pitch_sd": 2.83
     },
     "hi-IN": {
      "seconds": 7.3,
      "clarity": 0.97,
      "pitch_hz": 222,
-     "file": "/voices/elevenlabs/hi-IN/EXAVITQu4vr4xnSDxMaL.m4a"
+     "file": "/voices/elevenlabs/hi-IN/EXAVITQu4vr4xnSDxMaL.m4a",
+     "pitch_sd": 2.59
     }
    },
    "gender": "female"
@@ -326,13 +356,15 @@
      "seconds": 6.9,
      "clarity": 0.98,
      "pitch_hz": 158,
-     "file": "/voices/rumik/en-IN/adam.m4a"
+     "file": "/voices/rumik/en-IN/adam.m4a",
+     "pitch_sd": 3.41
     },
     "hi-IN": {
      "seconds": 8.3,
      "clarity": 0.96,
      "pitch_hz": 126,
-     "file": "/voices/rumik/hi-IN/adam.m4a"
+     "file": "/voices/rumik/hi-IN/adam.m4a",
+     "pitch_sd": 3.52
     }
    },
    "gender": "male"
@@ -347,13 +379,15 @@
      "seconds": 7.3,
      "clarity": 0.99,
      "pitch_hz": 190,
-     "file": "/voices/rumik/en-IN/aisha.m4a"
+     "file": "/voices/rumik/en-IN/aisha.m4a",
+     "pitch_sd": 1.74
     },
     "hi-IN": {
      "seconds": 10.2,
      "clarity": 0.99,
      "pitch_hz": 186,
-     "file": "/voices/rumik/hi-IN/aisha.m4a"
+     "file": "/voices/rumik/hi-IN/aisha.m4a",
+     "pitch_sd": 1.78
     }
    },
    "gender": "female"
@@ -368,13 +402,15 @@
      "seconds": 7.0,
      "clarity": 1.0,
      "pitch_hz": 222,
-     "file": "/voices/rumik/en-IN/ava.m4a"
+     "file": "/voices/rumik/en-IN/ava.m4a",
+     "pitch_sd": 3.55
     },
     "hi-IN": {
      "seconds": 8.7,
      "clarity": 0.97,
      "pitch_hz": 195,
-     "file": "/voices/rumik/hi-IN/ava.m4a"
+     "file": "/voices/rumik/hi-IN/ava.m4a",
+     "pitch_sd": 3.63
     }
    },
    "gender": "female"
@@ -389,13 +425,15 @@
      "seconds": 7.9,
      "clarity": 1.0,
      "pitch_hz": 216,
-     "file": "/voices/rumik/en-IN/emma.m4a"
+     "file": "/voices/rumik/en-IN/emma.m4a",
+     "pitch_sd": 3.42
     },
     "hi-IN": {
      "seconds": 10.0,
      "clarity": 0.97,
      "pitch_hz": 195,
-     "file": "/voices/rumik/hi-IN/emma.m4a"
+     "file": "/voices/rumik/hi-IN/emma.m4a",
+     "pitch_sd": 3.15
     }
    },
    "gender": "female"
@@ -410,13 +448,15 @@
      "seconds": 8.1,
      "clarity": 0.99,
      "pitch_hz": 242,
-     "file": "/voices/rumik/en-IN/ira.m4a"
+     "file": "/voices/rumik/en-IN/ira.m4a",
+     "pitch_sd": 4.35
     },
     "hi-IN": {
      "seconds": 10.8,
      "clarity": 0.98,
      "pitch_hz": 250,
-     "file": "/voices/rumik/hi-IN/ira.m4a"
+     "file": "/voices/rumik/hi-IN/ira.m4a",
+     "pitch_sd": 3.24
     }
    },
    "gender": "female"
@@ -431,13 +471,15 @@
      "seconds": 7.4,
      "clarity": 0.99,
      "pitch_hz": 133,
-     "file": "/voices/rumik/en-IN/lucas.m4a"
+     "file": "/voices/rumik/en-IN/lucas.m4a",
+     "pitch_sd": 3.67
     },
     "hi-IN": {
      "seconds": 8.8,
      "clarity": 0.96,
      "pitch_hz": 118,
-     "file": "/voices/rumik/hi-IN/lucas.m4a"
+     "file": "/voices/rumik/hi-IN/lucas.m4a",
+     "pitch_sd": 3.16
     }
    },
    "gender": "male"
@@ -452,13 +494,15 @@
      "seconds": 7.7,
      "clarity": 0.99,
      "pitch_hz": 250,
-     "file": "/voices/rumik/en-IN/mia.m4a"
+     "file": "/voices/rumik/en-IN/mia.m4a",
+     "pitch_sd": 3.71
     },
     "hi-IN": {
      "seconds": 8.7,
      "clarity": 0.99,
      "pitch_hz": 216,
-     "file": "/voices/rumik/hi-IN/mia.m4a"
+     "file": "/voices/rumik/hi-IN/mia.m4a",
+     "pitch_sd": 3.54
     }
    },
    "gender": "female"
@@ -473,13 +517,15 @@
      "seconds": 7.5,
      "clarity": 0.99,
      "pitch_hz": 222,
-     "file": "/voices/rumik/en-IN/noah.m4a"
+     "file": "/voices/rumik/en-IN/noah.m4a",
+     "pitch_sd": 4.48
     },
     "hi-IN": {
      "seconds": 9.0,
      "clarity": 0.99,
      "pitch_hz": 143,
-     "file": "/voices/rumik/hi-IN/noah.m4a"
+     "file": "/voices/rumik/hi-IN/noah.m4a",
+     "pitch_sd": 3.42
     }
    },
    "gender": "female"
@@ -494,13 +540,15 @@
      "seconds": 7.9,
      "clarity": 0.99,
      "pitch_hz": 250,
-     "file": "/voices/rumik/en-IN/siya.m4a"
+     "file": "/voices/rumik/en-IN/siya.m4a",
+     "pitch_sd": 3.13
     },
     "hi-IN": {
      "seconds": 10.2,
      "clarity": 0.96,
      "pitch_hz": 216,
-     "file": "/voices/rumik/hi-IN/siya.m4a"
+     "file": "/voices/rumik/hi-IN/siya.m4a",
+     "pitch_sd": 2.63
     }
    },
    "gender": "female"
@@ -515,13 +563,15 @@
      "seconds": 7.3,
      "clarity": 1.0,
      "pitch_hz": 216,
-     "file": "/voices/rumik/en-IN/sophia.m4a"
+     "file": "/voices/rumik/en-IN/sophia.m4a",
+     "pitch_sd": 4.29
     },
     "hi-IN": {
      "seconds": 9.0,
      "clarity": 0.99,
      "pitch_hz": 200,
-     "file": "/voices/rumik/hi-IN/sophia.m4a"
+     "file": "/voices/rumik/hi-IN/sophia.m4a",
+     "pitch_sd": 3.03
     }
    },
    "gender": "female"
@@ -536,13 +586,15 @@
      "seconds": 7.4,
      "clarity": 1.0,
      "pitch_hz": 163,
-     "file": "/voices/rumik/en-IN/theo.m4a"
+     "file": "/voices/rumik/en-IN/theo.m4a",
+     "pitch_sd": 3.28
     },
     "hi-IN": {
      "seconds": 9.0,
      "clarity": 0.99,
      "pitch_hz": 145,
-     "file": "/voices/rumik/hi-IN/theo.m4a"
+     "file": "/voices/rumik/hi-IN/theo.m4a",
+     "pitch_sd": 2.8
     }
    },
    "gender": "male"
@@ -557,13 +609,15 @@
      "seconds": 7.3,
      "clarity": 0.99,
      "pitch_hz": 296,
-     "file": "/voices/rumik/en-IN/zoya.m4a"
+     "file": "/voices/rumik/en-IN/zoya.m4a",
+     "pitch_sd": 4.44
     },
     "hi-IN": {
      "seconds": 9.4,
      "clarity": 0.97,
      "pitch_hz": 267,
-     "file": "/voices/rumik/hi-IN/zoya.m4a"
+     "file": "/voices/rumik/hi-IN/zoya.m4a",
+     "pitch_sd": 3.82
     }
    },
    "gender": "female"
@@ -578,19 +632,22 @@
      "seconds": 7.9,
      "clarity": 0.99,
      "pitch_hz": 157,
-     "file": "/voices/sarvam/te-IN/aayan.m4a"
+     "file": "/voices/sarvam/te-IN/aayan.m4a",
+     "pitch_sd": 3.08
     },
     "en-IN": {
      "seconds": 6.0,
      "clarity": 0.95,
      "pitch_hz": 136,
-     "file": "/voices/sarvam/en-IN/aayan.m4a"
+     "file": "/voices/sarvam/en-IN/aayan.m4a",
+     "pitch_sd": 3.21
     },
     "hi-IN": {
      "seconds": 7.0,
      "clarity": 0.99,
      "pitch_hz": 145,
-     "file": "/voices/sarvam/hi-IN/aayan.m4a"
+     "file": "/voices/sarvam/hi-IN/aayan.m4a",
+     "pitch_sd": 3.13
     }
    },
    "gender": "male"
@@ -605,19 +662,22 @@
      "seconds": 11.4,
      "clarity": 0.99,
      "pitch_hz": 104,
-     "file": "/voices/sarvam/te-IN/aditya.m4a"
+     "file": "/voices/sarvam/te-IN/aditya.m4a",
+     "pitch_sd": 1.9
     },
     "en-IN": {
      "seconds": 7.4,
      "clarity": 0.99,
      "pitch_hz": 105,
-     "file": "/voices/sarvam/en-IN/aditya.m4a"
+     "file": "/voices/sarvam/en-IN/aditya.m4a",
+     "pitch_sd": 3.5
     },
     "hi-IN": {
      "seconds": 8.9,
      "clarity": 0.98,
      "pitch_hz": 140,
-     "file": "/voices/sarvam/hi-IN/aditya.m4a"
+     "file": "/voices/sarvam/hi-IN/aditya.m4a",
+     "pitch_sd": 3.03
     }
    },
    "gender": "male"
@@ -632,19 +692,22 @@
      "seconds": 8.5,
      "clarity": 0.96,
      "pitch_hz": 136,
-     "file": "/voices/sarvam/te-IN/advait.m4a"
+     "file": "/voices/sarvam/te-IN/advait.m4a",
+     "pitch_sd": 2.92
     },
     "en-IN": {
      "seconds": 6.7,
      "clarity": 0.98,
      "pitch_hz": 134,
-     "file": "/voices/sarvam/en-IN/advait.m4a"
+     "file": "/voices/sarvam/en-IN/advait.m4a",
+     "pitch_sd": 2.08
     },
     "hi-IN": {
      "seconds": 8.5,
      "clarity": 0.97,
      "pitch_hz": 154,
-     "file": "/voices/sarvam/hi-IN/advait.m4a"
+     "file": "/voices/sarvam/hi-IN/advait.m4a",
+     "pitch_sd": 2.62
     }
    },
    "gender": "male"
@@ -659,19 +722,22 @@
      "seconds": 9.0,
      "clarity": 1.0,
      "pitch_hz": 119,
-     "file": "/voices/sarvam/te-IN/amit.m4a"
+     "file": "/voices/sarvam/te-IN/amit.m4a",
+     "pitch_sd": 2.11
     },
     "en-IN": {
      "seconds": 7.7,
      "clarity": 0.98,
      "pitch_hz": 136,
-     "file": "/voices/sarvam/en-IN/amit.m4a"
+     "file": "/voices/sarvam/en-IN/amit.m4a",
+     "pitch_sd": 1.61
     },
     "hi-IN": {
      "seconds": 10.1,
      "clarity": 0.98,
      "pitch_hz": 127,
-     "file": "/voices/sarvam/hi-IN/amit.m4a"
+     "file": "/voices/sarvam/hi-IN/amit.m4a",
+     "pitch_sd": 2.16
     }
    },
    "gender": "male"
@@ -686,19 +752,22 @@
      "seconds": 11.1,
      "clarity": 1.0,
      "pitch_hz": 157,
-     "file": "/voices/sarvam/te-IN/ashutosh.m4a"
+     "file": "/voices/sarvam/te-IN/ashutosh.m4a",
+     "pitch_sd": 2.47
     },
     "en-IN": {
      "seconds": 6.2,
      "clarity": 0.99,
      "pitch_hz": 172,
-     "file": "/voices/sarvam/en-IN/ashutosh.m4a"
+     "file": "/voices/sarvam/en-IN/ashutosh.m4a",
+     "pitch_sd": 3.37
     },
     "hi-IN": {
      "seconds": 7.7,
      "clarity": 0.95,
      "pitch_hz": 167,
-     "file": "/voices/sarvam/hi-IN/ashutosh.m4a"
+     "file": "/voices/sarvam/hi-IN/ashutosh.m4a",
+     "pitch_sd": 2.73
     }
    },
    "gender": "female"
@@ -713,19 +782,22 @@
      "seconds": 9.6,
      "clarity": 1.0,
      "pitch_hz": 186,
-     "file": "/voices/sarvam/te-IN/dev.m4a"
+     "file": "/voices/sarvam/te-IN/dev.m4a",
+     "pitch_sd": 2.53
     },
     "en-IN": {
      "seconds": 6.1,
      "clarity": 0.99,
      "pitch_hz": 229,
-     "file": "/voices/sarvam/en-IN/dev.m4a"
+     "file": "/voices/sarvam/en-IN/dev.m4a",
+     "pitch_sd": 3.32
     },
     "hi-IN": {
      "seconds": 8.5,
      "clarity": 0.97,
      "pitch_hz": 222,
-     "file": "/voices/sarvam/hi-IN/dev.m4a"
+     "file": "/voices/sarvam/hi-IN/dev.m4a",
+     "pitch_sd": 2.65
     }
    },
    "gender": "female"
@@ -740,19 +812,22 @@
      "seconds": 9.0,
      "clarity": 1.0,
      "pitch_hz": 216,
-     "file": "/voices/sarvam/te-IN/ishita.m4a"
+     "file": "/voices/sarvam/te-IN/ishita.m4a",
+     "pitch_sd": 2.91
     },
     "en-IN": {
      "seconds": 7.3,
      "clarity": 0.99,
      "pitch_hz": 267,
-     "file": "/voices/sarvam/en-IN/ishita.m4a"
+     "file": "/voices/sarvam/en-IN/ishita.m4a",
+     "pitch_sd": 3.16
     },
     "hi-IN": {
      "seconds": 8.9,
      "clarity": 0.99,
      "pitch_hz": 258,
-     "file": "/voices/sarvam/hi-IN/ishita.m4a"
+     "file": "/voices/sarvam/hi-IN/ishita.m4a",
+     "pitch_sd": 4.54
     }
    },
    "gender": "female"
@@ -767,19 +842,22 @@
      "seconds": 9.9,
      "clarity": 0.99,
      "pitch_hz": 110,
-     "file": "/voices/sarvam/te-IN/kabir.m4a"
+     "file": "/voices/sarvam/te-IN/kabir.m4a",
+     "pitch_sd": 3.16
     },
     "en-IN": {
      "seconds": 9.8,
      "clarity": 0.99,
      "pitch_hz": 101,
-     "file": "/voices/sarvam/en-IN/kabir.m4a"
+     "file": "/voices/sarvam/en-IN/kabir.m4a",
+     "pitch_sd": 2.23
     },
     "hi-IN": {
      "seconds": 9.8,
      "clarity": 0.97,
      "pitch_hz": 116,
-     "file": "/voices/sarvam/hi-IN/kabir.m4a"
+     "file": "/voices/sarvam/hi-IN/kabir.m4a",
+     "pitch_sd": 2.58
     }
    },
    "gender": "male"
@@ -794,7 +872,8 @@
      "seconds": 9.5,
      "clarity": 1.0,
      "pitch_hz": 267,
-     "file": "/voices/sarvam/te-IN/kavitha.m4a"
+     "file": "/voices/sarvam/te-IN/kavitha.m4a",
+     "pitch_sd": 2.6
     }
    },
    "gender": "female"
@@ -809,7 +888,8 @@
      "seconds": 10.2,
      "clarity": 0.98,
      "pitch_hz": 250,
-     "file": "/voices/sarvam/te-IN/kavitha_te_conversation.m4a"
+     "file": "/voices/sarvam/te-IN/kavitha_te_conversation.m4a",
+     "pitch_sd": 2.3
     }
    },
    "gender": "female"
@@ -824,19 +904,22 @@
      "seconds": 9.5,
      "clarity": 0.98,
      "pitch_hz": 242,
-     "file": "/voices/sarvam/te-IN/kavya.m4a"
+     "file": "/voices/sarvam/te-IN/kavya.m4a",
+     "pitch_sd": 3.12
     },
     "en-IN": {
      "seconds": 7.7,
      "clarity": 0.98,
      "pitch_hz": 267,
-     "file": "/voices/sarvam/en-IN/kavya.m4a"
+     "file": "/voices/sarvam/en-IN/kavya.m4a",
+     "pitch_sd": 2.9
     },
     "hi-IN": {
      "seconds": 8.4,
      "clarity": 0.98,
      "pitch_hz": 235,
-     "file": "/voices/sarvam/hi-IN/kavya.m4a"
+     "file": "/voices/sarvam/hi-IN/kavya.m4a",
+     "pitch_sd": 3.27
     }
    },
    "gender": "female"
@@ -851,19 +934,22 @@
      "seconds": 9.8,
      "clarity": 1.0,
      "pitch_hz": 160,
-     "file": "/voices/sarvam/te-IN/manan.m4a"
+     "file": "/voices/sarvam/te-IN/manan.m4a",
+     "pitch_sd": 2.56
     },
     "en-IN": {
      "seconds": 7.6,
      "clarity": 0.98,
      "pitch_hz": 176,
-     "file": "/voices/sarvam/en-IN/manan.m4a"
+     "file": "/voices/sarvam/en-IN/manan.m4a",
+     "pitch_sd": 3.11
     },
     "hi-IN": {
      "seconds": 9.0,
      "clarity": 0.98,
      "pitch_hz": 160,
-     "file": "/voices/sarvam/hi-IN/manan.m4a"
+     "file": "/voices/sarvam/hi-IN/manan.m4a",
+     "pitch_sd": 2.34
     }
    },
    "gender": "male"
@@ -878,19 +964,22 @@
      "seconds": 12.6,
      "clarity": 0.99,
      "pitch_hz": 154,
-     "file": "/voices/sarvam/te-IN/neha.m4a"
+     "file": "/voices/sarvam/te-IN/neha.m4a",
+     "pitch_sd": 2.29
     },
     "en-IN": {
      "seconds": 8.3,
      "clarity": 0.99,
      "pitch_hz": 182,
-     "file": "/voices/sarvam/en-IN/neha.m4a"
+     "file": "/voices/sarvam/en-IN/neha.m4a",
+     "pitch_sd": 4.15
     },
     "hi-IN": {
      "seconds": 12.9,
      "clarity": 0.98,
      "pitch_hz": 174,
-     "file": "/voices/sarvam/hi-IN/neha.m4a"
+     "file": "/voices/sarvam/hi-IN/neha.m4a",
+     "pitch_sd": 4.01
     }
    },
    "gender": "female"
@@ -905,19 +994,22 @@
      "seconds": 10.1,
      "clarity": 0.99,
      "pitch_hz": 229,
-     "file": "/voices/sarvam/te-IN/pooja.m4a"
+     "file": "/voices/sarvam/te-IN/pooja.m4a",
+     "pitch_sd": 4.22
     },
     "en-IN": {
      "seconds": 7.1,
      "clarity": 0.98,
      "pitch_hz": 258,
-     "file": "/voices/sarvam/en-IN/pooja.m4a"
+     "file": "/voices/sarvam/en-IN/pooja.m4a",
+     "pitch_sd": 3.9
     },
     "hi-IN": {
      "seconds": 8.8,
      "clarity": 0.97,
      "pitch_hz": 258,
-     "file": "/voices/sarvam/hi-IN/pooja.m4a"
+     "file": "/voices/sarvam/hi-IN/pooja.m4a",
+     "pitch_sd": 3.66
     }
    },
    "gender": "female"
@@ -932,19 +1024,22 @@
      "seconds": 10.2,
      "clarity": 1.0,
      "pitch_hz": 200,
-     "file": "/voices/sarvam/te-IN/priya.m4a"
+     "file": "/voices/sarvam/te-IN/priya.m4a",
+     "pitch_sd": 2.19
     },
     "en-IN": {
      "seconds": 7.3,
      "clarity": 0.99,
      "pitch_hz": 235,
-     "file": "/voices/sarvam/en-IN/priya.m4a"
+     "file": "/voices/sarvam/en-IN/priya.m4a",
+     "pitch_sd": 2.99
     },
     "hi-IN": {
      "seconds": 10.6,
      "clarity": 0.98,
      "pitch_hz": 229,
-     "file": "/voices/sarvam/hi-IN/priya.m4a"
+     "file": "/voices/sarvam/hi-IN/priya.m4a",
+     "pitch_sd": 2.31
     }
    },
    "gender": "female"
@@ -959,19 +1054,22 @@
      "seconds": 10.3,
      "clarity": 1.0,
      "pitch_hz": 130,
-     "file": "/voices/sarvam/te-IN/rahul.m4a"
+     "file": "/voices/sarvam/te-IN/rahul.m4a",
+     "pitch_sd": 2.49
     },
     "en-IN": {
      "seconds": 6.8,
      "clarity": 0.99,
      "pitch_hz": 138,
-     "file": "/voices/sarvam/en-IN/rahul.m4a"
+     "file": "/voices/sarvam/en-IN/rahul.m4a",
+     "pitch_sd": 2.35
     },
     "hi-IN": {
      "seconds": 9.2,
      "clarity": 0.98,
      "pitch_hz": 154,
-     "file": "/voices/sarvam/hi-IN/rahul.m4a"
+     "file": "/voices/sarvam/hi-IN/rahul.m4a",
+     "pitch_sd": 3.27
     }
    },
    "gender": "male"
@@ -986,19 +1084,22 @@
      "seconds": 8.2,
      "clarity": 0.99,
      "pitch_hz": 107,
-     "file": "/voices/sarvam/te-IN/ratan.m4a"
+     "file": "/voices/sarvam/te-IN/ratan.m4a",
+     "pitch_sd": 2.63
     },
     "en-IN": {
      "seconds": 6.3,
      "clarity": 1.0,
      "pitch_hz": 140,
-     "file": "/voices/sarvam/en-IN/ratan.m4a"
+     "file": "/voices/sarvam/en-IN/ratan.m4a",
+     "pitch_sd": 3.7
     },
     "hi-IN": {
      "seconds": 6.8,
      "clarity": 0.97,
      "pitch_hz": 127,
-     "file": "/voices/sarvam/hi-IN/ratan.m4a"
+     "file": "/voices/sarvam/hi-IN/ratan.m4a",
+     "pitch_sd": 3.43
     }
    },
    "gender": "male"
@@ -1013,19 +1114,22 @@
      "seconds": 9.9,
      "clarity": 0.98,
      "pitch_hz": 235,
-     "file": "/voices/sarvam/te-IN/ritu.m4a"
+     "file": "/voices/sarvam/te-IN/ritu.m4a",
+     "pitch_sd": 2.66
     },
     "en-IN": {
      "seconds": 6.3,
      "clarity": 0.98,
      "pitch_hz": 258,
-     "file": "/voices/sarvam/en-IN/ritu.m4a"
+     "file": "/voices/sarvam/en-IN/ritu.m4a",
+     "pitch_sd": 3.9
     },
     "hi-IN": {
      "seconds": 8.1,
      "clarity": 0.98,
      "pitch_hz": 242,
-     "file": "/voices/sarvam/hi-IN/ritu.m4a"
+     "file": "/voices/sarvam/hi-IN/ritu.m4a",
+     "pitch_sd": 3.49
     }
    },
    "gender": "female"
@@ -1040,19 +1144,22 @@
      "seconds": 11.1,
      "clarity": 1.0,
      "pitch_hz": 163,
-     "file": "/voices/sarvam/te-IN/rohan.m4a"
+     "file": "/voices/sarvam/te-IN/rohan.m4a",
+     "pitch_sd": 3.11
     },
     "en-IN": {
      "seconds": 6.0,
      "clarity": 0.97,
      "pitch_hz": 200,
-     "file": "/voices/sarvam/en-IN/rohan.m4a"
+     "file": "/voices/sarvam/en-IN/rohan.m4a",
+     "pitch_sd": 4.13
     },
     "hi-IN": {
      "seconds": 8.4,
      "clarity": 0.97,
      "pitch_hz": 186,
-     "file": "/voices/sarvam/hi-IN/rohan.m4a"
+     "file": "/voices/sarvam/hi-IN/rohan.m4a",
+     "pitch_sd": 2.89
     }
    },
    "gender": "female"
@@ -1067,19 +1174,22 @@
      "seconds": 8.4,
      "clarity": 1.0,
      "pitch_hz": 222,
-     "file": "/voices/sarvam/te-IN/roopa.m4a"
+     "file": "/voices/sarvam/te-IN/roopa.m4a",
+     "pitch_sd": 2.83
     },
     "en-IN": {
      "seconds": 7.3,
      "clarity": 0.98,
      "pitch_hz": 258,
-     "file": "/voices/sarvam/en-IN/roopa.m4a"
+     "file": "/voices/sarvam/en-IN/roopa.m4a",
+     "pitch_sd": 3.04
     },
     "hi-IN": {
      "seconds": 7.9,
      "clarity": 0.96,
      "pitch_hz": 250,
-     "file": "/voices/sarvam/hi-IN/roopa.m4a"
+     "file": "/voices/sarvam/hi-IN/roopa.m4a",
+     "pitch_sd": 2.75
     }
    },
    "gender": "female"
@@ -1094,19 +1204,22 @@
      "seconds": 9.1,
      "clarity": 0.99,
      "pitch_hz": 222,
-     "file": "/voices/sarvam/te-IN/shreya.m4a"
+     "file": "/voices/sarvam/te-IN/shreya.m4a",
+     "pitch_sd": 2.66
     },
     "en-IN": {
      "seconds": 6.8,
      "clarity": 0.98,
      "pitch_hz": 229,
-     "file": "/voices/sarvam/en-IN/shreya.m4a"
+     "file": "/voices/sarvam/en-IN/shreya.m4a",
+     "pitch_sd": 3.75
     },
     "hi-IN": {
      "seconds": 8.4,
      "clarity": 0.98,
      "pitch_hz": 258,
-     "file": "/voices/sarvam/hi-IN/shreya.m4a"
+     "file": "/voices/sarvam/hi-IN/shreya.m4a",
+     "pitch_sd": 2.36
     }
    },
    "gender": "female"
@@ -1121,19 +1234,22 @@
      "seconds": 8.2,
      "clarity": 0.99,
      "pitch_hz": 119,
-     "file": "/voices/sarvam/te-IN/shubh.m4a"
+     "file": "/voices/sarvam/te-IN/shubh.m4a",
+     "pitch_sd": 2.15
     },
     "en-IN": {
      "seconds": 5.8,
      "clarity": 1.0,
      "pitch_hz": 116,
-     "file": "/voices/sarvam/en-IN/shubh.m4a"
+     "file": "/voices/sarvam/en-IN/shubh.m4a",
+     "pitch_sd": 3.42
     },
     "hi-IN": {
      "seconds": 6.3,
      "clarity": 0.97,
      "pitch_hz": 125,
-     "file": "/voices/sarvam/hi-IN/shubh.m4a"
+     "file": "/voices/sarvam/hi-IN/shubh.m4a",
+     "pitch_sd": 3.4
     }
    },
    "gender": "male"
@@ -1148,19 +1264,22 @@
      "seconds": 10.3,
      "clarity": 1.0,
      "pitch_hz": 211,
-     "file": "/voices/sarvam/te-IN/simran.m4a"
+     "file": "/voices/sarvam/te-IN/simran.m4a",
+     "pitch_sd": 3.74
     },
     "en-IN": {
      "seconds": 5.8,
      "clarity": 0.98,
      "pitch_hz": 229,
-     "file": "/voices/sarvam/en-IN/simran.m4a"
+     "file": "/voices/sarvam/en-IN/simran.m4a",
+     "pitch_sd": 3.18
     },
     "hi-IN": {
      "seconds": 6.9,
      "clarity": 0.98,
      "pitch_hz": 222,
-     "file": "/voices/sarvam/hi-IN/simran.m4a"
+     "file": "/voices/sarvam/hi-IN/simran.m4a",
+     "pitch_sd": 3.68
     }
    },
    "gender": "female"
@@ -1175,19 +1294,22 @@
      "seconds": 9.3,
      "clarity": 1.0,
      "pitch_hz": 136,
-     "file": "/voices/sarvam/te-IN/sumit.m4a"
+     "file": "/voices/sarvam/te-IN/sumit.m4a",
+     "pitch_sd": 2.93
     },
     "en-IN": {
      "seconds": 6.4,
      "clarity": 1.0,
      "pitch_hz": 145,
-     "file": "/voices/sarvam/en-IN/sumit.m4a"
+     "file": "/voices/sarvam/en-IN/sumit.m4a",
+     "pitch_sd": 2.53
     },
     "hi-IN": {
      "seconds": 8.6,
      "clarity": 0.98,
      "pitch_hz": 148,
-     "file": "/voices/sarvam/hi-IN/sumit.m4a"
+     "file": "/voices/sarvam/hi-IN/sumit.m4a",
+     "pitch_sd": 2.1
     }
    },
    "gender": "male"
@@ -1202,19 +1324,22 @@
      "seconds": 10.9,
      "clarity": 0.99,
      "pitch_hz": 98,
-     "file": "/voices/sarvam/te-IN/varun.m4a"
+     "file": "/voices/sarvam/te-IN/varun.m4a",
+     "pitch_sd": 1.88
     },
     "en-IN": {
      "seconds": 7.8,
      "clarity": 0.98,
      "pitch_hz": 92,
-     "file": "/voices/sarvam/en-IN/varun.m4a"
+     "file": "/voices/sarvam/en-IN/varun.m4a",
+     "pitch_sd": 2.0
     },
     "hi-IN": {
      "seconds": 9.9,
      "clarity": 0.96,
      "pitch_hz": 98,
-     "file": "/voices/sarvam/hi-IN/varun.m4a"
+     "file": "/voices/sarvam/hi-IN/varun.m4a",
+     "pitch_sd": 2.33
     }
    },
    "gender": "male"

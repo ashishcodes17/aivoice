@@ -145,6 +145,28 @@ def pitch_hz(pcm: np.ndarray) -> float:
     return float(np.median(f0)) if f0 else 0.0
 
 
+def pitch_variation(pcm: np.ndarray) -> float:
+    """How much the pitch moves, as the standard deviation in semitones around the voice's own median.
+    Monotone speech scores low (about 2 or less), lively speech high (3 and up). It is one honest
+    signal of "robotic", not a verdict: rhythm, breathing and artefacts are not captured."""
+    x = pcm.astype(np.float64)
+    n, hop = 320, 160
+    f0 = []
+    for k in range(0, len(x) - n, hop):
+        f = x[k:k + n] - x[k:k + n].mean()
+        if np.sqrt((f ** 2).mean()) < 400:
+            continue
+        ac = np.correlate(f, f, "full")[n - 1:]
+        lo, hi = 8000 // 400, 8000 // 75
+        lag = lo + int(np.argmax(ac[lo:hi]))
+        if ac[lag] > 0.4 * ac[0]:
+            f0.append(8000 / lag)
+    if len(f0) < 30:
+        return 0.0
+    st = 12 * np.log2(np.array(f0) / np.median(f0))
+    return float(st[np.abs(st) < 9].std())
+
+
 def level(pcm: np.ndarray, target_rms: float = 2800.0) -> np.ndarray:
     """Same loudness for every voice, so the best-sounding one is not simply the loudest."""
     loud = np.abs(pcm) > 300
@@ -181,15 +203,29 @@ def render(job):
             return job, None, f"too short ({seconds:.1f}s)"
         score = clarity(pcm, lang)
         pitch = pitch_hz(pcm)
+        movement = pitch_variation(pcm)
         pcm = level(pcm)
         dest = OUT_DIR / provider / lang / f"{voice}.m4a"
         encode_m4a(pcm, dest)
-        return job, {"seconds": round(seconds, 1), "clarity": round(score, 2), "pitch_hz": round(pitch), "file": f"/voices/{provider}/{lang}/{voice}.m4a"}, None
+        return job, {"seconds": round(seconds, 1), "clarity": round(score, 2), "pitch_hz": round(pitch), "pitch_sd": round(movement, 2), "file": f"/voices/{provider}/{lang}/{voice}.m4a"}, None
     except Exception as e:  # noqa: BLE001
         return job, None, f"{type(e).__name__}: {str(e)[:110]}"
 
 
+def backfill():
+    """Add pitch movement to the existing catalog from the saved samples (no provider calls)."""
+    path = ROOT / "web" / "lib" / "voice-catalog.json"
+    cat = json.loads(path.read_text())
+    for v in cat["voices"]:
+        for lang, r in v["languages"].items():
+            r["pitch_sd"] = round(pitch_variation(to_pcm8k(ROOT / "web" / "public" / r["file"].lstrip("/"))), 2)
+    path.write_text(json.dumps(cat, ensure_ascii=False, indent=1))
+    print("pitch movement added to", sum(len(v["languages"]) for v in cat["voices"]), "samples")
+
+
 def main():
+    if "--backfill" in sys.argv:
+        return backfill()
     jobs = []
     for lang in LANGS:
         for v in SARVAM_V3:

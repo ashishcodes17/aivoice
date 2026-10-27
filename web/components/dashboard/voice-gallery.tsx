@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CALL_LANGUAGES, CALL_PROVIDERS } from "@/lib/call-voices";
-import { CATALOG, languageLabel, providerLabel, type CatalogVoice } from "@/lib/voices";
+import { CATALOG, languageLabel, liveliness, providerLabel, type CatalogVoice } from "@/lib/voices";
 
 type AgentOption = { id: string; name: string; language: string; tts_provider: string; tts_voice: string | null };
 
@@ -195,6 +195,9 @@ export function VoiceGallery({ agents }: { agents: AgentOption[] }) {
               </div>
               <div className="flex items-center justify-between text-muted-foreground text-xs">
                 <span className="tabular-nums">Clarity {sample.clarity.toFixed(2)}</span>
+                {liveliness(sample.pitch_sd) && (
+                  <span title="How much the pitch moves. Flat voices sound robotic on a phone.">{liveliness(sample.pitch_sd)} tone</span>
+                )}
                 <span className="tabular-nums">{sample.seconds.toFixed(0)} s sample</span>
               </div>
               <Button type="button" variant={current ? "secondary" : "outline"} size="sm" disabled={!agent || pending || current} onClick={() => use(v)}>
