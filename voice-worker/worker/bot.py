@@ -60,8 +60,11 @@ DEFAULT_NUDGE = "Hello, can you hear me?"
 class SpokenSarvamTTS(SarvamTTSService):
     """Sarvam voice that says phone numbers digit by digit."""
 
+    # Set from the call's language when the service is built.
+    spoken_language = "te-IN"
+
     async def run_tts(self, text: str, context_id: str):
-        async for frame in super().run_tts(spell_phone_numbers(text), context_id):
+        async for frame in super().run_tts(spell_phone_numbers(text, self.spoken_language), context_id):
             yield frame
 
 
@@ -100,7 +103,7 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
         )
     if agent.get("tts_provider") == "rumik":
         cfg = agent.get("config") or {}
-        return RumikTTSService(
+        tts = RumikTTSService(
             api_key=settings.rumik_api_key,
             gateway_url=settings.rumik_gateway_url,
             **strict,
@@ -111,6 +114,8 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
                 description=cfg.get("tts_description"),
             ),
         )
+        tts.spoken_language = str(language)
+        return tts
     # Per-agent options live in agents.config. Note v3 and v4-flash have different voice names.
     cfg = agent.get("config") or {}
     options = {"voice": voice, "language": language}
@@ -121,7 +126,9 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
     # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline; asking for
     # 8 kHz directly is optional (see settings.sarvam_tts_native_8k).
     rate = {"sample_rate": PIPELINE_SAMPLE_RATE} if settings.low_latency and settings.sarvam_tts_native_8k else {}
-    return SpokenSarvamTTS(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
+    tts = SpokenSarvamTTS(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
+    tts.spoken_language = str(language)
+    return tts
 
 
 IDLE_TIMEOUT_SECS = 15

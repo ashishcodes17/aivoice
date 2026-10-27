@@ -32,6 +32,7 @@ from pipecat.services.tts_service import InterruptibleTTSService
 from websockets.asyncio.client import connect as websocket_connect
 from websockets.protocol import State
 
+from .config import settings
 from .textfilter import spell_phone_numbers
 
 SAMPLE_RATE = 8000
@@ -50,6 +51,9 @@ class RumikTTSSettings(TTSSettings):
 class RumikTTSService(InterruptibleTTSService):
     Settings = RumikTTSSettings
     _settings: Settings
+
+    # Language of the call, used to say phone numbers digit by digit in the right words.
+    spoken_language = "en-IN"
 
     def __init__(self, *, api_key: str, gateway_url: str, settings: Settings | None = None, **kwargs):
         defaults = RumikTTSSettings(model=DEFAULT_MODEL, voice=None, language=None, description=None)
@@ -253,12 +257,17 @@ class RumikTTSService(InterruptibleTTSService):
             payload = {"text": text, "temperature": 0.7}
         else:
             payload = {"text": text, "description": description or DEFAULT_DESCRIPTION}
+        # Rumik stops a line at 2048 generated tokens, which cuts off a long reply in the middle of
+        # a word ("the audio is cut off early" in its docs); its ceiling is 8000. Off by default:
+        # not yet confirmed to be accepted on the streaming path. Set RUMIK_MAX_NEW_TOKENS=4096.
+        if settings.rumik_max_new_tokens:
+            payload["max_new_tokens"] = settings.rumik_max_new_tokens
         if voice:
             payload["speaker"] = voice
         return payload
 
     async def run_tts(self, text: str, context_id: str) -> AsyncGenerator[Frame | None, None]:
-        text = spell_phone_numbers(re.sub(r"\s+", " ", text).strip())
+        text = spell_phone_numbers(re.sub(r"\s+", " ", text).strip(), self.spoken_language)
         if not text:
             yield TTSStoppedFrame(context_id=context_id)
             await self.remove_audio_context(context_id)
