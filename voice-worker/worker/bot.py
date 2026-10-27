@@ -166,8 +166,14 @@ async def run_bot(
     stt = _build_stt(agent, language)
     llm_settings = {"model": agent.get("llm_model") or "openai/gpt-4o-mini"}
     if settings.low_latency:
-        # OpenRouter's default routing favours price; ask for the fastest provider instead.
-        llm_settings["provider"] = {"sort": "latency"}
+        # OpenRouter's default routing favours price; route for speed instead. Providers below the
+        # optional speed floors are tried last, not excluded.
+        provider: dict = {"sort": settings.llm_provider_sort}
+        if settings.llm_min_throughput_p50:
+            provider["preferred_min_throughput"] = {"p50": settings.llm_min_throughput_p50}
+        if settings.llm_max_latency_p50:
+            provider["preferred_max_latency"] = {"p50": settings.llm_max_latency_p50}
+        llm_settings["provider"] = provider
     # Only route to providers that honour the tools parameter, or end_call would be ignored.
     llm_settings.setdefault("provider", {})["require_parameters"] = True
     # `usage.include` makes OpenRouter return the exact dollar cost with each completion.
