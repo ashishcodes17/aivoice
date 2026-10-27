@@ -14,6 +14,10 @@ class Settings(BaseSettings):
 
     ws_token: str = ""
 
+    # Safety nets for calls the agent does not end itself (VoiceLink never hangs up on its own).
+    max_call_secs: int = 600
+    silence_hangup_secs: int = 25
+
     # Native 8 kHz synthesis, latency-sorted LLM routing. Turn off only to compare.
     low_latency: bool = True
     # Reasoning models (e.g. DeepSeek V4) think before answering, which adds seconds of

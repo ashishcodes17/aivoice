@@ -24,6 +24,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 
 from . import events
 from .config import settings
+from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
 from .transcripts import TranscriptCleaner
@@ -114,7 +115,13 @@ async def run_bot(
     language = _language(agent.get("language") or "en-IN")
     serializer = VoiceLinkFrameSerializer(start)
     timer = TurnTimer(call_sid)
-    serializer.on_audio_out = timer.audio_out
+    clock = CallClock()
+
+    def _agent_audio() -> None:
+        timer.audio_out()
+        clock.touch()
+
+    serializer.on_audio_out = _agent_audio
 
     transport = FastAPIWebsocketTransport(
         websocket=websocket,
@@ -131,6 +138,8 @@ async def run_bot(
     if settings.low_latency:
         # OpenRouter's default routing favours price; ask for the fastest provider instead.
         llm_settings["provider"] = {"sort": "latency"}
+    # Only route to providers that honour the tools parameter, or end_call would be ignored.
+    llm_settings.setdefault("provider", {})["require_parameters"] = True
     # `usage.include` makes OpenRouter return the exact dollar cost with each completion.
     extra_body: dict = {"usage": {"include": True}}
     if settings.llm_disable_thinking:
@@ -146,6 +155,7 @@ async def run_bot(
     llm = CostTrackingOpenRouterLLM(
         costs=costs, api_key=settings.openrouter_api_key, settings=OpenRouterLLMService.Settings(**llm_settings)
     )
+    register_end_call(llm, call_sid)
     tts = _build_tts(agent, language)
     events.log(
         "pipeline.built",
@@ -159,13 +169,13 @@ async def run_bot(
         language=str(language),
     )
 
-    system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
+    system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES} {END_CALL_RULE}".strip()
     if direction == "outbound":
         system += (
             "\n\nYou placed this call yourself because the person asked for a callback. "
             "Open by confirming it is a good time to talk, then help with what they need."
         )
-    context = LLMContext(messages=[{"role": "system", "content": system}])
+    context = LLMContext(messages=[{"role": "system", "content": system}], tools=END_CALL_TOOLS)
     aggregators = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(
@@ -176,8 +186,13 @@ async def run_bot(
     )
     user_agg, assistant_agg = aggregators.user(), aggregators.assistant()
 
+    @user_agg.event_handler("on_user_turn_started")
+    async def _user_turn_started(aggregator, strategy):
+        clock.user_started()
+
     @user_agg.event_handler("on_user_turn_stopped")
     async def _user_turn(aggregator, strategy, message):
+        clock.user_stopped()
         text = message.content or ""
         timer.user_stopped()
         events.log("call.user_said", call_sid=call_sid, text=text[:200])
@@ -232,10 +247,14 @@ async def run_bot(
 
     serializer.on_stop = _end_call
     stats = asyncio.create_task(_audio_stats(serializer, call_sid, task))
+    guard = asyncio.create_task(
+        guard_call(clock, task, call_sid, settings.max_call_secs, settings.silence_hangup_secs)
+    )
     try:
         await PipelineRunner(handle_sigint=False).run(task)
     finally:
         stats.cancel()
+        guard.cancel()
         costs.stt_seconds = serializer.frames_in * 0.02  # VoiceLink frames are 20 ms each
         summary = costs.summary()
         events.log("call.cost", call_sid=call_sid, **{k: summary[k] for k in ("total_inr", "complete", "llm", "tts", "stt")})
