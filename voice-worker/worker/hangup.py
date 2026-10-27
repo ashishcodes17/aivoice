@@ -53,17 +53,19 @@ def register_end_call(llm, call_sid: str) -> None:
 
 
 class CallClock:
-    """Tracks who spoke last so a silent line can be hung up."""
+    """Tracks who spoke last so a silent line can be nudged, then hung up."""
 
     def __init__(self) -> None:
         self.last_activity = time.monotonic()
         self.user_speaking = False
+        self.nudges = 0  # nudges sent since the caller last spoke
 
     def touch(self) -> None:
         self.last_activity = time.monotonic()
 
     def user_started(self) -> None:
         self.user_speaking = True
+        self.nudges = 0
         self.touch()
 
     def user_stopped(self) -> None:
@@ -72,9 +74,16 @@ class CallClock:
 
 
 async def guard_call(
-    clock: CallClock, task: PipelineTask, call_sid: str, max_call_secs: int, silence_secs: int
+    clock: CallClock,
+    task: PipelineTask,
+    call_sid: str,
+    max_call_secs: int,
+    silence_secs: int,
+    nudge_secs: int = 0,
+    nudge=None,
+    hangup_after_nudge_secs: int = 12,
 ) -> None:
-    """Hang up on a line nobody is speaking on, and on calls that run past the hard cap."""
+    """Check in on a quiet line like a person would, then hang up; also cap the call length."""
     started = time.monotonic()
     while True:
         await asyncio.sleep(1)
@@ -83,7 +92,17 @@ async def guard_call(
             events.log("call.max_duration", "WARNING", call_sid=call_sid, seconds=max_call_secs)
             await task.stop_when_done()
             return
-        if silence_secs and not clock.user_speaking and now - clock.last_activity >= silence_secs:
-            events.log("call.silence_hangup", "WARNING", call_sid=call_sid, seconds=silence_secs)
+        if clock.user_speaking:
+            continue
+        quiet = now - clock.last_activity
+        if nudge and nudge_secs and clock.nudges == 0 and quiet >= nudge_secs:
+            clock.nudges += 1
+            events.log("call.nudge", call_sid=call_sid, quiet_seconds=round(quiet))
+            await nudge()
+            clock.touch()
+            continue
+        limit = hangup_after_nudge_secs if clock.nudges else silence_secs
+        if limit and quiet >= limit:
+            events.log("call.silence_hangup", "WARNING", call_sid=call_sid, seconds=round(quiet), nudged=bool(clock.nudges))
             await task.stop_when_done()
             return

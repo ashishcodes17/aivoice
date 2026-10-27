@@ -30,6 +30,7 @@ from .config import settings
 from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
 from .latency import LLMProbe, TurnTimer
+from .textfilter import ScriptFilter
 from .transcripts import TranscriptCleaner
 from .serializer import VoiceLinkFrameSerializer
 from .rumik_tts import RumikTTSService
@@ -41,6 +42,13 @@ VOICE_RULES = (
 )
 
 PIPELINE_SAMPLE_RATE = 8000
+
+
+NUDGES = {
+    "te": "హలో, మీకు వినిపిస్తోందా?",
+    "hi": "हेलो, क्या आपको मेरी आवाज़ आ रही है?",
+}
+DEFAULT_NUDGE = "Hello, can you hear me?"
 
 
 def _language(code: str) -> Language:
@@ -132,6 +140,8 @@ async def run_bot(
     serializer = VoiceLinkFrameSerializer(start)
     timer = TurnTimer(call_sid)
     clock = CallClock()
+    opener: list[asyncio.Task] = []
+    heard_user = asyncio.Event()
 
     def _agent_audio() -> None:
         timer.audio_out()
@@ -186,10 +196,15 @@ async def run_bot(
     )
 
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
+    cfg = agent.get("config") or {}
+    greeting = (cfg.get("outbound_first_message") if direction == "outbound" else None) or agent.get("first_message")
     if direction == "outbound":
         system += (
-            "\n\nYou placed this call yourself because the person asked for a callback. "
-            "Open by confirming it is a good time to talk, then help with what they need."
+            "\n\nYou placed this call yourself because the person asked for a callback. The person has just "
+            "picked up. Do not talk before they do: their first words are usually hello. Reply to that with your "
+            "opening, which must say who you are, why you are calling, and ask whether they can talk now. "
+            f"Your opening is: \"{greeting}\". Say it in those words, do not ask the same question twice, and "
+            "do not greet them separately."
         )
     system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most
     # Sarvam's own VAD decides when a turn starts and ends (Pipecat picks the same strategies for us),
@@ -215,6 +230,7 @@ async def run_bot(
     @user_agg.event_handler("on_user_turn_started")
     async def _user_turn_started(aggregator, strategy):
         clock.user_started()
+        heard_user.set()
 
     @user_agg.event_handler("on_user_turn_stopped")
     async def _user_turn(aggregator, strategy, message):
@@ -238,6 +254,7 @@ async def run_bot(
             user_agg,
             llm,
             LLMProbe(timer),
+            ScriptFilter(call_sid),
             tts,
             TTSUsageProbe(costs),
             transport.output(),
@@ -252,13 +269,22 @@ async def run_bot(
         rates["audio_out_sample_rate"] = PIPELINE_SAMPLE_RATE
     task = PipelineTask(pipeline, params=PipelineParams(**rates))
 
+    async def _open_outbound() -> None:
+        # Pick-up is followed by "hello?"; talking over it sounds like a robot. Wait for it, and only
+        # speak first when the line stays quiet (a slow pickup, or a handset that opens muted).
+        try:
+            await asyncio.wait_for(heard_user.wait(), settings.outbound_wait_secs)
+        except asyncio.TimeoutError:
+            events.log("call.outbound_spoke_first", call_sid=call_sid)
+            if greeting:
+                await task.queue_frames([TTSSpeakFrame(greeting)])
+
     @transport.event_handler("on_client_connected")
     async def _connected(transport, ws):
-        # When the agent is the one calling, "thanks for calling" would be wrong.
-        greeting = (agent.get("config") or {}).get("outbound_first_message") if direction == "outbound" else None
-        greeting = greeting or agent.get("first_message")
-        events.log("call.pipeline_started", call_sid=call_sid, greeting=bool(greeting))
-        if greeting:
+        events.log("call.pipeline_started", call_sid=call_sid, greeting=bool(greeting), waits_for_hello=direction == "outbound")
+        if direction == "outbound":
+            opener.append(asyncio.create_task(_open_outbound()))
+        elif greeting:
             await task.queue_frames([TTSSpeakFrame(greeting)])
 
     @transport.event_handler("on_client_disconnected")
@@ -273,14 +299,24 @@ async def run_bot(
 
     serializer.on_stop = _end_call
     stats = asyncio.create_task(_audio_stats(serializer, call_sid, task))
+    nudge_text = cfg.get("idle_nudge_message") or NUDGES.get(language.value.split("-")[0], DEFAULT_NUDGE)
+
+    async def _nudge() -> None:
+        await task.queue_frames([TTSSpeakFrame(nudge_text)])
+
     guard = asyncio.create_task(
-        guard_call(clock, task, call_sid, settings.max_call_secs, settings.silence_hangup_secs)
+        guard_call(
+            clock, task, call_sid, settings.max_call_secs, settings.silence_hangup_secs,
+            settings.nudge_secs, _nudge, settings.hangup_after_nudge_secs,
+        )
     )
     try:
         await PipelineRunner(handle_sigint=False).run(task)
     finally:
         stats.cancel()
         guard.cancel()
+        for t in opener:
+            t.cancel()
         costs.stt_seconds = serializer.frames_in * 0.02  # VoiceLink frames are 20 ms each
         summary = costs.summary()
         events.log("call.cost", call_sid=call_sid, **{k: summary[k] for k in ("total_inr", "complete", "llm", "tts", "stt")})

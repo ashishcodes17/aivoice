@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     # Safety nets for calls the agent does not end itself (VoiceLink never hangs up on its own).
     max_call_secs: int = 600
     silence_hangup_secs: int = 25
+    # A quiet line gets one "can you hear me?" after this long, then a hangup if still quiet.
+    nudge_secs: int = 7
+    hangup_after_nudge_secs: int = 10
+    # Outbound: how long to wait for the person's "hello" before speaking first.
+    outbound_wait_secs: float = 3.5
 
     # Native 8 kHz synthesis, latency-sorted LLM routing. Turn off only to compare.
     low_latency: bool = True
