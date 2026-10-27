@@ -146,6 +146,7 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     .select("to_number")
     .eq("org_id", org.id)
     .eq("metadata->>kind", "callback")
+    .neq("status", "failed") // a request VoiceLink refused never dialled, so it should not use up the allowance
     .gte("created_at", since);
   const rows = recent.data ?? [];
   if (rows.length >= MAX_CALLBACKS_PER_HOUR) {
