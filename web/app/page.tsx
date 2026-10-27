@@ -1,13 +1,25 @@
-import Link from "next/link";
+import { Cta } from "@/components/landing/cta";
+import { Faq } from "@/components/landing/faq";
+import { Features } from "@/components/landing/features";
+import { Footer } from "@/components/landing/footer";
+import { Header } from "@/components/landing/header";
+import { Hero } from "@/components/landing/hero";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { Languages } from "@/components/landing/languages";
 
 export default function Home() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center gap-4 px-4 text-center">
-      <h1 className="text-3xl font-semibold">AI Voice Calling Platform</h1>
-      <p className="max-w-md text-zinc-500">Build voice agents that answer and make phone calls in Indian languages.</p>
-      <Link href="/login" className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-medium text-white dark:bg-white dark:text-black">
-        Get started
-      </Link>
-    </main>
+    <>
+      <Header />
+      <main className="flex-1">
+        <Hero />
+        <Features />
+        <Languages />
+        <HowItWorks />
+        <Faq />
+        <Cta />
+      </main>
+      <Footer />
+    </>
   );
 }

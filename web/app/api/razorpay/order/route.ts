@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { razorpay } from "@/lib/razorpay";
+import { getRazorpay } from "@/lib/razorpay";
 
 const Body = z.object({
   orgId: z.string().uuid(),
@@ -10,6 +10,9 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+    return NextResponse.json({ error: "Payments are not set up yet." }, { status: 503 });
+  }
   const parsed = Body.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Invalid body" }, { status: 400 });
   const { orgId, amountRupees } = parsed.data;
@@ -27,7 +30,7 @@ export async function POST(req: Request) {
   if (!membership) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const amountPaise = amountRupees * 100;
-  const order = await razorpay.orders.create({
+  const order = await getRazorpay().orders.create({
     amount: amountPaise,
     currency: "INR",
     notes: { org_id: orgId },
