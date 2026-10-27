@@ -20,6 +20,9 @@ from pipecat.services.openrouter.llm import OpenRouterLLMService  # noqa: F401  
 from pipecat.services.sarvam.stt import SarvamRealtimeSTTService
 from pipecat.services.sarvam.tts import SarvamTTSService
 from pipecat.transcriptions.language import Language
+from pipecat.turns.user_start import ExternalUserTurnStartStrategy
+from pipecat.turns.user_stop import ExternalUserTurnStopStrategy
+from pipecat.turns.user_turn_strategies import UserTurnStrategies
 from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPIWebsocketTransport
 
 from . import events
@@ -189,10 +192,19 @@ async def run_bot(
             "Open by confirming it is a good time to talk, then help with what they need."
         )
     system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most
+    # Sarvam's own VAD decides when a turn starts and ends (Pipecat picks the same strategies for us),
+    # but its stop strategy adds a 0.5 s wait after the transcript. Supply it with a shorter one.
+    turn_strategies = None
+    if agent.get("stt_provider", "sarvam") == "sarvam" and settings.sarvam_endpointing == "vad":
+        turn_strategies = UserTurnStrategies(
+            start=[ExternalUserTurnStartStrategy(enable_interruptions=True)],
+            stop=[ExternalUserTurnStopStrategy(timeout=settings.turn_stop_timeout_secs)],
+        )
     context = LLMContext(messages=[{"role": "system", "content": system}], tools=END_CALL_TOOLS)
     aggregators = LLMContextAggregatorPair(
         context,
         user_params=LLMUserAggregatorParams(
+            user_turn_strategies=turn_strategies,
             vad_analyzer=SileroVADAnalyzer(
                 params=VADParams(start_secs=settings.vad_start_secs, stop_secs=settings.vad_stop_secs)
             )

@@ -100,8 +100,10 @@ export async function removeNumber(id: string) {
 
 // ---- Request a call: the agent dials a number the user enters --------------------------------
 
-const MAX_CALLBACKS_PER_HOUR = 5; // per organization
-const MAX_CALLBACKS_PER_NUMBER_PER_HOUR = 2;
+// Generous enough to test an agent repeatedly; the wallet is the real spending cap.
+const MAX_CALLBACKS_PER_HOUR = 30; // per organization
+const MAX_CALLBACKS_PER_NUMBER_PER_HOUR = 15;
+const CALLBACK_COOLDOWN_MS = 45_000; // stops a double click ringing the same phone twice
 
 const CallbackSchema = z.object({
   phone_number_id: z.string().uuid("Choose which number the agent should call from."),
@@ -143,7 +145,7 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
   const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const recent = await admin
     .from("calls")
-    .select("to_number")
+    .select("to_number, created_at")
     .eq("org_id", org.id)
     .eq("metadata->>kind", "callback")
     .neq("status", "failed") // a request VoiceLink refused never dialled, so it should not use up the allowance
@@ -152,8 +154,12 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
   if (rows.length >= MAX_CALLBACKS_PER_HOUR) {
     return { error: `You can request up to ${MAX_CALLBACKS_PER_HOUR} calls per hour. Please try again later.` };
   }
-  if (rows.filter((r) => r.to_number === dest.national).length >= MAX_CALLBACKS_PER_NUMBER_PER_HOUR) {
-    return { error: "That number was called recently. Please wait before requesting another call." };
+  const toThisNumber = rows.filter((r) => r.to_number === dest.national);
+  if (toThisNumber.some((r) => Date.now() - new Date(r.created_at).getTime() < CALLBACK_COOLDOWN_MS)) {
+    return { error: "That number was just called. Please wait a moment before requesting another call." };
+  }
+  if (toThisNumber.length >= MAX_CALLBACKS_PER_NUMBER_PER_HOUR) {
+    return { error: "That number was called too many times this hour. Please try again later." };
   }
 
   // Record the call first; its id travels with the call so the worker can attach to this row.

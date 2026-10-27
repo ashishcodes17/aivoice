@@ -16,6 +16,10 @@ class Settings(BaseSettings):
 
     ws_token: str = ""
 
+    # After Sarvam's final transcript the turn-end strategy waits this long for a follow-up fragment
+    # before handing the turn to the LLM. Pipecat's default is 0.5 s, pure dead air on every turn.
+    turn_stop_timeout_secs: float = 0.1
+
     # Safety nets for calls the agent does not end itself (VoiceLink never hangs up on its own).
     max_call_secs: int = 600
     silence_hangup_secs: int = 25
