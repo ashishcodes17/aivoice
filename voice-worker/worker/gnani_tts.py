@@ -4,6 +4,10 @@ Measured from India: first audio about 140 ms after a sentence is sent (its REST
 took 1.4 s or more), and synthesis runs about three times faster than speech. The socket takes
 0.5 to 1.3 s to open, so it is opened when the call starts and kept for the whole call.
 
+Gnani sends a tiny first chunk (about 60 ms of sound) and then pauses about 0.4 s before the rest of
+the sentence, which on a call is a click, a gap, then speech. The first 300 ms of each sentence is
+therefore held back and played together; the speech was not going to start any sooner than that.
+
 Gnani accepts one request at a time on a socket and has no cancel message. On a barge-in the rest
 of that sentence's audio is dropped as it arrives, and the next sentence waits for the server to
 finish the old one (usually well under a second).
@@ -36,6 +40,8 @@ URL = "wss://api.vachana.ai/api/v1/tts"
 DEFAULT_MODEL = "timbre-v3.0"
 DEFAULT_VOICE = "Lakshmi"
 # Languages Gnani accepts; anything else is sent as "auto".
+# How much of a sentence to collect before the first audio is played.
+LEAD_SECONDS = 0.3
 LANGUAGES = {"hi-IN", "en-IN", "ta-IN", "te-IN", "kn-IN", "ml-IN", "mr-IN", "pa-IN", "bn-IN", "gu-IN"}
 
 
@@ -65,6 +71,10 @@ class GnaniTTSService(InterruptibleTTSService):
         # One request at a time on the socket. Held until the server says the request is complete,
         # including after a barge-in, because Gnani cannot be told to stop.
         self._synthesis_lock = asyncio.Lock()
+        # Start of the current sentence, held until enough has arrived to play without a gap.
+        self._lead = bytearray()
+        self._lead_released = False
+        self._lead_bytes = int(sample_rate * 2 * LEAD_SECONDS)
 
     def can_generate_metrics(self) -> bool:
         return True
@@ -171,15 +181,19 @@ class GnaniTTSService(InterruptibleTTSService):
                     context_id = self._active_context_id
                     audio = base64.b64decode((data.get("data") or {}).get("audio") or "")
                     if context_id and audio:
-                        await self.append_to_audio_context(
-                            context_id,
-                            TTSAudioRawFrame(audio=audio, sample_rate=self._rate, num_channels=1, context_id=context_id),
-                        )
+                        if self._lead_released:
+                            await self._play(context_id, audio)
+                        else:
+                            self._lead += audio
+                            if len(self._lead) >= self._lead_bytes:
+                                await self._release_lead(context_id)
                 elif kind == "complete":
                     # Gnani sends two "complete" messages per request: the final chunk (with `data`)
                     # and then "Streaming completed". Only the first ends the sentence; counting the
                     # second cut the next sentence off before it was spoken.
                     if data.get("data") is not None:
+                        if self._active_context_id and not self._lead_released:
+                            await self._release_lead(self._active_context_id)  # a short sentence
                         await self._finish_active_context()
                 elif kind == "error":
                     await self._finish_active_context(error_msg=f"Gnani TTS error: {data.get('message') or data}")
@@ -190,6 +204,16 @@ class GnaniTTSService(InterruptibleTTSService):
             raise
         else:
             await self._finish_active_context(error_msg="Gnani WebSocket closed before synthesis completed")
+
+    async def _play(self, context_id: str, audio: bytes):
+        await self.append_to_audio_context(
+            context_id, TTSAudioRawFrame(audio=audio, sample_rate=self._rate, num_channels=1, context_id=context_id)
+        )
+
+    async def _release_lead(self, context_id: str):
+        lead, self._lead, self._lead_released = bytes(self._lead), bytearray(), True
+        if lead:
+            await self._play(context_id, lead)
 
     async def _finish_active_context(self, *, error_msg: str | None = None):
         context_id = self._active_context_id
@@ -203,6 +227,7 @@ class GnaniTTSService(InterruptibleTTSService):
 
     def _release(self):
         self._active_context_id = None
+        self._lead, self._lead_released = bytearray(), False
         if self._synthesis_lock.locked():
             self._synthesis_lock.release()
 
@@ -225,6 +250,7 @@ class GnaniTTSService(InterruptibleTTSService):
 
         await self._synthesis_lock.acquire()
         self._active_context_id = context_id
+        self._lead, self._lead_released = bytearray(), False
         try:
             if not self._websocket or self._websocket.state is State.CLOSED:
                 await self._connect()

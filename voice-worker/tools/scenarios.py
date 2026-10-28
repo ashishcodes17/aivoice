@@ -147,7 +147,7 @@ SCENARIOS = {
         "caller": (
             "You are Venkat, 45, a shrimp farmer near Bhimavaram in West Godavari with four ponds of about one acre each. "
             "You are a little busy but willing to talk. You currently buy seed from another hatchery and are fairly happy but "
-            "the last batch had uneven size. You plan to stock two ponds in the first week of December, about five lakh PL. "
+            "the last batch had uneven size. You do NOT know the exact size of your ponds in acres and get a little irritated if asked about it more than once. You plan to stock two ponds in the first week of December, about five lakh PL. "
             "You ask: what is your rate, do you have disease-free test reports, can I visit your hatchery, is there any discount "
             "if I book early. You do not give your hatchery name unless asked twice. Be skeptical but fair. Reply in short "
             "colloquial Telugu in Telugu script with a few English words. After about ten exchanges agree that the hatchery "

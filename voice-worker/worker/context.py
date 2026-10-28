@@ -58,8 +58,8 @@ def call_context_note(
         confirm = _CONFIRM_NUMBER.get(lang, _CONFIRM_NUMBER["en"])
         parts.append(
             f"THE PERSON'S NUMBER: {_spoken_digits(customer_number)} ({how}). You already have it, so never ask "
-            f'them to say it. When you need a contact number, confirm it instead: "{confirm}" You may read back '
-            f"its last four digits. Only if they give a different number, take that one (10 digits, read back "
+            f'them to say it. When you need a contact number, confirm it instead: "{confirm}" Never read the whole number out '
+            f"loud: say \"this number\", or at most its last four digits. Only if they give a different number, take that one (10 digits, read back "
             f"{_READ_BACK.get(lang, _READ_BACK['en'])})."
         )
     return "\n".join(parts)
