@@ -121,6 +121,22 @@ def smallest(voice: str, lang: str) -> bytes:
     return retry(go)
 
 
+def gnani(voice: str, lang: str) -> bytes:
+    """Gnani Timbre v3. Every voice speaks every language; one request at a time per key."""
+    def go():
+        for wait in (0, 2, 4, 8):
+            time.sleep(wait)
+            r = httpx.post("https://api.vachana.ai/api/v1/tts/inference", headers={"X-API-Key-ID": settings.gnani_api_key},
+                           json={"text": TEXT[lang], "model": "timbre-v3.0", "voice": voice, "language": lang,
+                                 "audio_config": {"sample_rate": 8000, "encoding": "linear_pcm", "container": "wav"}}, timeout=90)
+            if r.status_code != 429:
+                break
+        if r.status_code != 200 or len(r.content) < 1000:
+            raise RuntimeError(f"gnani {r.status_code}: {r.text[:120]}")
+        return r.content
+    return retry(go)
+
+
 # ---- measurement -----------------------------------------------------------------------------
 
 def clarity(pcm: np.ndarray, lang: str) -> float:
@@ -203,8 +219,8 @@ def render(job):
             raw = sarvam(voice, lang, extra.get("model", "bulbul:v3"))
             with tempfile.NamedTemporaryFile(suffix=".wav") as f:
                 f.write(raw); f.flush(); pcm = to_pcm8k(Path(f.name))
-        elif provider == "smallest":
-            raw = smallest(voice, lang)
+        elif provider in ("smallest", "gnani"):
+            raw = smallest(voice, lang) if provider == "smallest" else gnani(voice, lang)
             with tempfile.NamedTemporaryFile(suffix=".wav") as f:
                 f.write(raw); f.flush(); pcm = to_pcm8k(Path(f.name))
         elif provider == "elevenlabs":
@@ -243,12 +259,16 @@ SMALLEST = [("rhea", ("te-IN", "en-IN", "hi-IN")), ("mishka", ("te-IN", "en-IN",
             ("sravani", ("te-IN",)), ("swathi", ("te-IN",))]
 
 
-def add_smallest():
-    """Render only the Smallest AI voices and merge them into the existing catalog."""
+GNANI = [(v, ("te-IN", "en-IN", "hi-IN")) for v in ("Lakshmi", "Chetana", "Tarika", "Kalpana", "Riyaa", "Shivani", "Prakash", "Avinash")]
+PROVIDER_MODEL = {"smallest": "lightning_v3.1_pro", "gnani": "timbre-v3.0"}
+
+
+def add_provider(provider: str, voices: list):
+    """Render one provider's voices and merge them into the existing catalog (others untouched)."""
     path = ROOT / "web" / "lib" / "voice-catalog.json"
     cat = json.loads(path.read_text())
-    cat["voices"] = [v for v in cat["voices"] if v["provider"] != "smallest"]
-    jobs = [("smallest", v, v.capitalize(), lang, {}) for v, langs in SMALLEST for lang in langs]
+    cat["voices"] = [v for v in cat["voices"] if v["provider"] != provider]
+    jobs = [(provider, v, v.capitalize(), lang, {}) for v, langs in voices for lang in langs]
     entries: dict[str, dict] = {}
     for job in jobs:
         _, result, err = render(job)
@@ -258,7 +278,7 @@ def add_smallest():
         print(f"ok {voice:8s} {lang} clarity {result['clarity']:.2f} pitch {result['pitch_hz']} Hz movement {result['pitch_sd']}", flush=True)
         if result["clarity"] < 0.80:
             print("   dropped: unclear"); continue
-        e = entries.setdefault(voice, {"provider": "smallest", "voice": voice, "label": label, "model": "lightning_v3.1_pro", "languages": {}})
+        e = entries.setdefault(voice, {"provider": provider, "voice": voice, "label": label, "model": PROVIDER_MODEL[provider], "languages": {}})
         e["languages"][lang] = result
     for e in entries.values():
         pitch = float(np.median([r["pitch_hz"] for r in e["languages"].values() if r["pitch_hz"]] or [0]))
@@ -273,7 +293,9 @@ def main():
     if "--backfill" in sys.argv:
         return backfill()
     if "--smallest" in sys.argv:
-        return add_smallest()
+        return add_provider("smallest", SMALLEST)
+    if "--gnani" in sys.argv:
+        return add_provider("gnani", GNANI)
     jobs = []
     for lang in LANGS:
         for v in SARVAM_V3:

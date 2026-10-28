@@ -84,6 +84,10 @@ class CallCosts:
             tts_rate = None if usd is None else round(usd * fx, 4)
             tts_inr = None if usd is None else self.tts_chars / 1000 * usd * fx
 
+        if self.tts_provider == "gnani" and settings.gnani_tts_inr_per_1k_chars is not None:
+            tts_rate = settings.gnani_tts_inr_per_1k_chars
+            tts_inr = self.tts_chars / 1000 * tts_rate
+
         stt_rate = settings.sarvam_stt_inr_per_min if self.stt_provider == "sarvam" else None
         stt_inr = self.stt_seconds / 60 * stt_rate if stt_rate is not None else None
 

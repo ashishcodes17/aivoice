@@ -8,7 +8,7 @@ line and language instructions for the duration of that one call.
 from . import events
 from .config import settings
 
-_KEYS = {"sarvam": "sarvam_api_key", "elevenlabs": "elevenlabs_api_key", "rumik": "rumik_api_key", "smallest": "smallest_api_key"}
+_KEYS = {"sarvam": "sarvam_api_key", "elevenlabs": "elevenlabs_api_key", "rumik": "rumik_api_key", "smallest": "smallest_api_key", "gnani": "gnani_api_key"}
 
 
 def provider_ready(provider: str | None) -> bool:
@@ -50,6 +50,9 @@ VOICES: dict[tuple[str, str], dict] = {
     ("smallest", "te-IN"): {"voice": "zariya", "model": "lightning_v3.1_pro"},
     ("smallest", "en-IN"): {"voice": "zariya", "model": "lightning_v3.1_pro"},
     ("smallest", "hi-IN"): {"voice": "zariya", "model": "lightning_v3.1_pro"},
+    ("gnani", "te-IN"): {"voice": "Lakshmi", "model": "timbre-v3.0"},
+    ("gnani", "en-IN"): {"voice": "Lakshmi", "model": "timbre-v3.0"},
+    ("gnani", "hi-IN"): {"voice": "Lakshmi", "model": "timbre-v3.0"},
     ("rumik", "en-IN"): {"voice": "zoya", "model": "mulberry", "description": "A warm, friendly, confident young woman speaking natural Indian English at a brisk, easy pace."},
     ("rumik", "hi-IN"): {"voice": "siya", "model": "mulberry", "description": "A warm, friendly, confident young woman speaking natural conversational Hindi at a brisk, easy pace."},
 }

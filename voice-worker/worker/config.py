@@ -9,7 +9,10 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = ""
     rumik_api_key: str = ""
     smallest_api_key: str = ""
-    # Seconds to wait before hanging up on a Smallest voice, so the goodbye is heard first.
+    gnani_api_key: str = ""
+    # Gnani has not published a price; set it (INR per 1,000 characters) to include it in call costs.
+    gnani_tts_inr_per_1k_chars: float | None = None
+    # Seconds to wait before hanging up on a Smallest or Gnani voice, so the goodbye is heard first.
     smallest_end_hold_secs: float = 3.5
     rumik_gateway_url: str = "https://silk-api.rumik.ai"
     # 0 = do not send max_new_tokens (Rumik's default cap of 2048 applies).

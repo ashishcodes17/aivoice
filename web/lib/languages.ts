@@ -24,6 +24,7 @@ export const SARVAM_TTS_MODELS = [
   { value: "mulberry", label: "Rumik Mulberry (Hindi, English)" },
   { value: "muga", label: "Rumik Muga (Hindi, English)" },
   { value: "lightning_v3.1_pro", label: "Smallest Lightning v3.1 Pro" },
+  { value: "timbre-v3.0", label: "Gnani Timbre v3" },
 ];
 
 export const TTS_PROVIDERS = [
@@ -31,4 +32,5 @@ export const TTS_PROVIDERS = [
   { value: "elevenlabs", label: "ElevenLabs" },
   { value: "rumik", label: "Rumik" },
   { value: "smallest", label: "Smallest AI" },
+  { value: "gnani", label: "Gnani" },
 ];

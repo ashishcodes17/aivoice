@@ -30,6 +30,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 from . import events
 from .config import settings
 from .context import call_context_note, national_number
+from .gnani_tts import GnaniTTSService
 from .llm_sarvam import SarvamLLMWithBackup, is_sarvam_llm
 from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
 from .costs import CallCosts, CostTrackingOpenRouterLLM, TTSUsageProbe
@@ -119,6 +120,16 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False, rate: 
             **strict,
             settings=ElevenLabsTTSService.Settings(model="eleven_flash_v2_5", voice=voice, language=language),
         )
+    if agent.get("tts_provider") == "gnani":
+        cfg = agent.get("config") or {}
+        tts = GnaniTTSService(
+            api_key=settings.gnani_api_key,
+            sample_rate=rate,
+            **strict,
+            settings=GnaniTTSService.Settings(model=cfg.get("tts_model") or "timbre-v3.0", voice=voice, language=None),
+        )
+        tts.spoken_language = str(language)
+        return tts
     if agent.get("tts_provider") == "smallest":
         cfg = agent.get("config") or {}
         # Smallest's Indian voices speak English and Hindi under "hi" (Indian-accented English plus
@@ -296,7 +307,7 @@ async def run_bot(
             settings=SarvamLLMService.Settings(model=agent_llm, temperature=0.5, max_tokens=300),
         )
     llm_probe = LLMProbe(timer)
-    register_end_call(llm, call_sid, language.value, lambda: llm_probe.spoke, hold_secs=settings.smallest_end_hold_secs if agent.get("tts_provider") == "smallest" else 0.0)
+    register_end_call(llm, call_sid, language.value, lambda: llm_probe.spoke, hold_secs=settings.smallest_end_hold_secs if agent.get("tts_provider") in ("smallest", "gnani") else 0.0)
     # Any voice other than Sarvam has Sarvam standing by: if it cannot speak (bad key, outage),
     # the call switches over instead of going silent.
     backup = fallback_agent(agent) if (agent.get("tts_provider") or "sarvam") != "sarvam" and provider_ready("sarvam") else None

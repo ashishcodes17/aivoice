@@ -13,6 +13,7 @@ export const CALL_PROVIDERS = [
   { value: "elevenlabs", label: "ElevenLabs" },
   { value: "rumik", label: "Rumik" },
   { value: "smallest", label: "Smallest AI" },
+  { value: "gnani", label: "Gnani" },
 ] as const;
 
 export type CallLanguage = (typeof CALL_LANGUAGES)[number]["value"];
@@ -24,6 +25,7 @@ export const SUPPORTED: Record<CallProvider, CallLanguage[]> = {
   elevenlabs: ["en-IN", "hi-IN"],
   rumik: ["en-IN", "hi-IN"],
   smallest: ["te-IN", "en-IN", "hi-IN"],
+  gnani: ["te-IN", "en-IN", "hi-IN"],
 };
 
 export function isSupported(provider: string, language: string) {

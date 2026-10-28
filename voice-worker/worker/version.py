@@ -19,6 +19,8 @@ FEATURES = (
     "sarvam_llm",
     "sarvam_tts_temperature",
     "smallest_tts",
+    "gnani_tts",
+    "wideband_16k",
 )
 
 
@@ -29,6 +31,7 @@ def status() -> dict:
         "elevenlabs": settings.elevenlabs_api_key,
         "rumik": settings.rumik_api_key,
         "smallest": settings.smallest_api_key,
+        "gnani": settings.gnani_api_key,
         "supabase_service_role": settings.supabase_service_role_key,
         "voicelink": settings.voicelink_api_token,
         "ws_token": settings.ws_token,

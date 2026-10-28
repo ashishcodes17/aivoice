@@ -11,7 +11,7 @@ export function liveliness(sd?: number): string | null {
   return sd >= 3.2 ? "Lively" : sd >= 2.4 ? "Moderate" : "Flat";
 }
 export type CatalogVoice = {
-  provider: "sarvam" | "elevenlabs" | "rumik" | "smallest";
+  provider: "sarvam" | "elevenlabs" | "rumik" | "smallest" | "gnani";
   voice: string;
   label: string;
   model: string | null;
@@ -37,6 +37,7 @@ const RUMIK_STYLE: Record<string, string> = {
 export function voiceConfig(v: CatalogVoice, language: string): Record<string, string | number> {
   if (v.provider === "sarvam") return { tts_model: v.model ?? "bulbul:v3", ...(v.voice === "kavitha_te_conversation" ? { tts_pace: 1.2 } : {}), ...(v.voice === "pooja" && language === "te-IN" ? { tts_pace: 1.1, tts_temperature: 0.9 } : {}) };
   if (v.provider === "smallest") return { tts_model: "lightning_v3.1_pro" };
+  if (v.provider === "gnani") return { tts_model: "timbre-v3.0" };
   if (v.provider === "rumik") return { tts_model: "mulberry", tts_description: RUMIK_STYLE[language] ?? RUMIK_STYLE["en-IN"] };
   return {};
 }

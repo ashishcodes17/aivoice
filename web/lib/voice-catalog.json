@@ -347,6 +347,246 @@
    "gender": "female"
   },
   {
+   "provider": "gnani",
+   "voice": "Avinash",
+   "label": "Avinash",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.4,
+     "clarity": 0.99,
+     "pitch_hz": 123,
+     "pitch_sd": 2.9,
+     "file": "/voices/gnani/te-IN/Avinash.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.4,
+     "clarity": 0.99,
+     "pitch_hz": 129,
+     "pitch_sd": 3.62,
+     "file": "/voices/gnani/en-IN/Avinash.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.7,
+     "clarity": 0.98,
+     "pitch_hz": 134,
+     "pitch_sd": 3.78,
+     "file": "/voices/gnani/hi-IN/Avinash.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Chetana",
+   "label": "Chetana",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.9,
+     "clarity": 0.97,
+     "pitch_hz": 250,
+     "pitch_sd": 4.0,
+     "file": "/voices/gnani/te-IN/Chetana.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.0,
+     "clarity": 1.0,
+     "pitch_hz": 276,
+     "pitch_sd": 3.33,
+     "file": "/voices/gnani/en-IN/Chetana.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.9,
+     "clarity": 0.98,
+     "pitch_hz": 235,
+     "pitch_sd": 3.67,
+     "file": "/voices/gnani/hi-IN/Chetana.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Kalpana",
+   "label": "Kalpana",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.0,
+     "clarity": 0.97,
+     "pitch_hz": 276,
+     "pitch_sd": 3.02,
+     "file": "/voices/gnani/te-IN/Kalpana.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.1,
+     "clarity": 1.0,
+     "pitch_hz": 276,
+     "pitch_sd": 4.0,
+     "file": "/voices/gnani/en-IN/Kalpana.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.2,
+     "clarity": 0.99,
+     "pitch_hz": 242,
+     "pitch_sd": 3.29,
+     "file": "/voices/gnani/hi-IN/Kalpana.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Lakshmi",
+   "label": "Lakshmi",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.8,
+     "clarity": 0.99,
+     "pitch_hz": 258,
+     "pitch_sd": 2.89,
+     "file": "/voices/gnani/te-IN/Lakshmi.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.8,
+     "clarity": 1.0,
+     "pitch_hz": 267,
+     "pitch_sd": 3.84,
+     "file": "/voices/gnani/en-IN/Lakshmi.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.6,
+     "clarity": 0.98,
+     "pitch_hz": 246,
+     "pitch_sd": 3.09,
+     "file": "/voices/gnani/hi-IN/Lakshmi.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Prakash",
+   "label": "Prakash",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.5,
+     "clarity": 1.0,
+     "pitch_hz": 151,
+     "pitch_sd": 4.09,
+     "file": "/voices/gnani/te-IN/Prakash.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.4,
+     "clarity": 0.99,
+     "pitch_hz": 167,
+     "pitch_sd": 4.79,
+     "file": "/voices/gnani/en-IN/Prakash.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.8,
+     "clarity": 0.98,
+     "pitch_hz": 134,
+     "pitch_sd": 3.31,
+     "file": "/voices/gnani/hi-IN/Prakash.m4a"
+    }
+   },
+   "gender": "male"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Riyaa",
+   "label": "Riyaa",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.4,
+     "clarity": 0.98,
+     "pitch_hz": 250,
+     "pitch_sd": 3.93,
+     "file": "/voices/gnani/te-IN/Riyaa.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.2,
+     "clarity": 1.0,
+     "pitch_hz": 276,
+     "pitch_sd": 3.72,
+     "file": "/voices/gnani/en-IN/Riyaa.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.6,
+     "clarity": 0.98,
+     "pitch_hz": 258,
+     "pitch_sd": 3.39,
+     "file": "/voices/gnani/hi-IN/Riyaa.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Shivani",
+   "label": "Shivani",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.5,
+     "clarity": 0.94,
+     "pitch_hz": 258,
+     "pitch_sd": 3.39,
+     "file": "/voices/gnani/te-IN/Shivani.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.8,
+     "clarity": 1.0,
+     "pitch_hz": 242,
+     "pitch_sd": 3.67,
+     "file": "/voices/gnani/en-IN/Shivani.m4a"
+    },
+    "hi-IN": {
+     "seconds": 9.5,
+     "clarity": 0.98,
+     "pitch_hz": 222,
+     "pitch_sd": 3.13,
+     "file": "/voices/gnani/hi-IN/Shivani.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "gnani",
+   "voice": "Tarika",
+   "label": "Tarika",
+   "model": "timbre-v3.0",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.6,
+     "clarity": 0.97,
+     "pitch_hz": 250,
+     "pitch_sd": 3.27,
+     "file": "/voices/gnani/te-IN/Tarika.m4a"
+    },
+    "en-IN": {
+     "seconds": 7.0,
+     "clarity": 1.0,
+     "pitch_hz": 235,
+     "pitch_sd": 4.02,
+     "file": "/voices/gnani/en-IN/Tarika.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.8,
+     "clarity": 0.98,
+     "pitch_hz": 216,
+     "pitch_sd": 3.16,
+     "file": "/voices/gnani/hi-IN/Tarika.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
    "provider": "rumik",
    "voice": "adam",
    "label": "Adam",
