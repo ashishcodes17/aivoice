@@ -4,6 +4,7 @@ Two real failures seen on live calls:
 * Sarvam looped on noise, returning "లే లే లే ..." about 100 times in one turn, which then sat in
   the conversation and inflated every later request.
 * Filler sounds ("అ", "ఉమ్", "ఏ ఏ.") were treated as full turns, so the agent answered them.
+* Short noise loops ("ఓ లే లే లే.") cut the agent off mid-sentence and got an answer of their own.
 """
 
 import re
@@ -47,6 +48,11 @@ def clean_transcript(text: str) -> str:
     # A turn made only of filler sounds says nothing: blank it so the agent does not answer.
     words = _words(text)
     if words and all(w.lower() in FILLERS for w in words):
+        return ""
+    # One short syllable said over and over (with or without fillers) is the recognizer looping on
+    # noise, not speech. Latin words are left alone: "no no no" is a real answer.
+    rest = [w for w in words if w.lower() not in FILLERS]
+    if len(set(rest)) == 1 and len(rest[0]) <= 2 and len(rest) >= 3 and not rest[0].isascii():
         return ""
     return text
 

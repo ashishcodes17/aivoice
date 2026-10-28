@@ -21,6 +21,7 @@ from pipecat.turns.types import ProcessFrameResult
 from pipecat.turns.user_start import ExternalUserTurnStartStrategy
 
 from . import events
+from .transcripts import _words, clean_transcript
 
 
 class GuardedBargeInStartStrategy(ExternalUserTurnStartStrategy):
@@ -61,7 +62,8 @@ class GuardedBargeInStartStrategy(ExternalUserTurnStartStrategy):
             logger.debug(f"{self}: sound while the agent is speaking, waiting for words")
             return ProcessFrameResult.CONTINUE
         elif isinstance(frame, (TranscriptionFrame, InterimTranscriptionFrame)):
-            words = len(frame.text.split())
+            # Count real words only: filler sounds and noise loops must not cut her off.
+            words = len(_words(clean_transcript(frame.text)))
             if self._busy and words >= self._min_words:
                 events.log("call.barge_in", call_sid=self._call_sid, words=words, text=frame.text[:80])
                 await self.trigger_user_turn_started()

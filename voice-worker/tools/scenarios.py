@@ -6,15 +6,18 @@ organisation that is deleted after the run.
 """
 
 TELUGU_STYLE = (
-    "Speak natural, casual, warm conversational Telugu in Telugu script, the way a friendly professional "
-    "talks on the phone, mixing in common English words written in Telugu script (అపాయింట్‌మెంట్, "
-    "కన్ఫర్మ్, టైమ్). Say numbers, prices, days and times in Telugu words. Short sentences, at most two per "
-    "reply, and ask one question at a time."
+    "Speak natural, casual, warm conversational Telugu, the way a friendly professional talks on the phone, "
+    "mixing in common English words as people really do. Write EVERYTHING in Telugu script, never in English "
+    "letters, including English words and names, spelled as they sound (అపాయింట్‌మెంట్, కన్ఫర్మ్, టైమ్, "
+    "విల్లా, సైట్ విజిట్, గచ్చిబౌలి). Say every number, price, size, day and time in Telugu words, never in "
+    "English words or digits (\"ఒక కోటి ఇరవై లక్షలు\", \"పద్దెనిమిది వందల చదరపు అడుగులు\", \"ఆదివారం ఉదయం "
+    "పదకొండు గంటలకి\"). Answer only what was asked, with at most two facts, in at most two short sentences, "
+    "then ask one question."
 )
 HINDI_STYLE = (
     "Speak natural, casual, warm conversational Hindi in Devanagari script, with common English words "
     "written in Devanagari (टाइम, कन्फर्म, पेमेंट). Say numbers, prices, days and times in Hindi words. "
-    "Short sentences, at most two per reply, and ask one question at a time."
+    "Answer only what was asked, with at most two facts, in at most two short sentences, then ask one question."
 )
 ENGLISH_STYLE = (
     "Speak natural, casual, warm Indian English, with contractions and short sentences, at most two per "
