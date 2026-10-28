@@ -109,6 +109,21 @@ def caller_think(persona: str, language: str, business: str, history: list[tuple
     return r["choices"][0]["message"]["content"].strip().strip('"')
 
 
+CHATTER = ["అరే ఇక్కడ చూడండి, నిన్న మీటింగ్ లో ఏం చెప్పారో గుర్తుందా, రేపు మళ్ళీ కలవాలి అన్నారు కదా.", "అవును అవును, నేను కూడా అదే అనుకున్నా, టైమ్ చూసి ఒకసారి ఫోన్ చేద్దాం, సరేనా."]
+
+
+def background_track(wire: str, rms: float = 700.0):
+    """Two people chatting nearby, as 16-bit samples at the wire rate, quieter than the caller."""
+    import numpy as np
+    parts = []
+    for text, spk in zip(CHATTER, ("kavitha", "shreya")):
+        raw = caller_say(text, "te-IN", spk, wire)
+        pcm = np.frombuffer(audioop.alaw2lin(raw, 2) if wire == "alaw" else raw, dtype=np.int16).astype(np.float64)
+        parts.append(pcm)
+    x = np.concatenate(parts)
+    return x / (np.sqrt(np.mean(x ** 2)) + 1e-9) * rms
+
+
 def build_agent(scn: dict, org: str, args) -> dict:
     src = rest(f"agents?id=eq.{TEMPLATE_AGENT}&select=*")[0]
     for k in ("id", "created_at", "updated_at"):
@@ -155,6 +170,8 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
         sid = f"sim-{port}-{int(t0)}"
         box = bytearray()
         last_out = [0.0]
+        bg = background_track(args.wire, args.background_rms) if args.background else None
+        bg_pos = [0]
         done = asyncio.Event()
 
         def events() -> list[dict]:
@@ -173,6 +190,14 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
                     n = 160 if args.wire == "alaw" else 640  # 20 ms
                     silence = WIRE[args.wire][3]
                     c = bytes(box[:n]); del box[:n]; c += silence * ((n - len(c)) // len(silence))
+                    if bg is not None and time.time() - last_out[0] < 0.3:
+                        # someone nearby talks while the agent is speaking
+                        import numpy as np
+                        k = 160 if args.wire == "alaw" else 320
+                        seg = np.take(bg, range(bg_pos[0], bg_pos[0] + k), mode="wrap"); bg_pos[0] += k
+                        base = np.frombuffer(audioop.alaw2lin(c, 2) if args.wire == "alaw" else c, dtype=np.int16).astype(np.float64)
+                        mixed = np.clip(base + seg, -32768, 32767).astype(np.int16).tobytes()
+                        c = audioop.lin2alaw(mixed, 2) if args.wire == "alaw" else mixed
                     await ws.send(json.dumps({"event": "media", "streamSid": sid, "media": {"track": "inbound", "payload": base64.b64encode(c).decode()}}))
                     t += 0.02
                     await asyncio.sleep(max(0, t - time.monotonic()))
@@ -194,6 +219,11 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
 
             def speak(line: str):
                 audio = caller_say(line, voice_lang, speaker, args.wire)
+                if args.caller_gain != 1.0:  # a softer (or louder) speaker
+                    import numpy as np
+                    pcm = np.frombuffer(audioop.alaw2lin(audio, 2) if args.wire == "alaw" else audio, dtype=np.int16).astype(np.float64) * args.caller_gain
+                    pcm = np.clip(pcm, -32768, 32767).astype(np.int16).tobytes()
+                    audio = audioop.lin2alaw(pcm, 2) if args.wire == "alaw" else pcm
                 box.extend(audio)
                 transcript.append(("caller", line))
                 timeline.append((time.time() - t0, "caller", line))
@@ -226,11 +256,13 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
             speak(scn["hello"])
             interrupted = False
             for turn in range(1, args.max_turns + 1):
-                if not await agent_reply(None):
+                talk_over = args.interrupt and turn == 3 and not interrupted
+                if not await agent_reply(2.0 if talk_over else None):
                     break
                 result["turns"] = turn
-                await asyncio.sleep(0.4)  # the agent's text is logged as it finishes speaking
-                text = new_agent_text()
+                if not talk_over:
+                    await asyncio.sleep(0.4)  # the agent's text is logged as it finishes speaking
+                text = "" if talk_over else new_agent_text()
                 if text:
                     transcript.append(("agent", text))
                     timeline.append((time.time() - t0, "agent", text))
@@ -238,9 +270,9 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
                     break
                 last = turn == args.max_turns
                 line = await asyncio.to_thread(caller_think, scn["caller"], lang, scn["agent_name"], list(transcript), last)
-                if args.interrupt and turn == 3 and not interrupted:
+                if talk_over:
                     interrupted = True
-                    speak(line)  # talk over the agent: she has just started the next reply
+                    speak(line)  # talks over the agent, two seconds into her reply
                     timeline.append((time.time() - t0, "note", "caller interrupted"))
                 else:
                     speak(line)
@@ -334,6 +366,9 @@ def main():
     ap.add_argument("--hangup-wait", type=float, default=18.0)
     ap.add_argument("--settle", type=float, default=9.0)
     ap.add_argument("--out", default="sim_out")
+    ap.add_argument("--caller-gain", type=float, default=1.0, help="scale the caller's voice, e.g. 0.3 for a soft speaker")
+    ap.add_argument("--background", action="store_true", help="two people chat quietly nearby while the agent speaks")
+    ap.add_argument("--background-rms", type=float, default=700.0, help="loudness of that chatter (the caller is about 2500)")
     ap.add_argument("--wire", choices=list(WIRE), default="alaw", help="audio format VoiceLink streams: alaw (8 kHz) or pcm16k (16 kHz linear PCM)")
     args = ap.parse_args()
     if args.list or not args.scenario:

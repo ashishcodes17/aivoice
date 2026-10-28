@@ -39,6 +39,7 @@ from .opening import OpeningGate, outbound_note
 from . import outcome
 from .textfilter import ScriptFilter, spell_phone_numbers
 from .transcripts import TranscriptCleaner
+from .levels import LevelMeter, LevelTracker
 from .turns import GuardedBargeInStartStrategy
 from pipecat.turns.user_start import ExternalUserTurnStartStrategy
 from .serializer import VoiceLinkFrameSerializer
@@ -187,7 +188,7 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False, rate: 
 IDLE_TIMEOUT_SECS = 15
 
 
-async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task: PipelineTask) -> None:
+async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task: PipelineTask, levels=None) -> None:
     """Heartbeat while the call is live, and a watchdog for calls that went silent.
 
     VoiceLink sends caller audio continuously (about 50 frames a second), so a stretch with
@@ -209,6 +210,8 @@ async def _audio_stats(serializer: VoiceLinkFrameSerializer, call_sid: str, task
             tracks=dict(serializer.tracks),
             dropped=dict(serializer.dropped),
             longest_gap_ms=serializer.max_gap_ms,
+            caller_level=round(levels.recent() or 0) if levels else None,  # loudness of the last second of speech
+            caller_usual_level=round(levels.reference) if levels and levels.reference else None,
             out_stutters=serializer.out_stutters,  # 120-1500 ms pauses in what we send while speaking
             longest_out_gap_ms=serializer.longest_out_gap_ms,
         )
@@ -353,11 +356,13 @@ async def run_bot(
     # Sarvam's own VAD decides when a turn starts and ends (Pipecat picks the same strategies for us),
     # but its stop strategy adds a 0.5 s wait after the transcript. Supply it with a shorter one.
     turn_strategies = None
+    levels = LevelTracker() if settings.barge_in_level_ratio > 0 else None
     if agent.get("stt_provider", "sarvam") == "sarvam" and settings.sarvam_endpointing == "vad":
         turn_strategies = UserTurnStrategies(
             start=[
                 GuardedBargeInStartStrategy(
-                    min_words=settings.barge_in_min_words, thinking_secs=settings.barge_in_thinking_secs, call_sid=call_sid
+                    min_words=settings.barge_in_min_words, thinking_secs=settings.barge_in_thinking_secs, call_sid=call_sid,
+                    levels=levels, level_ratio=settings.barge_in_level_ratio, min_level=settings.barge_in_min_level,
                 )
                 if settings.barge_in_min_words > 0
                 else ExternalUserTurnStartStrategy(enable_interruptions=True)  # 0: any sound interrupts
@@ -404,6 +409,7 @@ async def run_bot(
     pipeline = Pipeline(
         [
             transport.input(),
+            *([LevelMeter(levels)] if levels else []),
             stt,
             TranscriptCleaner(call_sid),
             user_agg,
@@ -458,7 +464,7 @@ async def run_bot(
         asyncio.create_task(task.cancel())
 
     serializer.on_stop = _end_call
-    stats = asyncio.create_task(_audio_stats(serializer, call_sid, task))
+    stats = asyncio.create_task(_audio_stats(serializer, call_sid, task, levels))
     nudge_text = cfg.get("idle_nudge_message") or NUDGES.get(language.value.split("-")[0], DEFAULT_NUDGE)
 
     async def _nudge() -> None:

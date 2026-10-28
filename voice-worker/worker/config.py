@@ -30,6 +30,10 @@ class Settings(BaseSettings):
     turn_stop_timeout_secs: float = 0.5
     # While the agent is speaking, the caller interrupts her only with at least this many words;
     # a lone sound (cough, TV, line noise) no longer cuts her off mid-sentence.
+    # A barge-in must be at least this fraction as loud as the caller usually is (0 = off), and never
+    # quieter than this absolute level (16-bit RMS); a bystander reaches the microphone quieter.
+    barge_in_level_ratio: float = 0.45
+    barge_in_min_level: float = 300.0
     barge_in_min_words: int = 2
     # Also protect the reply for this long after the caller finishes, while it is being written.
     # 0 turns that off.
