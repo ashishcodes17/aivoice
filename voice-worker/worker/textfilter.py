@@ -7,11 +7,14 @@ stop it, so characters outside the scripts a phone agent should use are dropped 
 Given conflicting instructions (an English prompt on a Telugu call), a model has also spoken its
 own reasoning aloud ("the user said hello, the instructions say..."). Such sentences are dropped
 whole before they reach the voice.
+
+A model also sometimes says a sentence it said one or two turns ago, word for word, whatever the
+prompt says. Such a sentence is dropped (unless that would leave the reply silent).
 """
 
 import re
 
-from pipecat.frames.frames import Frame, InterruptionFrame, LLMFullResponseStartFrame, LLMTextFrame
+from pipecat.frames.frames import Frame, InterruptionFrame, LLMFullResponseEndFrame, LLMFullResponseStartFrame, LLMTextFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 
 from . import events
@@ -38,6 +41,15 @@ _SENTENCE_END = re.compile(r"(?<=[.!?\u0964])\s+|\n+")
 
 def is_meta_talk(sentence: str) -> bool:
     return bool(_META.search(sentence))
+
+
+_PUNCT = re.compile(r"[\s.,!?;:\u0964'\"\u201c\u201d\u2018\u2019()\-\u2013\u2014\u2026]+")
+REPEAT_MIN_WORDS = 5  # "సరే అండి." may be said twice; a whole statement should not be
+REPEAT_MEMORY_REPLIES = 2
+
+
+def sentence_key(sentence: str) -> str:
+    return _PUNCT.sub(" ", sentence.lower()).strip()
 
 
 _DIGIT_WORDS = {
@@ -73,6 +85,13 @@ class ScriptFilter(FrameProcessor):
         super().__init__()
         self._call_sid = call_sid
         self._buffer = ""
+        self._history: list[set[str]] = []  # sentences of the last few finished replies
+        self._current: list[str] = []  # sentences let through in the reply being written
+        self._held_repeat: str | None = None  # last repeat dropped, spoken only if nothing else is
+
+    def _is_repeat(self, sentence: str) -> bool:
+        key = sentence_key(sentence)
+        return len(key.split()) >= REPEAT_MIN_WORDS and any(key in earlier for earlier in self._history)
 
     async def _release(self, text: str, direction: FrameDirection):
         if not text.strip():
@@ -82,6 +101,11 @@ class ScriptFilter(FrameProcessor):
         if is_meta_talk(text):
             events.log("llm.meta_removed", "WARNING", call_sid=self._call_sid, text=text[:160])
             return
+        if self._is_repeat(text):
+            events.log("llm.repeat_removed", "WARNING", call_sid=self._call_sid, text=text[:120])
+            self._held_repeat = text
+            return
+        self._current.append(sentence_key(text))
         await self.push_frame(LLMTextFrame(text), direction)
 
     async def _flush(self, direction: FrameDirection):
@@ -107,9 +131,19 @@ class ScriptFilter(FrameProcessor):
                 for sentence in re.findall(r".+?(?:[.!?\u0964]\s+|\n+|$)", finished, flags=re.S):
                     await self._release(sentence, direction)
             return
-        if isinstance(frame, (InterruptionFrame, LLMFullResponseStartFrame)):
-            self._buffer = ""
+        if isinstance(frame, InterruptionFrame):
+            # Cut off mid-reply: the caller may not have heard it, so it does not count as said.
+            self._buffer, self._current, self._held_repeat = "", [], None
+        elif isinstance(frame, LLMFullResponseStartFrame):
+            if self._current:
+                self._history = (self._history + [set(self._current)])[-REPEAT_MEMORY_REPLIES:]
+            self._buffer, self._current, self._held_repeat = "", [], None
         else:
             # Anything else (end of the reply, a tool call, end of the call) comes after the text so far.
             await self._flush(direction)
+            if isinstance(frame, LLMFullResponseEndFrame) and not self._current and self._held_repeat:
+                # The whole reply was a repeat: say it rather than leave the caller in silence.
+                held, self._held_repeat = self._held_repeat, None
+                self._current.append(sentence_key(held))
+                await self.push_frame(LLMTextFrame(held), direction)
         await self.push_frame(frame, direction)
