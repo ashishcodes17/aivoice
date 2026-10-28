@@ -21,7 +21,7 @@ export type CatalogVoice = {
 
 export const CATALOG = catalogJson as { generated: string; voices: CatalogVoice[] };
 
-export const providerLabel = (p: string) => (p === "smallest" ? "Smallest AI" : CALL_PROVIDERS.find((x) => x.value === p)?.label ?? p);
+export const providerLabel = (p: string) => (CALL_PROVIDERS.find((x) => x.value === p)?.label ?? p);
 export const languageLabel = (l: string) => CALL_LANGUAGES.find((x) => x.value === l)?.label ?? l;
 
 export function findVoice(provider: string, voice: string, language: string) {

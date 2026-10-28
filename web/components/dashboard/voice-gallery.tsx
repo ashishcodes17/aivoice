@@ -14,7 +14,7 @@ import { CATALOG, languageLabel, liveliness, providerLabel, type CatalogVoice } 
 type AgentOption = { id: string; name: string; language: string; tts_provider: string; tts_voice: string | null };
 
 const ALL = "all";
-const providerItems = [{ value: ALL, label: "All voices" }, ...CALL_PROVIDERS, { value: "smallest", label: "Smallest AI" }];
+const providerItems = [{ value: ALL, label: "All voices" }, ...CALL_PROVIDERS];
 const genderItems = [
   { value: ALL, label: "Any" },
   { value: "female", label: "Female" },

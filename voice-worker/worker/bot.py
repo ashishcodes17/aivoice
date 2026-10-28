@@ -118,7 +118,10 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
         )
     if agent.get("tts_provider") == "smallest":
         cfg = agent.get("config") or {}
-        options = {"voice": voice, "language": language, "model": cfg.get("tts_model") or "lightning_v3.1_pro"}
+        # Smallest's Indian voices speak English and Hindi under "hi" (Indian-accented English plus
+        # Hindi); "en" would be the British and American voices. Telugu has its own code.
+        smallest_language = Language.HI if str(language).startswith(("en", "hi")) else language
+        options = {"voice": voice, "language": smallest_language, "model": cfg.get("tts_model") or "lightning_v3.1_pro"}
         if cfg.get("tts_pace"):
             options["speed"] = float(cfg["tts_pace"])
         # word_timestamps off: Telugu voices send no word events, and without them the transcript
