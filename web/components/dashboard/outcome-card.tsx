@@ -2,7 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import type { CallOutcome } from "@/lib/types";
 
 export const outcomeLabel: Record<CallOutcome["outcome"], { label: string; variant: "success" | "info" | "warning" | "secondary" | "outline" }> = {
-  visit_requested: { label: "Wants a visit", variant: "success" },
+  visit_requested: { label: "Agreed to next step", variant: "success" },
   callback_requested: { label: "Wants a call back", variant: "info" },
   busy_call_later: { label: "Call later", variant: "warning" },
   info_only: { label: "Questions only", variant: "secondary" },

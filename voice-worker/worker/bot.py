@@ -289,7 +289,7 @@ async def run_bot(
             settings=SarvamLLMService.Settings(model=agent_llm, temperature=0.5, max_tokens=300),
         )
     llm_probe = LLMProbe(timer)
-    register_end_call(llm, call_sid, language.value, lambda: llm_probe.spoke)
+    register_end_call(llm, call_sid, language.value, lambda: llm_probe.spoke, hold_secs=settings.smallest_end_hold_secs if agent.get("tts_provider") == "smallest" else 0.0)
     # Any voice other than Sarvam has Sarvam standing by: if it cannot speak (bad key, outage),
     # the call switches over instead of going silent.
     backup = fallback_agent(agent) if (agent.get("tts_provider") or "sarvam") != "sarvam" and provider_ready("sarvam") else None
@@ -467,4 +467,8 @@ async def run_bot(
             events.log("call.cost_save_failed", "ERROR", call_sid=call_sid, error=f"{type(e).__name__}: {e}")
         # After the call, in the background: the socket must close (that is the hangup) without waiting.
         if settings.record_outcomes:
-            outcome.record_in_background(store, call_id, call_sid, transcript)
+            outcome.record_in_background(
+                store, call_id, call_sid, transcript,
+                # What the business is comes from the start of the agent's own instructions.
+                f"the agent \"{agent.get('name') or 'assistant'}\", whose instructions begin: {(agent.get('system_prompt') or '')[:300]}",
+            )

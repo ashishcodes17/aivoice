@@ -50,9 +50,13 @@ GOODBYES = {
 }
 
 
-def register_end_call(llm, call_sid: str, language: str = "en-IN", spoke=lambda: True) -> None:
+def register_end_call(llm, call_sid: str, language: str = "en-IN", spoke=lambda: True, hold_secs: float = 0.0) -> None:
     """`spoke()` says whether the model said anything in this reply. Some models hang up with only
-    the tool call when the caller says bye first, which would end the call in silence."""
+    the tool call when the caller says bye first, which would end the call in silence.
+
+    `hold_secs` waits before hanging up. Smallest releases a line only when it has finished it, about
+    4.7 s after the request, and the hangup queued behind the goodbye made the goodbye start 3.6 s
+    late; holding the hangup back lets the goodbye play first."""
 
     async def end_call(params: FunctionCallParams) -> None:
         events.log("call.end_requested", call_sid=call_sid, by="agent")
@@ -61,6 +65,8 @@ def register_end_call(llm, call_sid: str, language: str = "en-IN", spoke=lambda:
             await params.llm.push_frame(TTSSpeakFrame(GOODBYES.get(language.split("-")[0], GOODBYES["en"])))
         # No follow-up completion: the goodbye was already spoken in this turn.
         await params.result_callback(None, properties=FunctionCallResultProperties(run_llm=False))
+        if hold_secs:
+            await asyncio.sleep(hold_secs)
         # EndWorkerFrame is turned into an EndFrame that queues behind the goodbye audio.
         await params.llm.push_frame(EndWorkerFrame(), FrameDirection.UPSTREAM)
 

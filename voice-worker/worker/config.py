@@ -9,6 +9,8 @@ class Settings(BaseSettings):
     elevenlabs_api_key: str = ""
     rumik_api_key: str = ""
     smallest_api_key: str = ""
+    # Seconds to wait before hanging up on a Smallest voice, so the goodbye is heard first.
+    smallest_end_hold_secs: float = 3.5
     rumik_gateway_url: str = "https://silk-api.rumik.ai"
     # 0 = do not send max_new_tokens (Rumik's default cap of 2048 applies).
     rumik_max_new_tokens: int = 0
