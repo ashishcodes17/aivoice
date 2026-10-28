@@ -21,7 +21,7 @@ export type CatalogVoice = {
 
 export const CATALOG = catalogJson as { generated: string; voices: CatalogVoice[] };
 
-export const providerLabel = (p: string) => CALL_PROVIDERS.find((x) => x.value === p)?.label ?? p;
+export const providerLabel = (p: string) => (p === "smallest" ? "Smallest AI" : CALL_PROVIDERS.find((x) => x.value === p)?.label ?? p);
 export const languageLabel = (l: string) => CALL_LANGUAGES.find((x) => x.value === l)?.label ?? l;
 
 export function findVoice(provider: string, voice: string, language: string) {
@@ -36,6 +36,7 @@ const RUMIK_STYLE: Record<string, string> = {
 };
 export function voiceConfig(v: CatalogVoice, language: string): Record<string, string | number> {
   if (v.provider === "sarvam") return { tts_model: v.model ?? "bulbul:v3", ...(v.voice === "kavitha_te_conversation" ? { tts_pace: 1.2 } : {}), ...(v.voice === "pooja" && language === "te-IN" ? { tts_pace: 1.1, tts_temperature: 0.9 } : {}) };
+  if (v.provider === "smallest") return { tts_model: "lightning_v3.1_pro" };
   if (v.provider === "rumik") return { tts_model: "mulberry", tts_description: RUMIK_STYLE[language] ?? RUMIK_STYLE["en-IN"] };
   return {};
 }

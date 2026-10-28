@@ -109,6 +109,18 @@ def rumik(voice: str, lang: str) -> bytes:
     return retry(go)
 
 
+def smallest(voice: str, lang: str) -> bytes:
+    """Smallest AI Lightning v3.1 Pro. Indian voices speak English and Hindi under language "hi"."""
+    code = "te" if lang == "te-IN" else "hi"
+    def go():
+        r = httpx.post("https://api.smallest.ai/waves/v1/tts", headers={"Authorization": f"Bearer {settings.smallest_api_key}"},
+                       json={"text": TEXT[lang], "voice_id": voice, "model": "lightning_v3.1_pro", "language": code, "sample_rate": 8000, "output_format": "wav"}, timeout=90)
+        if r.status_code != 200 or len(r.content) < 1000:
+            raise RuntimeError(f"smallest {r.status_code}: {r.text[:120]}")
+        return r.content
+    return retry(go)
+
+
 # ---- measurement -----------------------------------------------------------------------------
 
 def clarity(pcm: np.ndarray, lang: str) -> float:
@@ -191,6 +203,10 @@ def render(job):
             raw = sarvam(voice, lang, extra.get("model", "bulbul:v3"))
             with tempfile.NamedTemporaryFile(suffix=".wav") as f:
                 f.write(raw); f.flush(); pcm = to_pcm8k(Path(f.name))
+        elif provider == "smallest":
+            raw = smallest(voice, lang)
+            with tempfile.NamedTemporaryFile(suffix=".wav") as f:
+                f.write(raw); f.flush(); pcm = to_pcm8k(Path(f.name))
         elif provider == "elevenlabs":
             raw = eleven(voice, lang)
             with tempfile.NamedTemporaryFile(suffix=".mp3") as f:
@@ -223,9 +239,41 @@ def backfill():
     print("pitch movement added to", sum(len(v["languages"]) for v in cat["voices"]), "samples")
 
 
+SMALLEST = [("rhea", ("te-IN", "en-IN", "hi-IN")), ("mishka", ("te-IN", "en-IN", "hi-IN")), ("zariya", ("te-IN", "en-IN", "hi-IN")),
+            ("sravani", ("te-IN",)), ("swathi", ("te-IN",))]
+
+
+def add_smallest():
+    """Render only the Smallest AI voices and merge them into the existing catalog."""
+    path = ROOT / "web" / "lib" / "voice-catalog.json"
+    cat = json.loads(path.read_text())
+    cat["voices"] = [v for v in cat["voices"] if v["provider"] != "smallest"]
+    jobs = [("smallest", v, v.capitalize(), lang, {}) for v, langs in SMALLEST for lang in langs]
+    entries: dict[str, dict] = {}
+    for job in jobs:
+        _, result, err = render(job)
+        provider, voice, label, lang, _ = job
+        if err or result is None:
+            print("FAIL", voice, lang, err); continue
+        print(f"ok {voice:8s} {lang} clarity {result['clarity']:.2f} pitch {result['pitch_hz']} Hz movement {result['pitch_sd']}", flush=True)
+        if result["clarity"] < 0.80:
+            print("   dropped: unclear"); continue
+        e = entries.setdefault(voice, {"provider": "smallest", "voice": voice, "label": label, "model": "lightning_v3.1_pro", "languages": {}})
+        e["languages"][lang] = result
+    for e in entries.values():
+        pitch = float(np.median([r["pitch_hz"] for r in e["languages"].values() if r["pitch_hz"]] or [0]))
+        e["gender"] = "female" if pitch >= 165 else "male" if pitch > 0 else "unknown"
+        cat["voices"].append(e)
+    cat["voices"].sort(key=lambda e: (e["provider"], e["label"]))
+    path.write_text(json.dumps(cat, ensure_ascii=False, indent=1))
+    print(f"catalog now has {len(cat['voices'])} voices")
+
+
 def main():
     if "--backfill" in sys.argv:
         return backfill()
+    if "--smallest" in sys.argv:
+        return add_smallest()
     jobs = []
     for lang in LANGS:
         for v in SARVAM_V3:

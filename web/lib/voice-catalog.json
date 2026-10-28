@@ -1343,6 +1343,128 @@
     }
    },
    "gender": "male"
+  },
+  {
+   "provider": "smallest",
+   "voice": "mishka",
+   "label": "Mishka",
+   "model": "lightning_v3.1_pro",
+   "languages": {
+    "te-IN": {
+     "seconds": 7.9,
+     "clarity": 1.0,
+     "pitch_hz": 250,
+     "pitch_sd": 3.23,
+     "file": "/voices/smallest/te-IN/mishka.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.1,
+     "clarity": 1.0,
+     "pitch_hz": 246,
+     "pitch_sd": 2.43,
+     "file": "/voices/smallest/en-IN/mishka.m4a"
+    },
+    "hi-IN": {
+     "seconds": 8.1,
+     "clarity": 0.99,
+     "pitch_hz": 258,
+     "pitch_sd": 3.68,
+     "file": "/voices/smallest/hi-IN/mishka.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "smallest",
+   "voice": "rhea",
+   "label": "Rhea",
+   "model": "lightning_v3.1_pro",
+   "languages": {
+    "te-IN": {
+     "seconds": 6.6,
+     "clarity": 0.99,
+     "pitch_hz": 216,
+     "pitch_sd": 3.14,
+     "file": "/voices/smallest/te-IN/rhea.m4a"
+    },
+    "en-IN": {
+     "seconds": 5.8,
+     "clarity": 1.0,
+     "pitch_hz": 242,
+     "pitch_sd": 4.2,
+     "file": "/voices/smallest/en-IN/rhea.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.5,
+     "clarity": 0.99,
+     "pitch_hz": 229,
+     "pitch_sd": 3.76,
+     "file": "/voices/smallest/hi-IN/rhea.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "smallest",
+   "voice": "sravani",
+   "label": "Sravani",
+   "model": "lightning_v3.1_pro",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.5,
+     "clarity": 1.0,
+     "pitch_hz": 235,
+     "pitch_sd": 3.28,
+     "file": "/voices/smallest/te-IN/sravani.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "smallest",
+   "voice": "swathi",
+   "label": "Swathi",
+   "model": "lightning_v3.1_pro",
+   "languages": {
+    "te-IN": {
+     "seconds": 9.4,
+     "clarity": 0.99,
+     "pitch_hz": 242,
+     "pitch_sd": 3.32,
+     "file": "/voices/smallest/te-IN/swathi.m4a"
+    }
+   },
+   "gender": "female"
+  },
+  {
+   "provider": "smallest",
+   "voice": "zariya",
+   "label": "Zariya",
+   "model": "lightning_v3.1_pro",
+   "languages": {
+    "te-IN": {
+     "seconds": 8.0,
+     "clarity": 0.99,
+     "pitch_hz": 195,
+     "pitch_sd": 1.99,
+     "file": "/voices/smallest/te-IN/zariya.m4a"
+    },
+    "en-IN": {
+     "seconds": 6.5,
+     "clarity": 1.0,
+     "pitch_hz": 186,
+     "pitch_sd": 2.6,
+     "file": "/voices/smallest/en-IN/zariya.m4a"
+    },
+    "hi-IN": {
+     "seconds": 7.8,
+     "clarity": 0.99,
+     "pitch_hz": 190,
+     "pitch_sd": 2.19,
+     "file": "/voices/smallest/hi-IN/zariya.m4a"
+    }
+   },
+   "gender": "female"
   }
  ]
 }
