@@ -23,10 +23,12 @@ export const SARVAM_TTS_MODELS = [
   { value: "bulbul:v4-flash", label: "Sarvam Bulbul v4 Flash" },
   { value: "mulberry", label: "Rumik Mulberry (Hindi, English)" },
   { value: "muga", label: "Rumik Muga (Hindi, English)" },
+  { value: "lightning_v3.1_pro", label: "Smallest Lightning v3.1 Pro" },
 ];
 
 export const TTS_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },
   { value: "rumik", label: "Rumik" },
+  { value: "smallest", label: "Smallest AI" },
 ];

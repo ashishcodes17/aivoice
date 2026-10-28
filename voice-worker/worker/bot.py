@@ -21,6 +21,7 @@ from pipecat.services.openrouter.llm import OpenRouterLLMService  # noqa: F401  
 from pipecat.services.sarvam.llm import SarvamLLMService
 from pipecat.services.sarvam.stt import SarvamRealtimeSTTService
 from pipecat.services.sarvam.tts import SarvamTTSService
+from pipecat.services.smallest.tts import SmallestTTSService
 from pipecat.transcriptions.language import Language
 from pipecat.turns.user_stop import ExternalUserTurnStopStrategy
 from pipecat.turns.user_turn_strategies import UserTurnStrategies
@@ -72,6 +73,16 @@ class SpokenSarvamTTS(SarvamTTSService):
             yield frame
 
 
+class SpokenSmallestTTS(SmallestTTSService):
+    """Smallest voice that says phone numbers digit by digit."""
+
+    spoken_language = "te-IN"
+
+    async def run_tts(self, text: str, context_id: str):
+        async for frame in super().run_tts(spell_phone_numbers(text, self.spoken_language), context_id):
+            yield frame
+
+
 def _language(code: str) -> Language:
     try:
         return Language(code)
@@ -105,6 +116,24 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
             **strict,
             settings=ElevenLabsTTSService.Settings(model="eleven_flash_v2_5", voice=voice, language=language),
         )
+    if agent.get("tts_provider") == "smallest":
+        cfg = agent.get("config") or {}
+        options = {"voice": voice, "language": language, "model": cfg.get("tts_model") or "lightning_v3.1_pro"}
+        if cfg.get("tts_pace"):
+            options["speed"] = float(cfg["tts_pace"])
+        # word_timestamps off: Telugu voices send no word events, and without them the transcript
+        # would receive no agent text at all.
+        tts = SpokenSmallestTTS(
+            api_key=settings.smallest_api_key,
+            word_timestamps=False,
+            # By default Smallest holds a fragment for up to 3 s waiting for more text, which made
+            # a short line such as the goodbye start 4 s late.
+            max_buffer_delay_ms=300,
+            **strict,
+            settings=SmallestTTSService.Settings(**options),
+        )
+        tts.spoken_language = str(language)
+        return tts
     if agent.get("tts_provider") == "rumik":
         cfg = agent.get("config") or {}
         tts = RumikTTSService(

@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     sarvam_api_key: str = ""
     elevenlabs_api_key: str = ""
     rumik_api_key: str = ""
+    smallest_api_key: str = ""
     rumik_gateway_url: str = "https://silk-api.rumik.ai"
     # 0 = do not send max_new_tokens (Rumik's default cap of 2048 applies).
     rumik_max_new_tokens: int = 0

@@ -11,7 +11,7 @@ export function liveliness(sd?: number): string | null {
   return sd >= 3.2 ? "Lively" : sd >= 2.4 ? "Moderate" : "Flat";
 }
 export type CatalogVoice = {
-  provider: "sarvam" | "elevenlabs" | "rumik";
+  provider: "sarvam" | "elevenlabs" | "rumik" | "smallest";
   voice: string;
   label: string;
   model: string | null;

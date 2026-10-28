@@ -8,7 +8,7 @@ line and language instructions for the duration of that one call.
 from . import events
 from .config import settings
 
-_KEYS = {"sarvam": "sarvam_api_key", "elevenlabs": "elevenlabs_api_key", "rumik": "rumik_api_key"}
+_KEYS = {"sarvam": "sarvam_api_key", "elevenlabs": "elevenlabs_api_key", "rumik": "rumik_api_key", "smallest": "smallest_api_key"}
 
 
 def provider_ready(provider: str | None) -> bool:

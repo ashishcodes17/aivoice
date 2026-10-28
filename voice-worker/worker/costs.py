@@ -21,6 +21,9 @@ SARVAM_TTS_INR_PER_1K_CHARS = {"bulbul:v3": 3.00, "bulbul:v3-beta": 3.00, "bulbu
 # Rumik, same unit. Excludes mulberry's per-request voice description (about 65 characters billed
 # on each reply, roughly 6% extra), which we do not count here.
 RUMIK_TTS_INR_PER_1K_CHARS = {"mulberry": 0.50, "muga": 0.99}
+# Smallest AI Lightning v3.1 Pro: about $0.195 per 10,000 characters at the 88 INR/USD in settings.
+SMALLEST_TTS_USD_PER_1K_CHARS = {"lightning_v3.1_pro": 0.0195}
+DEFAULT_SMALLEST_TTS_MODEL = "lightning_v3.1_pro"
 DEFAULT_RUMIK_TTS_MODEL = "mulberry"
 # Sarvam's own chat models, INR per 1M tokens (input, output). The "-conversations" variant is not on
 # the price page; it is billed here at the 105B rate until Sarvam's invoice says otherwise.
@@ -74,6 +77,12 @@ class CallCosts:
             model = self.tts_model or DEFAULT_RUMIK_TTS_MODEL
             tts_rate = RUMIK_TTS_INR_PER_1K_CHARS.get(model)
             tts_inr = self.tts_chars / 1000 * tts_rate if tts_rate is not None else None
+
+        if self.tts_provider == "smallest":
+            model = self.tts_model or DEFAULT_SMALLEST_TTS_MODEL
+            usd = SMALLEST_TTS_USD_PER_1K_CHARS.get(model)
+            tts_rate = None if usd is None else round(usd * fx, 4)
+            tts_inr = None if usd is None else self.tts_chars / 1000 * usd * fx
 
         stt_rate = settings.sarvam_stt_inr_per_min if self.stt_provider == "sarvam" else None
         stt_inr = self.stt_seconds / 60 * stt_rate if stt_rate is not None else None
