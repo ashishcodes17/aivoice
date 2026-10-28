@@ -19,6 +19,7 @@ import argparse
 import asyncio
 import audioop
 import base64
+import io
 import json
 import os
 import re
@@ -68,17 +69,22 @@ def rest(path: str, method: str = "GET", body=None):
     return r.json() if r.text else None
 
 
-def caller_say(text: str, lang: str, speaker: str) -> bytes:
+WIRE = {"alaw": ("audio/alaw", 8000, 2, b"\xd5"), "pcm16k": ("audio/pcm", 16000, 1, b"\x00\x00")}  # encoding, rate, bytes per sample divisor, silence
+
+
+def caller_say(text: str, lang: str, speaker: str, wire: str = "alaw") -> bytes:
+    """The simulated caller's line as telephone audio in the call's wire format."""
     for attempt in range(4):
-        r = httpx.post(
-            "https://api.sarvam.ai/text-to-speech",
-            headers={"api-subscription-key": settings.sarvam_api_key},
-            json={"text": text, "target_language_code": lang, "model": "bulbul:v3", "speaker": speaker, "speech_sample_rate": 8000, "output_audio_codec": "alaw"},
-            timeout=60,
-        )
+        body = {"text": text, "target_language_code": lang, "model": "bulbul:v3", "speaker": speaker}
+        body.update({"speech_sample_rate": 8000, "output_audio_codec": "alaw"} if wire == "alaw" else {"speech_sample_rate": 16000})
+        r = httpx.post("https://api.sarvam.ai/text-to-speech", headers={"api-subscription-key": settings.sarvam_api_key}, json=body, timeout=60)
         j = r.json()
         if "audios" in j:
-            return base64.b64decode(j["audios"][0])
+            audio = base64.b64decode(j["audios"][0])
+            if wire != "alaw":
+                with wave.open(io.BytesIO(audio)) as w:
+                    audio = w.readframes(w.getnframes())
+            return audio
         time.sleep(3 * (attempt + 1))
     raise RuntimeError("the simulated caller's voice (Sarvam TTS) is unavailable")
 
@@ -159,12 +165,14 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
 
         async with websockets.connect(f"ws://127.0.0.1:{port}/ws?token={settings.ws_token}", max_size=None) as ws:
             await ws.send(json.dumps({"event": "start", "stream_sid": sid, "start": {"stream_sid": sid, "call_sid": sid, "from": "+910000000001", "to": "+910000000002",
-                                    "custom_parameters": {"call_row_id": row, "org_id": org, "agent_id": agent["id"], "kind": "callback"}, "media_format": {"encoding": "audio/alaw", "sample_rate": "8000"}}}))
+                                    "custom_parameters": {"call_row_id": row, "org_id": org, "agent_id": agent["id"], "kind": "callback"}, "media_format": {"encoding": WIRE[args.wire][0], "sample_rate": str(WIRE[args.wire][1])}}}))
 
             async def feed():
                 t = time.monotonic()
                 while True:
-                    c = bytes(box[:160]); del box[:160]; c += b"\xd5" * (160 - len(c))
+                    n = 160 if args.wire == "alaw" else 640  # 20 ms
+                    silence = WIRE[args.wire][3]
+                    c = bytes(box[:n]); del box[:n]; c += silence * ((n - len(c)) // len(silence))
                     await ws.send(json.dumps({"event": "media", "streamSid": sid, "media": {"track": "inbound", "payload": base64.b64encode(c).decode()}}))
                     t += 0.02
                     await asyncio.sleep(max(0, t - time.monotonic()))
@@ -185,11 +193,10 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
             feeder, reader = asyncio.create_task(feed()), asyncio.create_task(read())
 
             def speak(line: str):
-                audio = caller_say(line, voice_lang, speaker)
+                audio = caller_say(line, voice_lang, speaker, args.wire)
                 box.extend(audio)
                 transcript.append(("caller", line))
                 timeline.append((time.time() - t0, "caller", line))
-                return len(audio) / 8000  # seconds of speech
 
             async def agent_reply(interrupt_after: float | None) -> bool:
                 """Wait for the agent to answer. Returns False if it never did or the call ended."""
@@ -272,16 +279,17 @@ async def run_call(scn: dict, port: int, org: str, agent: dict, args) -> dict:
     return result
 
 
-def write_wav(frames: list[tuple[float, bytes]], path: Path) -> None:
+def write_wav(frames: list[tuple[float, bytes]], path: Path, wire: str = "alaw") -> None:
     """The agent's side of the call as heard on the phone, with the real gaps between replies."""
+    rate = WIRE[wire][1]
     pcm = bytearray()
-    for t, alaw in frames:
-        want = int(t * 8000) * 2
+    for t, chunk in frames:
+        want = int(t * rate) * 2
         if want > len(pcm):
             pcm.extend(b"\x00" * (want - len(pcm)))
-        pcm.extend(audioop.alaw2lin(alaw, 2))
+        pcm.extend(audioop.alaw2lin(chunk, 2) if wire == "alaw" else chunk)
     with wave.open(str(path), "wb") as w:
-        w.setnchannels(1); w.setsampwidth(2); w.setframerate(8000); w.writeframes(bytes(pcm))
+        w.setnchannels(1); w.setsampwidth(2); w.setframerate(rate); w.writeframes(bytes(pcm))
 
 
 def judge(scn: dict, res: dict) -> list[tuple[bool, str]]:
@@ -326,6 +334,7 @@ def main():
     ap.add_argument("--hangup-wait", type=float, default=18.0)
     ap.add_argument("--settle", type=float, default=9.0)
     ap.add_argument("--out", default="sim_out")
+    ap.add_argument("--wire", choices=list(WIRE), default="alaw", help="audio format VoiceLink streams: alaw (8 kHz) or pcm16k (16 kHz linear PCM)")
     args = ap.parse_args()
     if args.list or not args.scenario:
         for k, v in SCENARIOS.items():
@@ -356,7 +365,7 @@ def main():
         for ok, what in checks:
             print(f"  [{'PASS' if ok else 'FAIL'}] {what}")
         wav = Path(args.out) / f"{args.stamp}_{name}.agent.wav"
-        write_wav(res["frames"], wav)
+        write_wav(res["frames"], wav, args.wire)
         (Path(args.out) / f"{args.stamp}_{name}.json").write_text(json.dumps({k: v for k, v in res.items() if k != "frames"}, ensure_ascii=False, indent=1, default=str))
         print(f"  agent audio: {wav}")
         outcome = ((res["db"].get("metadata") or {}).get("outcome") or {})

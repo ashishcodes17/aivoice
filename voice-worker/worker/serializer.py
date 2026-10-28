@@ -50,6 +50,12 @@ _WIRE_FORMATS = {
     ("pcm", 8000): "l16",
     ("pcm", 16000): "l16",
 }
+# Other names for 16-bit linear PCM. VoiceLink's dashboard calls it "Linear PCM 16-bit"; the exact
+# encoding string in `start` is not documented, so the usual spellings are all accepted.
+for _name in ("linear16", "lpcm", "pcm16", "pcm_s16le", "s16le", "slin", "linear", "l16le"):
+    for _rate in (8000, 16000):
+        _WIRE_FORMATS[(_name, _rate)] = "l16"
+_WIRE_FORMATS[("slin16", 16000)] = "l16"
 
 
 def resolve_format(media_format: dict[str, Any] | None) -> tuple[str, int]:
@@ -76,6 +82,7 @@ class VoiceLinkFrameSerializer(FrameSerializer):
         self._stream_sid: str | None = start.get("stream_sid") or start.get("streamSid")
         self._call_sid: str | None = start.get("call_sid") or start.get("callSid")
         self._codec, self._wire_rate = resolve_format(start.get("media_format"))
+        self.wire_rate = self._wire_rate
         self._sample_rate = 0  # pipeline input rate, set in setup()
         self._in_resampler = create_stream_resampler()
         self._out_resampler = create_stream_resampler()

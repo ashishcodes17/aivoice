@@ -53,6 +53,9 @@ VOICE_RULES = (
 )
 
 PIPELINE_SAMPLE_RATE = 8000
+# With VoiceLink set to 16 kHz linear PCM, hearing and voice run at 16 kHz too (wideband); converting
+# to 8 kHz inside would throw that away. Rumik only produces 8 kHz, so its calls stay at 8 kHz.
+WIDEBAND_RATE = 16000
 
 
 NUDGES = {
@@ -90,23 +93,23 @@ def _language(code: str) -> Language:
         return Language.EN_IN
 
 
-def _build_stt(agent: dict, language: Language):
+def _build_stt(agent: dict, language: Language, rate: int = PIPELINE_SAMPLE_RATE):
     if agent.get("stt_provider") == "elevenlabs":
         return ElevenLabsRealtimeSTTService(
             api_key=settings.elevenlabs_api_key,
-            sample_rate=PIPELINE_SAMPLE_RATE,
+            sample_rate=rate,
             settings=ElevenLabsRealtimeSTTService.Settings(language=language),
         )
     extra = {"silence_duration_ms": settings.sarvam_silence_ms} if settings.sarvam_silence_ms else {}
     return SarvamRealtimeSTTService(
         api_key=settings.sarvam_api_key,
-        sample_rate=PIPELINE_SAMPLE_RATE,
+        sample_rate=rate,
         endpointing=settings.sarvam_endpointing,
         settings=SarvamRealtimeSTTService.Settings(language=language, **extra),
     )
 
 
-def _build_tts(agent: dict, language: Language, has_backup: bool = False):
+def _build_tts(agent: dict, language: Language, has_backup: bool = False, rate: int = PIPELINE_SAMPLE_RATE):
     voice = agent.get("tts_voice")
     # With a backup voice standing by, one sentence that comes out silent is already one too many.
     strict = {"max_consecutive_zero_audio_contexts": 1} if has_backup else {}
@@ -164,8 +167,8 @@ def _build_tts(agent: dict, language: Language, has_backup: bool = False):
         options["temperature"] = float(cfg["tts_temperature"])
     # Sarvam's service takes its rate from the model default (24 kHz), not the pipeline; asking for
     # 8 kHz directly is optional (see settings.sarvam_tts_native_8k).
-    rate = {"sample_rate": PIPELINE_SAMPLE_RATE} if settings.low_latency and settings.sarvam_tts_native_8k else {}
-    tts = SpokenSarvamTTS(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **rate)
+    native = {"sample_rate": rate} if settings.low_latency and settings.sarvam_tts_native_8k else {}
+    tts = SpokenSarvamTTS(api_key=settings.sarvam_api_key, settings=SarvamTTSService.Settings(**options), **native)
     tts.spoken_language = str(language)
     return tts
 
@@ -241,7 +244,8 @@ async def run_bot(
         ),
     )
 
-    stt = _build_stt(agent, language)
+    call_rate = WIDEBAND_RATE if serializer.wire_rate == WIDEBAND_RATE and (agent.get("tts_provider") or "sarvam") != "rumik" else PIPELINE_SAMPLE_RATE
+    stt = _build_stt(agent, language, call_rate)
     agent_llm = agent.get("llm_model") or "openai/gpt-4o-mini"
     # A Sarvam model runs on Sarvam's own API, with an OpenRouter model standing by.
     sarvam_llm = is_sarvam_llm(agent_llm) and bool((settings.sarvam_api_key or "").strip())
@@ -296,10 +300,10 @@ async def run_bot(
     # Any voice other than Sarvam has Sarvam standing by: if it cannot speak (bad key, outage),
     # the call switches over instead of going silent.
     backup = fallback_agent(agent) if (agent.get("tts_provider") or "sarvam") != "sarvam" and provider_ready("sarvam") else None
-    tts_primary = _build_tts(agent, language, has_backup=bool(backup))
+    tts_primary = _build_tts(agent, language, has_backup=bool(backup), rate=call_rate)
     tts = tts_primary
     if backup:
-        tts_backup = _build_tts(backup, language)
+        tts_backup = _build_tts(backup, language, rate=call_rate)
         tts = ServiceSwitcher([tts_primary, tts_backup], strategy_type=ServiceSwitcherStrategyFailover)
 
         @tts.strategy.event_handler("on_service_switched")
@@ -324,6 +328,7 @@ async def run_bot(
         tts_model=cfg.get("tts_model", "default"),
         tts_pace=cfg.get("tts_pace", 1.0),
         language=str(language),
+        audio_rate=call_rate,
     )
 
     system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
@@ -404,9 +409,9 @@ async def run_bot(
     # With low latency the TTS services synthesize at the phone line's native 8 kHz, which
     # skips a 24 kHz -> 8 kHz resample (extra work and audible artifacts).
     # Usage metrics make the TTS report characters spoken, which is what Sarvam bills on.
-    rates = {"audio_in_sample_rate": PIPELINE_SAMPLE_RATE, "enable_usage_metrics": True}
+    rates = {"audio_in_sample_rate": call_rate, "enable_usage_metrics": True}
     if settings.low_latency:
-        rates["audio_out_sample_rate"] = PIPELINE_SAMPLE_RATE
+        rates["audio_out_sample_rate"] = call_rate
     task = PipelineTask(pipeline, params=PipelineParams(**rates))
 
     async def _open_outbound() -> None:
