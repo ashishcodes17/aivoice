@@ -12,9 +12,11 @@ import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/c
 import { CALL_LANGUAGES, CALL_PROVIDERS, isSupported } from "@/lib/call-voices";
 
 const AGENT_DEFAULT = "agent";
+const NUMBER_AGENT = "number";
 const providerItems = [{ value: AGENT_DEFAULT, label: "Agent's own voice" }, ...CALL_PROVIDERS];
 
-export function CallbackForm({ numbers }: { numbers: { value: string; label: string }[] }) {
+export function CallbackForm({ numbers, agents }: { numbers: { value: string; label: string }[]; agents: { value: string; label: string }[] }) {
+  const agentItems = [{ value: NUMBER_AGENT, label: "The number's own agent" }, ...agents];
   const [state, action, pending] = useActionState<ActionState, FormData>(requestCallback, {});
   const formRef = useRef<HTMLFormElement>(null);
   // After a call is requested, clear the number and ask for permission again next time.
@@ -80,6 +82,22 @@ export function CallbackForm({ numbers }: { numbers: { value: string; label: str
           Call me
         </Button>
       </div>
+      <Field>
+        <FieldLabel>Agent on this call</FieldLabel>
+        <Select name="agent_id" items={agentItems} defaultValue={NUMBER_AGENT}>
+          <SelectTrigger>
+            <SelectValue />
+          </SelectTrigger>
+          <SelectPopup>
+            {agentItems.map((a) => (
+              <SelectItem key={a.value} value={a.value}>
+                {a.label}
+              </SelectItem>
+            ))}
+          </SelectPopup>
+        </Select>
+        <FieldDescription>Pick a different agent for this call only, without changing the number.</FieldDescription>
+      </Field>
       {/* Remounted after a call is placed, which puts both dropdowns back to the agent's own settings. */}
       <VoiceFields key={state.message ?? "idle"} />
       <label className="flex items-start gap-2.5 text-muted-foreground text-sm">

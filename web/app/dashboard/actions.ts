@@ -111,6 +111,8 @@ const CallbackSchema = z.object({
   phone_number_id: z.string().uuid("Choose which number the agent should call from."),
   to: z.string().min(1, "Enter the number to call."),
   consent: z.string().refine((v) => v === "on", "Please confirm you have permission to call this number."),
+  // "number" = the agent connected to that number; otherwise one of this organisation's agents.
+  agent_id: z.union([z.literal("number"), z.string().uuid()]).default("number"),
   // "agent" = use whatever the agent itself is set to.
   tts_provider: z.enum(["agent", ...CALL_PROVIDERS.map((p) => p.value)] as [string, ...string[]]).default("agent"),
   language: z.enum(["agent", ...CALL_LANGUAGES.map((l) => l.value)] as [string, ...string[]]).default("agent"),
@@ -121,6 +123,7 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     phone_number_id: formData.get("phone_number_id"),
     to: formData.get("to") ?? "",
     consent: formData.get("consent") ?? "",
+    agent_id: formData.get("agent_id") ?? "number",
     tts_provider: formData.get("tts_provider") ?? "agent",
     language: formData.get("language") ?? "agent",
   });
@@ -141,7 +144,14 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     .eq("id", parsed.data.phone_number_id)
     .eq("org_id", org.id)
     .maybeSingle();
-  if (!number?.agent_id) return { error: "That number has no agent connected to it." };
+  if (!number) return { error: "Choose which number the agent should call from." };
+  let agentId = number.agent_id as string | null;
+  if (parsed.data.agent_id !== "number") {
+    const { data: chosen } = await supabase.from("agents").select("id").eq("id", parsed.data.agent_id).eq("org_id", org.id).maybeSingle();
+    if (!chosen) return { error: "That agent was not found." };
+    agentId = chosen.id as string;
+  }
+  if (!agentId) return { error: "That number has no agent connected to it." };
 
   // Callbacks spend money. Off by default while billing is being set up; set
   // ENFORCE_WALLET_CHECK=true to require at least one minute of balance first.
@@ -180,7 +190,7 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
     .from("calls")
     .insert({
       org_id: org.id,
-      agent_id: number.agent_id,
+      agent_id: agentId,
       direction: "outbound",
       status: "initiated",
       from_number: number.did_number,
@@ -196,7 +206,7 @@ export async function requestCallback(_prev: ActionState, formData: FormData): P
   const result = await placeCall({
     did: number.did_number,
     customerNumber: dest.national,
-    params: { call_row_id: call.id, org_id: org.id, agent_id: number.agent_id, kind: "callback" },
+    params: { call_row_id: call.id, org_id: org.id, agent_id: agentId, kind: "callback" },
   });
   if (!result.ok) {
     await admin.from("calls").update({ status: "failed", metadata: { kind: "callback", requested_by: user.id, ...(voice ? { voice } : {}), error: result.error } }).eq("id", call.id);

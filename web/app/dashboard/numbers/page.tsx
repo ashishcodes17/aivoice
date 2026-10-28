@@ -53,7 +53,7 @@ async function Numbers() {
   return (
     <>
       <NumberForm agents={agents} />
-      {callable.length > 0 && <CallbackForm numbers={callable} />}
+      {callable.length > 0 && <CallbackForm numbers={callable} agents={agents} />}
       {numbers.length ? (
         <div className="overflow-hidden rounded-xl border">
           <Table>
