@@ -57,6 +57,16 @@ VOICES: dict[tuple[str, str], dict] = {
 # Added to the agent's prompt when the call's language differs from the one the prompt was written
 # for. The prompt's own rules (selling, honesty, hours, hangup) all still apply.
 LANGUAGE_NOTES = {
+    "te-IN": (
+        "ఈ కాల్ తెలుగులో ఉంది (THIS CALL IS IN TELUGU). Ignore every instruction above about speaking English "
+        "or Hindi, or about which script to write in. Speak natural, casual, warm conversational Telugu, the way "
+        "a friendly professional talks on the phone, mixing in common English words as people really do. Write "
+        "everything in Telugu script, including those English words, spelled as they sound (అపాయింట్‌మెంట్, "
+        "కన్ఫర్మ్, బుకింగ్, టైమ్), because the voice reads Telugu script far more clearly. Write names of people, "
+        "places and the business in Telugu script too. Short sentences (8 to 18 words, at most two). Say "
+        "prices, numbers, days and times in Telugu words (\"నాలుగు వేల ఐదు వందల రూపాయలు\", \"రేపు గురువారం "
+        "సాయంత్రం ఆరు గంటలకి\"). If the person speaks English, you may answer in simple English."
+    ),
     "en-IN": (
         "THIS CALL IS IN ENGLISH. Ignore every instruction above about speaking Telugu, writing Telugu "
         "script, Telugu words and Telugu spellings. Speak natural, casual, warm Indian English, the way a "
