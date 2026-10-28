@@ -5,6 +5,10 @@ simulator plays through a real call. None of these touch real data: the agents l
 organisation that is deleted after the run.
 """
 
+from pathlib import Path
+
+AGENT_DIR = Path(__file__).parent / "agents"
+
 TELUGU_STYLE = (
     "Speak natural, casual, warm conversational Telugu, the way a friendly professional talks on the phone, "
     "mixing in common English words as people really do. Write EVERYTHING in Telugu script, never in English "
@@ -133,5 +137,23 @@ SCENARIOS = {
         ),
         "caller_voice": ("en-IN", "priya"),
         "hello": "Hello?",
+    },
+    "rockstar_te": {
+        "title": "Shrimp seed sales, long discovery call (Telugu)",
+        "language": "te-IN",
+        "agent_name": "Rockstar Hatcheries",
+        "greeting": "హలో అండి, నేను రవి, రాక్‌స్టార్ హేచరీస్ నుంచి మాట్లాడుతున్నాను. మీరు రొయ్యల సాగు చేస్తున్నారు కదా, ఒక్క రెండు నిమిషాలు మాట్లాడొచ్చా?",
+        "prompt": (AGENT_DIR / "rockstar_hatcheries.txt").read_text(),
+        "caller": (
+            "You are Venkat, 45, a shrimp farmer near Bhimavaram in West Godavari with four ponds of about one acre each. "
+            "You are a little busy but willing to talk. You currently buy seed from another hatchery and are fairly happy but "
+            "the last batch had uneven size. You plan to stock two ponds in the first week of December, about five lakh PL. "
+            "You ask: what is your rate, do you have disease-free test reports, can I visit your hatchery, is there any discount "
+            "if I book early. You do not give your hatchery name unless asked twice. Be skeptical but fair. Reply in short "
+            "colloquial Telugu in Telugu script with a few English words. After about ten exchanges agree that the hatchery "
+            "team can call this same number with a quotation, then say bye."
+        ),
+        "caller_voice": ("te-IN", "rahul"),
+        "hello": "హలో?",
     },
 }

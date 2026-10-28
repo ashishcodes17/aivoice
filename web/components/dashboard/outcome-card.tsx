@@ -8,6 +8,10 @@ export const outcomeLabel: Record<CallOutcome["outcome"], { label: string; varia
   info_only: { label: "Questions only", variant: "secondary" },
   not_interested: { label: "Not interested", variant: "outline" },
   no_conversation: { label: "No conversation", variant: "outline" },
+  qualified_lead: { label: "Qualified lead", variant: "success" },
+  quote_requested: { label: "Wants a quotation", variant: "success" },
+  wrong_number: { label: "Wrong number", variant: "outline" },
+  do_not_call: { label: "Do not call", variant: "warning" },
 };
 
 export function OutcomeBadge({ outcome }: { outcome?: CallOutcome | null }) {
@@ -23,7 +27,8 @@ export function OutcomeCard({ outcome }: { outcome: CallOutcome }) {
     ["Needs", outcome.need],
     ["Preferred time", outcome.preferred_time],
     ["Other number", outcome.phone],
-  ].filter(([, v]) => v);
+    ...Object.entries(outcome.details ?? {}).map(([k, v]) => [k.charAt(0).toUpperCase() + k.slice(1), v]),
+  ].filter(([, v]) => v) as [string, string][];
   return (
     <section>
       <div className="flex items-center gap-3">

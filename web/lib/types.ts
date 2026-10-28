@@ -30,11 +30,22 @@ export type CostSummary = {
 };
 
 export type CallOutcome = {
-  outcome: "visit_requested" | "callback_requested" | "busy_call_later" | "info_only" | "not_interested" | "no_conversation";
+  outcome:
+    | "visit_requested"
+    | "callback_requested"
+    | "busy_call_later"
+    | "info_only"
+    | "not_interested"
+    | "no_conversation"
+    | "qualified_lead"
+    | "quote_requested"
+    | "wrong_number"
+    | "do_not_call";
   name: string | null;
   need: string | null;
   preferred_time: string | null;
   phone: string | null;
+  details?: Record<string, string>;
   summary: string;
   follow_up: boolean;
 };

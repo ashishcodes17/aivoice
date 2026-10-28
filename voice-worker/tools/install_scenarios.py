@@ -29,12 +29,24 @@ PREFIX = "[Test] "
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--remove", action="store_true")
+    ap.add_argument("--real", help="create (or refresh) a real, non-test agent from a scenario, e.g. rockstar_te")
     ap.add_argument("--use", help="connect your number to a scenario's test agent (or 'kumudha')")
     ap.add_argument("--tts", help="voice for every agent, e.g. smallest:zariya or sarvam:pooja")
     ap.add_argument("--llm", help="model for every agent")
     args = ap.parse_args()
 
     org = rest(f"agents?id=eq.{TEMPLATE_AGENT}&select=org_id")[0]["org_id"]
+    if args.real:
+        if args.real not in SCENARIOS:
+            sys.exit(f"unknown scenario {args.real!r}; choose from {', '.join(SCENARIOS)}")
+        scn = SCENARIOS[args.real]
+        for row in rest(f"agents?org_id=eq.{org}&select=id,name") or []:
+            if row["name"] == scn["agent_name"]:
+                rest(f"agents?id=eq.{row['id']}", "DELETE")
+                print("replaced existing", row["name"])
+        agent = build_agent({**scn, "key": args.real}, org, SimpleNamespace(tts=args.tts, llm=args.llm))
+        print(f"created {agent['name']}  {agent['language']}  {agent['tts_provider']}:{agent['tts_voice']}  {agent['llm_model']}")
+        return
     if args.use:
         if args.use == "kumudha":
             target = TEMPLATE_AGENT

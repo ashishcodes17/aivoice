@@ -7,7 +7,7 @@ from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from worker import events, version
+from worker import events, probe, version
 from worker.bot import run_bot
 from worker.config import settings
 from worker.store import Store
@@ -35,6 +35,14 @@ async def debug_status(token: str = ""):
     if not _token_ok(token):
         return JSONResponse({"error": "forbidden"}, status_code=403)
     return version.status()
+
+
+@app.get("/debug/probe")
+async def debug_probe(token: str = ""):
+    """Time every configured LLM and voice provider from this server (a few paise; takes ~20 s)."""
+    if not _token_ok(token):
+        return JSONResponse({"error": "forbidden"}, status_code=403)
+    return await probe.run()
 
 
 @app.get("/debug/events")
