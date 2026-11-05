@@ -17,10 +17,10 @@ def provider_ready(provider: str | None) -> bool:
     return bool(attr and (getattr(settings, attr, "") or "").strip())
 
 
-def fallback_agent(agent: dict) -> dict | None:
-    """The same agent speaking the same language with Sarvam, or None if Sarvam cannot do it."""
+def fallback_agent(agent: dict, provider: str = "sarvam") -> dict | None:
+    """The same agent speaking the same language with `provider`, or None if it cannot do it."""
     language = agent.get("language") or "en-IN"
-    choice = VOICES.get(("sarvam", language))
+    choice = VOICES.get((provider, language))
     if not choice:
         return None
     cfg = {k: v for k, v in (agent.get("config") or {}).items() if k not in ("tts_model", "tts_pace", "tts_description")}
@@ -28,7 +28,28 @@ def fallback_agent(agent: dict) -> dict | None:
         cfg["tts_model"] = choice["model"]
     if choice.get("pace"):
         cfg["tts_pace"] = choice["pace"]
-    return {**agent, "tts_provider": "sarvam", "tts_voice": choice["voice"], "config": cfg}
+    return {**agent, "tts_provider": provider, "tts_voice": choice["voice"], "config": cfg}
+
+
+# Voices that stand by for the agent's own, in the order they are tried. Sarvam and Gnani are
+# separate accounts, so one running out of credits (or being down) must not silence the call.
+TTS_BACKUP_ORDER = ("sarvam", "gnani")
+
+
+def tts_backup_chain(agent: dict) -> list[dict]:
+    """Backup agents (same agent, other voice provider), best first. Empty if none can step in.
+
+    A provider is only listed if it has an API key and a measured voice for the call's language.
+    """
+    primary = agent.get("tts_provider") or "sarvam"
+    chain = []
+    for provider in TTS_BACKUP_ORDER:
+        if provider == primary or not provider_ready(provider):
+            continue
+        backup = fallback_agent(agent, provider)
+        if backup:
+            chain.append(backup)
+    return chain
 
 
 def ensure_provider_ready(agent: dict, call_sid: str | None = None) -> dict:

@@ -20,6 +20,8 @@ FEATURES = (
     "sarvam_tts_temperature",
     "smallest_tts",
     "gnani_tts",
+    "gnani_stt",
+    "stt_failover",
     "latency_probe",
     "wideband_16k",
 )

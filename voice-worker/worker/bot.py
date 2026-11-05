@@ -30,6 +30,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 from . import events
 from .config import settings
 from .context import call_context_note, national_number
+from .gnani_stt import GnaniSTTService
 from .gnani_tts import GnaniTTSService
 from .llm_sarvam import SarvamLLMWithBackup, is_sarvam_llm
 from .hangup import END_CALL_RULE, END_CALL_TOOLS, CallClock, guard_call, register_end_call
@@ -45,7 +46,7 @@ from pipecat.turns.user_start import ExternalUserTurnStartStrategy
 from .serializer import VoiceLinkFrameSerializer
 from .rumik_tts import RumikTTSService
 from .store import Store
-from .voices import fallback_agent, provider_ready
+from .voices import provider_ready, tts_backup_chain
 
 VOICE_RULES = (
     "You are speaking on a phone call. Reply in short, natural spoken sentences. "
@@ -95,8 +96,16 @@ def _language(code: str) -> Language:
         return Language.EN_IN
 
 
-def _build_stt(agent: dict, language: Language, rate: int = PIPELINE_SAMPLE_RATE):
-    if agent.get("stt_provider") == "elevenlabs":
+def _build_stt(agent: dict, language: Language, rate: int = PIPELINE_SAMPLE_RATE, provider: str | None = None):
+    provider = provider or agent.get("stt_provider") or "sarvam"
+    if provider == "gnani":
+        return GnaniSTTService(
+            api_key=settings.gnani_api_key,
+            sample_rate=rate,
+            silence_ms=settings.gnani_stt_silence_ms,
+            settings=GnaniSTTService.Settings(model=settings.gnani_stt_model or None, language=language),
+        )
+    if provider == "elevenlabs":
         return ElevenLabsRealtimeSTTService(
             api_key=settings.elevenlabs_api_key,
             sample_rate=rate,
@@ -109,6 +118,26 @@ def _build_stt(agent: dict, language: Language, rate: int = PIPELINE_SAMPLE_RATE
         endpointing=settings.sarvam_endpointing,
         settings=SarvamRealtimeSTTService.Settings(language=language, **extra),
     )
+
+
+def _external_turns(agent: dict) -> bool:
+    """Do the speech-to-text's own speech boundaries drive the turns (rather than a local VAD)?"""
+    stt = agent.get("stt_provider") or "sarvam"
+    return stt == "gnani" or (stt == "sarvam" and settings.sarvam_endpointing == "vad")
+
+
+def _stt_backup_providers(agent: dict) -> list[str]:
+    """Speech-to-text providers standing by for the agent's own, on separate accounts, so one running
+    out of credits does not leave the caller unheard. A backup must report speech boundaries the same
+    way as the primary, because the call's turn-taking is set up around the primary:
+    Sarvam and Gnani both do; ElevenLabs needs a local VAD, so it only backs up ElevenLabs's peers.
+    """
+    primary = agent.get("stt_provider") or "sarvam"
+    if _external_turns(agent):
+        candidates = [p for p in ("sarvam", "gnani") if p != primary]
+    else:
+        candidates = [p for p in ("sarvam", "elevenlabs") if p != primary]
+    return [p for p in candidates if provider_ready(p)]
 
 
 def _build_tts(agent: dict, language: Language, has_backup: bool = False, rate: int = PIPELINE_SAMPLE_RATE):
@@ -259,7 +288,9 @@ async def run_bot(
     )
 
     call_rate = WIDEBAND_RATE if serializer.wire_rate == WIDEBAND_RATE and (agent.get("tts_provider") or "sarvam") != "rumik" else PIPELINE_SAMPLE_RATE
-    stt = _build_stt(agent, language, call_rate)
+    stt_primary = _build_stt(agent, language, call_rate)
+    stt_backups = _stt_backup_providers(agent)
+    stt = stt_primary
     agent_llm = agent.get("llm_model") or "openai/gpt-4o-mini"
     # A Sarvam model runs on Sarvam's own API, with an OpenRouter model standing by.
     sarvam_llm = is_sarvam_llm(agent_llm) and bool((settings.sarvam_api_key or "").strip())
@@ -311,20 +342,28 @@ async def run_bot(
         )
     llm_probe = LLMProbe(timer)
     register_end_call(llm, call_sid, language.value, lambda: llm_probe.spoke, hold_secs=settings.smallest_end_hold_secs if agent.get("tts_provider") in ("smallest", "gnani") else 0.0)
-    # Any voice other than Sarvam has Sarvam standing by: if it cannot speak (bad key, outage),
-    # the call switches over instead of going silent.
-    backup = fallback_agent(agent) if (agent.get("tts_provider") or "sarvam") != "sarvam" and provider_ready("sarvam") else None
-    tts_primary = _build_tts(agent, language, has_backup=bool(backup), rate=call_rate)
+    # Other voice providers stand by (Sarvam, then Gnani, whichever the agent isn't already using):
+    # if the voice cannot speak (bad key, no credits, outage) the call switches over instead of
+    # going silent.
+    backups = tts_backup_chain(agent)
+    tts_primary = _build_tts(agent, language, has_backup=bool(backups), rate=call_rate)
     tts = tts_primary
-    if backup:
-        tts_backup = _build_tts(backup, language, rate=call_rate)
-        tts = ServiceSwitcher([tts_primary, tts_backup], strategy_type=ServiceSwitcherStrategyFailover)
+    if backups:
+        tts_services = [_build_tts(b, language, has_backup=i < len(backups) - 1, rate=call_rate) for i, b in enumerate(backups)]
+        tts = ServiceSwitcher([tts_primary, *tts_services], strategy_type=ServiceSwitcherStrategyFailover)
+        backup_of = {id(svc): b for svc, b in zip(tts_services, backups)}
+        current_tts = {"provider": agent.get("tts_provider") or "sarvam"}
 
         @tts.strategy.event_handler("on_service_switched")
         async def _tts_failover(strategy, service):
+            backup = backup_of.get(id(service))
+            if backup is None:  # switched back to the agent's own voice
+                backup = agent
             bcfg = backup.get("config") or {}
-            costs.tts_provider, costs.tts_model = "sarvam", bcfg.get("tts_model")
-            events.log("tts.failover", "ERROR", call_sid=call_sid, failed=agent.get("tts_provider"), now="sarvam", voice=backup.get("tts_voice"))
+            failed = current_tts["provider"]
+            current_tts["provider"] = backup.get("tts_provider") or "sarvam"
+            costs.tts_provider, costs.tts_model = current_tts["provider"], bcfg.get("tts_model")
+            events.log("tts.failover", "ERROR", call_sid=call_sid, failed=failed, now=current_tts["provider"], voice=backup.get("tts_voice"))
             # If the failed voice never got a word out, the caller has heard nothing at all: say
             # the opening again with the backup voice rather than leave a silent line.
             if serializer.frames_out == 0:
@@ -332,12 +371,26 @@ async def run_bot(
                 opening = greeting
                 gate.take()  # the opening is being said now, not by the gate later
                 await task.queue_frames([TTSSpeakFrame(opening)] if opening else [LLMRunFrame()])
+    if stt_backups:
+        stt_services = [_build_stt(agent, language, call_rate, provider=p) for p in stt_backups]
+        stt = ServiceSwitcher([stt_primary, *stt_services], strategy_type=ServiceSwitcherStrategyFailover)
+        stt_backup_of = {id(svc): p for svc, p in zip(stt_services, stt_backups)}
+        current_stt = {"provider": agent.get("stt_provider") or "sarvam"}
+
+        @stt.strategy.event_handler("on_service_switched")
+        async def _stt_failover(strategy, service):
+            now = stt_backup_of.get(id(service), agent.get("stt_provider") or "sarvam")
+            events.log("stt.failover", "ERROR", call_sid=call_sid, failed=current_stt["provider"], now=now)
+            current_stt["provider"] = now
+            costs.stt_provider = now
     events.log(
         "pipeline.built",
         call_sid=call_sid,
         stt=agent.get("stt_provider"),
         llm=agent.get("llm_model"),
         tts=agent.get("tts_provider"),
+        tts_backups=[b.get("tts_provider") for b in backups],
+        stt_backups=stt_backups,
         voice=agent.get("tts_voice"),
         tts_model=cfg.get("tts_model", "default"),
         tts_pace=cfg.get("tts_pace", 1.0),
@@ -357,7 +410,7 @@ async def run_bot(
     # but its stop strategy adds a 0.5 s wait after the transcript. Supply it with a shorter one.
     turn_strategies = None
     levels = LevelTracker() if settings.barge_in_level_ratio > 0 else None
-    if agent.get("stt_provider", "sarvam") == "sarvam" and settings.sarvam_endpointing == "vad":
+    if _external_turns(agent):
         turn_strategies = UserTurnStrategies(
             start=[
                 GuardedBargeInStartStrategy(

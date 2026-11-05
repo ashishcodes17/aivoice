@@ -89,6 +89,8 @@ class CallCosts:
             tts_inr = self.tts_chars / 1000 * tts_rate
 
         stt_rate = settings.sarvam_stt_inr_per_min if self.stt_provider == "sarvam" else None
+        if self.stt_provider == "gnani":
+            stt_rate = settings.gnani_stt_inr_per_min
         stt_inr = self.stt_seconds / 60 * stt_rate if stt_rate is not None else None
 
         known = [llm_inr, tts_inr, stt_inr]

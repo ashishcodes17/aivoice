@@ -10,6 +10,12 @@ class Settings(BaseSettings):
     rumik_api_key: str = ""
     smallest_api_key: str = ""
     gnani_api_key: str = ""
+    # Gnani speech-to-text (the backup when Sarvam fails). Model "" = Gnani's default (prisma-v2.5);
+    # silence_ms is how long a pause ends the caller's turn (Gnani's default is 500).
+    gnani_stt_model: str = ""
+    gnani_stt_silence_ms: int | None = 400
+    # Gnani has not published a price; set it (INR per minute of audio) to include it in call costs.
+    gnani_stt_inr_per_min: float | None = None
     # Gnani has not published a price; set it (INR per 1,000 characters) to include it in call costs.
     gnani_tts_inr_per_1k_chars: float | None = None
     # Seconds to wait before hanging up on a Smallest or Gnani voice, so the goodbye is heard first.
