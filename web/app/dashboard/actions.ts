@@ -40,8 +40,23 @@ const AgentSchema = z.object({
   tts_voice: z.string().trim().max(120),
   tts_model: z.enum(SARVAM_TTS_MODELS.map((m) => m.value) as [string, ...string[]]),
   outbound_first_message: z.string().trim().max(500),
+  variables: z.string().max(10000).optional(),
   tts_pace: z.coerce.number().min(0.5, "Speed must be between 0.5 and 2.").max(2, "Speed must be between 0.5 and 2."),
 });
+
+// The builder sends variables as a JSON object of name to value; keep only well-formed names.
+function parseVariables(raw?: string): Record<string, string> {
+  try {
+    const obj = JSON.parse(raw || "{}") as Record<string, unknown>;
+    return Object.fromEntries(
+      Object.entries(obj)
+        .filter(([k, v]) => /^[A-Za-z_]\w*$/.test(k) && typeof v === "string")
+        .map(([k, v]) => [k, (v as string).slice(0, 500)]),
+    );
+  } catch {
+    return {};
+  }
+}
 
 export async function saveAgent(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const parsed = AgentSchema.safeParse(Object.fromEntries(formData));
@@ -49,11 +64,12 @@ export async function saveAgent(_prev: ActionState, formData: FormData): Promise
 
   const { supabase, org } = await requireOrg();
   const id = String(formData.get("id") ?? "");
-  const { tts_model, tts_pace, outbound_first_message, ...fields } = parsed.data;
+  const { tts_model, tts_pace, outbound_first_message, variables, ...fields } = parsed.data;
+  const vars = parseVariables(variables);
   const row = {
     ...fields,
     tts_voice: fields.tts_voice || null,
-    config: { tts_model, tts_pace, ...(outbound_first_message ? { outbound_first_message } : {}) },
+    config: { tts_model, tts_pace, ...(outbound_first_message ? { outbound_first_message } : {}), ...(Object.keys(vars).length ? { variables: vars } : {}) },
   };
 
   // RLS also enforces org membership; org_id comes from the session, never the form.
@@ -263,4 +279,51 @@ export async function setAgentVoice(_prev: ActionState, formData: FormData): Pro
   if (error) return { error: "Could not save the voice. Please try again." };
   revalidatePath("/dashboard", "layout");
   return { message: `${agent.name} now speaks with ${choice.label} (${providerLabel(provider)}). It applies to the next call.` };
+}
+
+// ---- WhatsApp: connect a Cloud API number to an agent ------------------------------------------
+
+const WhatsappSchema = z.object({
+  phone_number_id: z.string().trim().regex(/^\d{8,20}$/, "Paste the Phone number ID from Meta (digits only)."),
+  access_token: z.string().trim().min(20, "Paste the access token from Meta.").max(1000),
+  display_number: z.string().trim().max(30),
+  agent_id: z.string().uuid("Choose an agent for this number."),
+});
+
+export async function connectWhatsapp(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const parsed = WhatsappSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return { error: parsed.error.issues[0].message };
+
+  const { supabase, org } = await requireOrg();
+  // The browser role may not write the access token column, so the row is written with the service
+  // role, after checking here that the agent belongs to the signed-in user's organization.
+  const { data: agent } = await supabase.from("agents").select("id").eq("id", parsed.data.agent_id).eq("org_id", org.id).maybeSingle();
+  if (!agent) return { error: "Choose one of your agents." };
+
+  const { error } = await createAdminClient()
+    .from("whatsapp_accounts")
+    .insert({
+      org_id: org.id,
+      agent_id: agent.id,
+      phone_number_id: parsed.data.phone_number_id,
+      access_token: parsed.data.access_token,
+      display_number: parsed.data.display_number || null,
+    });
+  if (error) {
+    return { error: error.code === "23505" ? "That WhatsApp number is already connected." : "Could not connect the number. Try again." };
+  }
+  revalidatePath("/dashboard/whatsapp");
+  return {};
+}
+
+export async function removeWhatsapp(id: string) {
+  const { supabase, org } = await requireOrg();
+  await supabase.from("whatsapp_accounts").delete().eq("id", id).eq("org_id", org.id);
+  revalidatePath("/dashboard/whatsapp");
+}
+
+export async function setWhatsappEnabled(id: string, enabled: boolean) {
+  const { supabase, org } = await requireOrg();
+  await supabase.from("whatsapp_accounts").update({ enabled }).eq("id", id).eq("org_id", org.id);
+  revalidatePath("/dashboard/whatsapp");
 }

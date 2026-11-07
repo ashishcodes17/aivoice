@@ -123,3 +123,53 @@ class Store:
 
     async def close(self) -> None:
         await self._http.aclose()
+
+    async def find_whatsapp_account(self, phone_number_id: str):
+        """The connected WhatsApp number (with its access token and agent), or None."""
+        r = await self._http.get(
+            "/whatsapp_accounts",
+            params={"phone_number_id": f"eq.{phone_number_id}", "select": "*,agents(*)", "limit": "1"},
+        )
+        r.raise_for_status()
+        rows = r.json()
+        return rows[0] if rows else None
+
+    async def add_whatsapp_message(self, account, wa_message_id, contact_number, contact_name, direction, kind, content) -> bool:
+        """Store a message. False if this WhatsApp message id was already stored (a webhook retry)."""
+        r = await self._http.post(
+            "/whatsapp_messages",
+            params={"on_conflict": "wa_message_id"},
+            headers={"Prefer": "resolution=ignore-duplicates,return=representation"},
+            json={
+                "org_id": account["org_id"],
+                "account_id": account["id"],
+                "wa_message_id": wa_message_id,
+                "contact_number": contact_number,
+                "contact_name": contact_name,
+                "direction": direction,
+                "kind": kind,
+                "content": content,
+            },
+        )
+        r.raise_for_status()
+        return bool(r.json())
+
+    async def set_whatsapp_content(self, wa_message_id: str, content: str) -> None:
+        r = await self._http.patch("/whatsapp_messages", params={"wa_message_id": f"eq.{wa_message_id}"}, json={"content": content})
+        r.raise_for_status()
+
+    async def whatsapp_history(self, account_id: str, contact_number: str, before: str | None = None) -> list[dict]:
+        """The last turns with this customer as LLM messages, oldest first, excluding the message being answered."""
+        r = await self._http.get(
+            "/whatsapp_messages",
+            params={
+                "account_id": f"eq.{account_id}",
+                "contact_number": f"eq.{contact_number}",
+                "select": "wa_message_id,direction,content",
+                "order": "created_at.desc",
+                "limit": "12",
+            },
+        )
+        r.raise_for_status()
+        rows = [x for x in reversed(r.json()) if x["content"] and x.get("wa_message_id") != before]
+        return [{"role": "user" if x["direction"] == "inbound" else "assistant", "content": x["content"]} for x in rows]

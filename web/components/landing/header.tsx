@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { LogoMark } from "./logo";
+import { SolutionsMenu } from "./solutions-menu";
 
 const links = [
   { href: "/#product", label: "Product" },
   { href: "/#languages", label: "Languages" },
   { href: "/#how", label: "How it works" },
   { href: "/pricing", label: "Pricing" },
+  { href: "/blog", label: "Blog" },
   { href: "/#faq", label: "FAQ" },
 ];
 
@@ -19,6 +21,7 @@ export function Header() {
           <span className="font-heading font-semibold text-[15px] tracking-tight">Lynksy</span>
         </Link>
         <nav className="hidden items-center gap-8 md:flex">
+          <SolutionsMenu />
           {links.map((l) => (
             <a
               key={l.href}

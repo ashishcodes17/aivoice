@@ -8,7 +8,7 @@ export type Agent = {
   stt_provider: string;
   tts_provider: string;
   tts_voice: string | null;
-  config: { tts_model?: string; tts_pace?: number; outbound_first_message?: string } | null;
+  config: { tts_model?: string; tts_pace?: number; outbound_first_message?: string; variables?: Record<string, string> } | null;
   created_at: string;
 };
 
@@ -68,5 +68,24 @@ export type LedgerEntry = {
   kind: "topup" | "call_debit" | "refund" | "adjustment";
   amount_paise: number;
   note: string | null;
+  created_at: string;
+};
+
+export type WhatsappAccount = {
+  id: string;
+  phone_number_id: string;
+  display_number: string | null;
+  enabled: boolean;
+  created_at: string;
+  agents: { name: string } | null;
+};
+
+export type WhatsappMessage = {
+  id: string;
+  contact_number: string;
+  contact_name: string | null;
+  direction: "inbound" | "outbound";
+  kind: "text" | "audio";
+  content: string;
   created_at: string;
 };

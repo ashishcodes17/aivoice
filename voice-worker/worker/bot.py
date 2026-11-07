@@ -29,6 +29,7 @@ from pipecat.transports.websocket.fastapi import FastAPIWebsocketParams, FastAPI
 
 from . import events
 from .config import settings
+from .variables import fill_variables
 from .context import call_context_note, national_number
 from .gnani_stt import GnaniSTTService
 from .gnani_tts import GnaniTTSService
@@ -398,11 +399,14 @@ async def run_bot(
         audio_rate=call_rate,
     )
 
-    system = f"{agent.get('system_prompt', '')}\n\n{VOICE_RULES}".strip()
+    variables = cfg.get("variables") or {}
+    system = f"{fill_variables(agent.get('system_prompt', ''), variables)}\n\n{VOICE_RULES}".strip()
     if agent.get("language_note"):
         system += "\n\n" + agent["language_note"]
     system += "\n\n" + call_context_note(direction, national_number(customer_number), language=language.value)
-    greeting = (cfg.get("outbound_first_message") if direction == "outbound" else None) or agent.get("first_message")
+    greeting = fill_variables(
+        (cfg.get("outbound_first_message") if direction == "outbound" else None) or agent.get("first_message"), variables
+    )
     if direction == "outbound":
         system += "\n\n" + outbound_note(greeting)
     system += f"\n\n{END_CALL_RULE}"  # last, where the model weighs it most

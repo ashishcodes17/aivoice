@@ -30,6 +30,12 @@ class Settings(BaseSettings):
 
     ws_token: str = ""
 
+    # WhatsApp (Meta Cloud API). The verify token is any string you also type into Meta's webhook
+    # setup; the app secret signs each webhook so only Meta can post to us.
+    meta_app_secret: str = ""
+    whatsapp_verify_token: str = ""
+    meta_graph_version: str = "v24.0"
+
     # After Sarvam's final transcript the turn-end strategy waits this long for a follow-up fragment
     # before handing the turn to the LLM. 0.1 s answered faster but split sentences with a pause in
     # them into two turns, so the agent started replying and was cut off by the second half.

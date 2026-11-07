@@ -1,11 +1,12 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { CheckIcon, PhoneCallIcon } from "lucide-react";
+import { BotIcon, ClockIcon, PhoneCallIcon, WalletIcon } from "lucide-react";
+import { AgentTemplates } from "@/components/dashboard/agent-templates";
+import { GetStarted } from "@/components/dashboard/get-started";
 import { CallsTable } from "@/components/dashboard/calls-table";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Page, PageFallback, PageHeader } from "@/components/dashboard/page-header";
 import { StatCard } from "@/components/dashboard/stat-card";
-import { Button } from "@/components/ui/button";
 import { requireOrg } from "@/lib/dashboard";
 import { rupees } from "@/lib/format";
 import type { Call } from "@/lib/types";
@@ -44,9 +45,9 @@ async function Overview() {
   const minutes = Math.round((callRows.data ?? []).reduce((s, r) => s + r.duration_seconds, 0) / 60);
   const calls = (recent.data ?? []) as unknown as Call[];
   const steps = [
-    { done: (agents.count ?? 0) > 0, title: "Create an agent", body: "Write a prompt and pick a language and voice.", href: "/dashboard/agents/new", cta: "New agent" },
-    { done: (numbers.count ?? 0) > 0, title: "Connect a number", body: "Point a phone number at your agent.", href: "/dashboard/numbers", cta: "Add number" },
-    { done: (callCount.count ?? 0) > 0, title: "Take your first call", body: "Call your number, or have your agent call you.", href: "/dashboard/numbers", cta: "Get a call" },
+    { done: (agents.count ?? 0) > 0, title: "Build a voice agent", body: "Describe what it should do, pick a language and voice. About 2 min.", href: "/dashboard/agents/new", cta: "Build your voice agent" },
+    { done: (numbers.count ?? 0) > 0, title: "Connect a phone number", body: "Point a phone number at your agent.", href: "/dashboard/numbers", cta: "Add number" },
+    { done: (callCount.count ?? 0) > 0, title: "Take your first call", body: "Call your number, or have your agent call you. Calls appear below with transcripts.", href: "/dashboard/numbers", cta: "Get a call" },
   ];
 
   return (
@@ -54,40 +55,15 @@ async function Overview() {
       <PageHeader title="Overview" description={`Activity for ${org.name} over the last 30 days.`} />
 
       <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Wallet balance" value={rupees(Number(balance.data?.balance_paise ?? 0))} hint="Top up to keep agents answering" href="/dashboard/wallet" />
-        <StatCard label="Calls" value={String(callCount.count ?? 0)} hint="Last 30 days" href="/dashboard/calls" />
-        <StatCard label="Talk time" value={`${minutes} min`} hint="Last 30 days" />
-        <StatCard label="Agents" value={String(agents.count ?? 0)} hint={`${numbers.count ?? 0} connected number${numbers.count === 1 ? "" : "s"}`} href="/dashboard/agents" />
+        <StatCard label="Wallet balance" value={rupees(Number(balance.data?.balance_paise ?? 0))} hint="Top up to keep agents answering" href="/dashboard/wallet" icon={WalletIcon} />
+        <StatCard label="Calls" value={String(callCount.count ?? 0)} hint="Last 30 days" href="/dashboard/calls" icon={PhoneCallIcon} />
+        <StatCard label="Talk time" value={`${minutes} min`} hint="Last 30 days" icon={ClockIcon} />
+        <StatCard label="Agents" value={String(agents.count ?? 0)} hint={`${numbers.count ?? 0} connected number${numbers.count === 1 ? "" : "s"}`} href="/dashboard/agents" icon={BotIcon} />
       </section>
 
-      {steps.some((s) => !s.done) && (
-        <section>
-          <h2 className="font-heading font-semibold text-base tracking-tight">Get started</h2>
-          <ol className="mt-4 grid gap-4 md:grid-cols-3">
-            {steps.map((s, i) => (
-              <li key={s.title} className="flex flex-col rounded-xl border bg-card p-5">
-                <div className="flex items-center gap-3">
-                  <span
-                    className={
-                      "flex size-6 items-center justify-center rounded-full border font-medium text-xs " +
-                      (s.done ? "border-success/40 bg-success/10 text-success-foreground" : "text-muted-foreground")
-                    }
-                  >
-                    {s.done ? <CheckIcon className="size-3.5" strokeWidth={2.5} /> : i + 1}
-                  </span>
-                  <h3 className="font-medium text-sm">{s.title}</h3>
-                </div>
-                <p className="mt-3 flex-1 text-muted-foreground text-sm leading-6">{s.body}</p>
-                {!s.done && (
-                  <Button variant="outline" size="sm" className="mt-4 w-fit" render={<Link href={s.href} />}>
-                    {s.cta}
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ol>
-        </section>
-      )}
+      {steps.some((s) => !s.done) && <GetStarted steps={steps} />}
+
+      <AgentTemplates />
 
       <section>
         <div className="flex items-center justify-between">

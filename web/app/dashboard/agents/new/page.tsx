@@ -1,13 +1,14 @@
 import { AgentForm } from "@/components/dashboard/agent-form";
-import { Page, PageHeader } from "@/components/dashboard/page-header";
+import { templateById } from "@/lib/agent-templates";
 
 export const metadata = { title: "New agent" };
 
-export default function NewAgentPage() {
+export default async function NewAgentPage({ searchParams }: PageProps<"/dashboard/agents/new">) {
+  const raw = (await searchParams).template;
+  const template = templateById(typeof raw === "string" ? raw : undefined);
   return (
-    <Page>
-      <PageHeader title="New agent" description="Set up how your agent sounds and behaves." />
-      <AgentForm />
-    </Page>
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-5 sm:px-6">
+      <AgentForm template={template} />
+    </div>
   );
 }

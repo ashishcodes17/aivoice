@@ -14,7 +14,7 @@ export function CallCard() {
     <div className="relative mx-auto w-full max-w-2xl">
       <div
         aria-hidden
-        className="absolute -inset-x-8 -inset-y-6 -z-10 rounded-[2rem] bg-gradient-to-b from-foreground/[0.04] to-transparent blur-2xl"
+        className="absolute -inset-x-8 -inset-y-6 -z-10 rounded-[2rem] bg-gradient-to-b from-primary/[0.10] to-transparent blur-2xl"
       />
       <div className="overflow-hidden rounded-2xl border bg-card shadow-black/[0.06] shadow-xl">
         <div className="flex items-center justify-between border-b px-5 py-3.5">
@@ -35,7 +35,7 @@ export function CallCard() {
           {bars.map((h, i) => (
             <span
               key={i}
-              className="wave-bar w-[3px] rounded-full bg-foreground/70"
+              className="wave-bar w-[3px] rounded-full bg-primary/70"
               style={{ height: `${h}%`, animationDelay: `${(i % 9) * 0.11}s` }}
             />
           ))}

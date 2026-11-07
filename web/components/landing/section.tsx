@@ -44,5 +44,5 @@ export function SectionHeading({
 
 /** Italic serif accent used inside headings. */
 export function Accent({ children }: { children: React.ReactNode }) {
-  return <span className="font-normal font-serif italic tracking-normal">{children}</span>;
+  return <span className="font-normal font-serif text-primary italic tracking-normal">{children}</span>;
 }

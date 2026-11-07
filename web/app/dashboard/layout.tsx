@@ -1,4 +1,6 @@
 import { Suspense } from "react";
+import { Breadcrumbs } from "@/components/dashboard/breadcrumbs";
+import { Separator } from "@/components/ui/separator";
 import { AppSidebar } from "@/components/dashboard/app-sidebar";
 import { Onboarding } from "@/components/dashboard/onboarding";
 import { SidebarInset, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
@@ -36,8 +38,10 @@ async function Shell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar orgName={org.name} email={user.email ?? ""} balance={rupees(Number(bal?.balance_paise ?? 0))} />
       <SidebarInset>
-        <header className="flex h-14 items-center gap-2 border-b px-4 md:hidden">
-          <SidebarTrigger />
+        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+          <SidebarTrigger className="-ms-1" />
+          <Separator orientation="vertical" className="me-1 data-[orientation=vertical]:h-4" />
+          <Breadcrumbs />
         </header>
         <div className="flex-1">{children}</div>
       </SidebarInset>

@@ -19,7 +19,7 @@ export function PageHeader({
 }
 
 export function Page({ children }: { children: React.ReactNode }) {
-  return <div className="mx-auto w-full max-w-6xl space-y-8 px-4 py-8 sm:px-8">{children}</div>;
+  return <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8">{children}</div>;
 }
 
 export function PageFallback() {

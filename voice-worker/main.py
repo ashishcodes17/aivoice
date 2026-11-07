@@ -3,11 +3,11 @@ import json
 import sys
 import time
 
-from fastapi import FastAPI, Query, WebSocket, WebSocketDisconnect
+from fastapi import BackgroundTasks, FastAPI, Query, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from loguru import logger
 
-from worker import events, probe, version
+from worker import events, probe, version, whatsapp
 from worker.bot import run_bot
 from worker.config import settings
 from worker.store import Store
@@ -26,6 +26,31 @@ def _token_ok(token: str) -> bool:
 
 @app.get("/healthz")
 async def healthz():
+    return {"ok": True}
+
+
+@app.get("/wa/webhook")
+async def whatsapp_verify(request: Request):
+    """Meta's one-time check when the webhook URL is saved: echo the challenge if the token matches."""
+    q = request.query_params
+    expected = settings.whatsapp_verify_token
+    if expected and q.get("hub.mode") == "subscribe" and hmac.compare_digest(q.get("hub.verify_token", ""), expected):
+        return Response(q.get("hub.challenge", ""), media_type="text/plain")
+    return Response("forbidden", status_code=403)
+
+
+@app.post("/wa/webhook")
+async def whatsapp_webhook(request: Request, background: BackgroundTasks):
+    """Customer messages from WhatsApp. Answer Meta at once (it retries slow webhooks) and reply in the background."""
+    raw = await request.body()
+    if not whatsapp.verify_signature(raw, request.headers.get("x-hub-signature-256"), settings.meta_app_secret):
+        return Response("forbidden", status_code=403)
+    try:
+        messages = whatsapp.parse_inbound(json.loads(raw))
+    except ValueError:
+        return Response("bad request", status_code=400)
+    for msg in messages:
+        background.add_task(whatsapp.handle_message, store, msg)
     return {"ok": True}
 
 
