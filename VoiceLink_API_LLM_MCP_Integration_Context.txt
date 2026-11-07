@@ -1,0 +1,1291 @@
+# VoiceLink API — LLM / MCP Integration Context
+
+Use this as implementation context for an AI coding agent. Do not invent undocumented endpoints, fields, error shapes, role permissions, enum values, or response fields. Where this document marks an item unresolved, ask for confirmation or make the uncertainty explicit.
+
+Base URL: `https://app.voicelink.co.in/api/v1`
+Authentication: Bearer token via `Authorization: Bearer {access_token}` for authenticated endpoints.
+
+## Platform context
+VoiceLink (a product by Elision Group) is a telephony infrastructure platform connecting voice bots to real phone networks in India through SIP Trunk and WebSocket connectivity, DID provisioning, call routing, reseller management and webhook/call-reporting workflows.
+
+SIP:
+- VoiceLink SIP domain: sip.voicelink.co.in
+- VoiceLink SIP port: 3300
+- Customer static IP/port and VoiceLink SIP endpoint are mutually allowlisted according to the supplied overview.
+
+WebSocket media:
+- Bidirectional WSS audio in the supplied overview is base64-encoded A-law, 8-bit, 8 kHz, mono.
+- Return bot audio in the same format unless VoiceLink confirms a different media format for the deployment.
+- WebSocket events: connected, start, media, mark, clear, transfer, stop
+- Webhook lifecycle events: call.initiated, call.answered, call.ended, call.completed
+
+## Integration flows
+### Option A — Full Reseller Onboarding
+Audience: New reseller / platform partner
+Use case: Create the reseller, verify email, log in, complete KYC and inspect commercial state.
+Sequence:
+1. Reseller Signup — `POST /reseller/signup`
+2. Verify Email OTP — `POST /auth/verify-otp`
+3. Login — `POST /auth/login`
+4. KYC Status — `GET /reseller/kyc/status`
+5. Step 1 — Register Details — `POST /reseller/kyc/step-1-register-details`
+6. Step 2 — PAN Verification — `POST /reseller/kyc/step-2-pan-verify`
+7. Upload KYC Document — `POST /reseller/kyc/upload-document`
+8. Step 3 — Aadhaar Initiate — `POST /reseller/kyc/step-3-aadhaar-init`
+9. Step 3 — Aadhaar DigiLocker Callback — `GET /reseller/kyc/step-3-aadhaar-callback`
+10. Upload KYC Document — `POST /reseller/kyc/upload-document`
+11. Step 4 — GST Verification — `POST /reseller/kyc/step-4-gst-verify`
+12. Upload KYC Document — `POST /reseller/kyc/upload-document`
+13. Final Submit — `POST /reseller/kyc/final-submit`
+14. Get Reseller Profile — `GET /reseller/profile`
+Note: GST steps are business-only. In verification-link mode replace the OTP step with the emailed link.
+
+### Option B — Provision an End Client
+Audience: Reseller onboarding a customer
+Use case: Create a client, allocate commercial capacity, map a DID and prepare the account for voice routing.
+Sequence:
+1. Login — `POST /auth/login`
+2. Get Reseller Profile — `GET /reseller/profile`
+3. Create Client — `POST /reseller/client/create`
+4. Allocate Wallet Balance to Client — `POST /reseller/client/allocate-wallet/{client_id}`
+5. Get DIDs Available for Client Mapping — `GET /reseller/client/available-dids`
+6. Map DID to Client — `POST /reseller/client/map-did`
+7. Get Reseller Clients — `GET /reseller/clients`
+Note: Client verification/KYC can be performed using client_id on the KYC endpoints where supported.
+
+### Option C — Buy DIDs & Channels
+Audience: Reseller with an active direct-purchase plan
+Use case: Discover DID types, select inventory, build a draft order, inspect pricing and confirm purchase.
+Sequence:
+1. Get Reseller Profile — `GET /reseller/profile`
+2. List Active DID Types — `GET /reseller/did-types`
+3. List DIDs for Purchase — `GET /reseller/purchase/dids`
+4. Lock DIDs — `POST /reseller/purchase/lock-did`
+5. Add Channels — `POST /reseller/purchase/add-channel`
+6. Apply/Remove Promocode — `POST /reseller/purchase/promocode`
+7. Order Summary — `GET /reseller/purchase/summary/{order_id}`
+8. Confirm Purchase — `POST /reseller/purchase/confirm`
+9. Purchased DID List — `GET /reseller/did/purchased`
+Note: Add Channels and Promocode are optional. Request-required DID types use the approval path instead.
+
+### Option D — Request a Regulated DID Series
+Audience: Reseller needing request-required / DLT-regulated numbers
+Use case: Discover request-required types, submit business use case, then track approval status.
+Sequence:
+1. List Active DID Types — `GET /reseller/did-types`
+2. Submit Purchase Request — `POST /reseller/did-purchase-request`
+3. List Purchase Requests — `GET /reseller/did-purchase-request`
+Note: The source examples conflict between 140/160 and 140/180 wording; use the DID Types API response as the runtime source of truth.
+
+### Option E — SIP Voicebot Integration
+Audience: Voicebot using SIP trunking
+Use case: Create or select a SIP trunk, map it to the DID and use DID routing for inbound/outbound calls.
+Sequence:
+1. List BOT Providers — `GET /sip-trunk/bot-provider/list`
+2. Create SIP Trunk — `POST /sip-trunk/create`
+3. List SIP Trunks — `GET /sip-trunk/list`
+4. List Call Routings — `GET /call-routing/list`
+5. Create Call Routing — `POST /call-routing/create`
+6. Update Call Routing — `POST /call-routing/update/{id}`
+7. Purchased DID List — `GET /reseller/did/purchased`
+8. Get Call Details — `GET /call-log/details`
+Note: VoiceLink overview also states SIP connectivity at sip.voicelink.co.in:3300 with mutual IP/port whitelisting.
+
+### Option F — WebSocket Voicebot Integration
+Audience: Real-time AI voicebot / streaming platform
+Use case: Create a WebSocket bot, attach it to DID routing, then place outbound calls with Add Lead.
+Sequence:
+1. Create WebSocket Bot — `POST /websocket-bot/create`
+2. List WebSocket Bots — `GET /websocket-bot/list`
+3. List Call Routings — `GET /call-routing/list`
+4. Create Call Routing — `POST /call-routing/create`
+5. Add Outbound Lead — `POST /add_lead`
+6. Get Call Details — `GET /call-log/details`
+Note: For India outbound Add Lead, send a 10-digit customer_number and country_code="91" separately.
+
+### Option G — Renew DIDs & Channels
+Audience: Reseller operations / billing automation
+Use case: Find renewable purchases, price the renewal and execute it atomically.
+Sequence:
+1. List Renewable Items — `GET /reseller/renew/list`
+2. Renewal Summary — `POST /reseller/renew/summary`
+3. Confirm Renewal — `POST /reseller/renew/confirm`
+Note: Renewal uses purchase IDs, not DID IDs. Set renew_for_client=true when mapped client expiry must be extended too.
+
+### Option H — Operations, Billing & Audit
+Audience: Support / NOC / account operations
+Use case: Inspect reseller/client state, DID inventory, routing, call details, billing and document history.
+Sequence:
+1. Get Reseller Profile — `GET /reseller/profile`
+2. Get Reseller Clients — `GET /reseller/clients`
+3. Get Reseller Billing — `GET /reseller/billing`
+4. Purchased DID List — `GET /reseller/did/purchased`
+5. List Call Routings — `GET /call-routing/list`
+6. Get Call Details — `GET /call-log/details`
+7. KYC Document History — `GET /reseller/kyc/document-history`
+Note: Use this flow for dashboards, support tooling and audit views.
+
+## API reference
+## Authentication & User
+### Login
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/login`
+- Auth: Public
+- Roles/context: Reseller, Client, Agent
+- Purpose: Authenticate a user and return a Sanctum Bearer token.
+- Parameters:
+  - `username` (string, Mandatory, body): Registered username
+  - `password` (string, Mandatory, body): Account password
+- Rules:
+  - Use Authorization: Bearer {access_token} on authenticated requests.
+  - If the password is correct but email is unverified, login returns 422. In OTP mode, a verification code is emailed automatically.
+  - An incorrect password does not trigger a verification email.
+  - After OTP verification, call login again; verify-otp does not return a token.
+- Request example:
+```
+{"password":"Secret@123","username":"johndoe"}
+```
+- Response example:
+```
+{"data":{"user":{"id":10,"name":"John Doe","email":"john@acme.com","username":"johndoe"},"token_type":"Bearer","access_token":"1|abc123..."},"status":true,"message":"Login successful."}
+```
+
+### Logout
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/logout`
+- Auth: Bearer
+- Roles/context: All authenticated roles
+- Purpose: Revoke the current Sanctum Bearer token.
+- Rules:
+  - The current token is permanently invalidated and cannot be reused.
+- Response example:
+```
+{"data":[],"status":true,"message":"Logged out successfully."}
+```
+
+### Forgot Password
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/forgot-password`
+- Auth: Public
+- Roles/context: All user roles
+- Purpose: Send a password reset link to the registered email address.
+- Parameters:
+  - `email` (string, Mandatory, body): Registered email address
+- Request example:
+```
+{"email":"john@acme.com"}
+```
+- Response example:
+```
+{"data":[],"status":true,"message":"Password reset link sent. Please check your email."}
+```
+
+### Reset Password
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/reset-password`
+- Auth: Public
+- Roles/context: All user roles
+- Purpose: Reset the account password using the token received by email.
+- Parameters:
+  - `token` (string, Mandatory, body): Password reset token from the email
+  - `email` (string, Mandatory, body): Registered email address
+  - `password` (string, Mandatory, body): New password
+  - `password_confirmation` (string, Mandatory, body): Must match password
+- Rules:
+  - All active Sanctum tokens are revoked after a successful reset.
+  - Call login again to obtain a fresh token.
+- Request example:
+```
+{"email":"john@acme.com","token":"abc123xyz...","password":"NewSecret@123","password_confirmation":"NewSecret@123"}
+```
+- Response example:
+```
+{"data":[],"status":true,"message":"Password has been reset successfully. Please log in with your new password."}
+```
+
+### Verify Email OTP
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/verify-otp`
+- Auth: Public
+- Roles/context: Unverified accounts in OTP mode
+- Purpose: Confirm an email address with the one-time passcode sent at signup or after a correct-password login attempt.
+- Parameters:
+  - `username` (string, Mandatory, body): Registered username
+  - `otp` (string, Mandatory, body): 6-digit code from the verification email
+- Rules:
+  - Available only when project.email_verification.method = 2 (OTP mode).
+  - Under verification-link mode this returns 422 and the emailed link must be used.
+  - No Bearer token is returned; OTP proves inbox ownership, not login.
+  - Default expiry is 10 minutes (project.email_verification.otp.expiry_minutes).
+  - Default maximum incorrect attempts is 5; after that request a new code with resend-otp.
+- Request example:
+```
+{"otp":"482913","username":"johndoe"}
+```
+- Response example:
+```
+{"data":[],"status":true,"message":"Your email address has been verified. You can now log in."}
+```
+
+### Resend Email OTP
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/resend-otp`
+- Auth: Public
+- Roles/context: Unverified accounts in OTP mode
+- Purpose: Email a fresh verification passcode.
+- Parameters:
+  - `username` (string, Mandatory, body): Registered username
+- Rules:
+  - Every resend issues a different code and invalidates the previous outstanding code.
+  - Default resend cooldown is 60 seconds; requests inside the cooldown return 422 with remaining seconds.
+  - Available only when project.email_verification.method = 2.
+- Request example:
+```
+{"username":"johndoe"}
+```
+- Response example:
+```
+{"data":[],"status":true,"message":"A verification code has been sent to your email address."}
+```
+
+### Get Authenticated User
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/auth/user`
+- Auth: Bearer
+- Roles/context: All authenticated roles
+- Purpose: Return the basic profile of the currently authenticated user.
+- Response example:
+```
+{"data":{"id":1,"name":"User Name","email":"user@example.com","username":"user123"},"status":true,"message":"User profile retrieved successfully"}
+```
+
+## Reseller Account
+### Reseller Signup
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/signup`
+- Auth: Public
+- Roles/context: New reseller
+- Purpose: Register a new reseller account and trigger email verification.
+- Parameters:
+  - `first_name` (string, Mandatory, body): First name
+  - `last_name` (string, Mandatory, body): Last name
+  - `company_name` (string, Mandatory, body): Company name
+  - `email` (string, Mandatory, body): Unique email address
+  - `username` (string, Mandatory, body): Unique username
+  - `phone` (string, Mandatory, body): Contact phone number
+  - `currency_code` (string, Mandatory, body): 3-letter ISO currency code, e.g. USD or INR
+  - `password` (string, Mandatory, body): Account password
+  - `password_confirmation` (string, Mandatory, body): Must match password
+  - `industry` (integer, Mandatory, body): Industry catalog ID
+  - `telephony_provider` (integer, Mandatory, body): Telephony provider catalog ID
+  - `expected_call_volume` (integer, Mandatory, body): Expected call volume catalog ID
+- Rules:
+  - Verification follows project.email_verification.method: OTP (default) or verification link.
+  - Signup does not return a Bearer token. Verify email first, then log in.
+  - industry, telephony_provider, and expected_call_volume are integer IDs from VoiceLink catalog lookups. The catalog/list endpoints for these values are not specified in the supplied source material — confirm the correct lookup endpoint before building a signup form.
+- Request example:
+```
+{"email":"john@acme.com","phone":"+919876543210","password":"Secret@123","username":"johndoe","last_name":"Doe","first_name":"John","company_name":"Acme Telecom","currency_code":"USD","password_confirmation":"Secret@123","industry":3,"telephony_provider":2,"expected_call_volume":4}
+```
+- Response example:
+```
+{"data":{"user":{"id":10,"name":"John Doe","email":"john@acme.com","username":"johndoe"},"message":"Registration successful! We have emailed you a verification code. Submit it to /api/v1/auth/verify-otp to activate your account."},"status":true,"message":"Registration successful! We have emailed you a verification code. Submit it to /api/v1/auth/verify-otp to activate your account."}
+```
+
+### Get Reseller Profile
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/profile`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return reseller profile, wallet, channel counts, billing mode and active plan snapshot.
+- Rules:
+  - billing_mode is prepaid or postpaid; pending_billing_mode is a queued switch for the next cycle.
+  - For postpaid accounts wallet.balance may be negative; wallet.bill_amount exposes the amount owed as a positive value.
+  - active_plan.did_type_rates is dynamic. Discover the catalog with GET /reseller/did-types.
+- Response example:
+```
+{"data":{"id":10,"name":"John Doe","email":"john@acme.com","phone":"+919876543210","wallet":{"balance":-4900,"currency":"USD","bill_amount":4900,"negative_threshold":-500},"channels":{"available":5,"total_allocated":15,"total_purchased":20},"currency":"USD","username":"johndoe","is_active":1,"last_name":"Doe","first_name":"John","active_plan":{"end_date":"2026-01-01","plan_name":"Pro","plan_type":"limited","start_date":"2025-01-01","inbound_rate":0.5,"outbound_rate":0.8,"pulse_seconds":60,"did_type_rates":[{"name":"Landline","rate":0.6,"did_type_id":3},{"name":"Mobile","rate":0.75,"did_type_id":2},{"name":"Toll-Free","rate":1,"did_type_id":1}],"allocated_channels":20,"monthly_channel_rate":10},"is_verified":true,"billing_mode":"postpaid","company_name":"Acme Telecom","member_since":"2025-01-15","pending_billing_mode":null},"status":true,"message":"Success"}
+```
+
+### Get Reseller Clients
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/clients`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return all clients under the reseller with profile, wallet, channels and assigned DIDs.
+- Response example:
+```
+{"data":[{"id":101,"dids":[{"did_id":3,"did_number":"9876543210","type_label":"Mobile","expiry_date":"2026-12-31","user_status":2,"country_code":"IN","call_recording":0,"user_status_label":"Assigned","client_expiry_date":"2026-06-30","call_recording_label":"No"}],"name":"Jane Smith","email":"jane@example.com","phone":"+919876543210","wallet":{"balance":200,"currency":"USD","negative_threshold":-100},"channels":{"allocated":5},"currency":"USD","username":"janesmith","is_active":1,"last_name":"Smith","first_name":"Jane","is_verified":true,"member_since":"2025-03-01"}],"status":true,"message":"Success"}
+```
+
+### Get Reseller Billing
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/billing`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return current postpaid outstanding amount and monthly invoice history.
+- Rules:
+  - Postpaid bill_amount is returned as a positive outstanding amount.
+  - Invoices include rolled-up per-client call costs.
+  - Prepaid resellers have no postpaid invoices and no outstanding postpaid bill amount.
+- Response example:
+```
+{"data":{"currency":"INR","invoices":[{"id":12,"cycle":"2026-05","status":"generated","clients":[{"name":"Acme Ltd","call_cost":1000,"client_id":7}],"paid_at":null,"generated_at":"2026-06-01T01:00:00.000000Z","total_amount":5000}],"bill_amount":5000,"billing_mode":"postpaid"},"status":true,"message":"Success"}
+```
+
+## Client Management
+### Create Client
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/client/create`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Create a client under the authenticated reseller.
+- Parameters:
+  - `first_name` (string, Mandatory, body): Client first name
+  - `last_name` (string, Mandatory, body): Client last name
+  - `username` (string, Mandatory, body): Unique username
+  - `email` (string, Mandatory, body): Unique email
+  - `phone` (string, Optional, body): Contact phone number
+  - `password` (string, Mandatory, body): Password, minimum 8 characters
+  - `is_active` (integer, Optional, body): 1=active, 0=inactive; default 1
+  - `channel_count` (integer, Mandatory, body): Channels to allocate, from 1 to reseller availability
+  - `plan_type` (string, Conditional, body): Required if reseller plan is Unlimited; unlimited or limited
+  - `negative_threshold` (numeric, Mandatory, body): ≤0 and ≥ reseller threshold
+  - `pulse_seconds` (integer, Conditional, body): Required for Limited client plan
+  - `inbound_rate` (numeric, Conditional, body): Required for Limited client plan
+  - `outbound_rate` (numeric, Conditional, body): Required for Limited client plan
+  - `wallet_balance` (numeric, Optional, body): Initial balance from reseller wallet; ignored for postpaid reseller
+  - `wallet_bypass` (integer, Optional, body): 0 or 1; when 1 billing debits reseller wallet and pricing mirrors reseller plan
+- Rules:
+  - DID mapping is separate: POST /reseller/client/map-did.
+  - Client inherits reseller billing mode. For postpaid resellers wallet_balance is ignored.
+  - If reseller has an unlimited plan, they can choose client plan_type.
+- Request example:
+```
+{"email":"jane@example.com","phone":"9876543210","password":"Secret@123","username":"janesmith","is_active":1,"last_name":"Smith","first_name":"Jane","inbound_rate":0.5,"channel_count":5,"outbound_rate":0.8,"pulse_seconds":60,"wallet_bypass":0,"wallet_balance":100,"negative_threshold":-500}
+```
+- Response example:
+```
+{"data":{"client_id":101},"status":true,"message":"Client created successfully. Verification email sent."}
+```
+
+### Update Client
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/client/update/{client_id}`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Update profile, pricing, wallet threshold and channel allocation for a client owned by the reseller.
+- Parameters:
+  - `client_id` (integer, Mandatory, path): Client ID
+  - `first_name` (string, Mandatory, body): Client first name
+  - `last_name` (string, Mandatory, body): Client last name
+  - `username` (string, Mandatory, body): Unique username
+  - `email` (string, Mandatory, body): Unique email
+  - `phone` (string, Optional, body): Contact phone
+  - `password` (string, Optional, body): New password; omit to keep current
+  - `is_active` (integer, Mandatory, body): 1=active, 0=inactive
+  - `channel_count` (integer, Mandatory, body): Channel allocation
+  - `plan_type` (string, Optional, body): For unlimited reseller plan: unlimited or limited
+  - `negative_threshold` (numeric, Mandatory, body): ≤0 and ≥ reseller threshold
+  - `pulse_seconds` (integer, Conditional, body): Required for Limited plan
+  - `inbound_rate` (numeric, Conditional, body): Required for Limited plan
+  - `outbound_rate` (numeric, Conditional, body): Required for Limited plan
+  - `wallet_balance` (numeric, Optional, body): Wallet balance value; ignored for postpaid reseller
+  - `wallet_bypass` (integer, Optional, body): 0 or 1; omit to keep current
+- Rules:
+  - Only clients belonging to the authenticated reseller may be updated.
+  - For transferring additional balance, prefer the explicit allocate-wallet endpoint.
+  - Source material does not state whether wallet_balance here replaces or increments the existing client balance.
+- Request example:
+```
+{"email":"jane@example.com","username":"janesmith","is_active":1,"last_name":"Smith","first_name":"Jane","inbound_rate":0.5,"channel_count":5,"outbound_rate":0.8,"pulse_seconds":60,"wallet_bypass":0,"wallet_balance":50,"negative_threshold":-500}
+```
+- Response example:
+```
+{"data":{"client_id":101},"status":true,"message":"Client updated successfully."}
+```
+
+### Delete Client
+- Method: `DELETE`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/client/delete/{client_id}`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Soft-delete a client owned by the authenticated reseller.
+- Parameters:
+  - `client_id` (integer, Mandatory, path): Client ID
+- Rules:
+  - Soft delete: treat the account as deleted/inactive at application level; do not assume physical erasure.
+- Response example:
+```
+{"data":[],"status":true,"message":"Client deleted successfully."}
+```
+
+### Get DIDs Available for Client Mapping
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/client/available-dids`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return reseller-owned DIDs that are not yet assigned to a client.
+- Rules:
+  - Use this list before map-did.
+  - user_status: 1=Available, 2=Assigned, 3=Expired, 4=Inactive.
+  - call_recording: 0=Disabled, 1=Enabled.
+- Response example:
+```
+{"data":[{"did_id":1,"did_number":"9876543210","type_label":"Mobile","expiry_date":"2026-12-31","user_status":1,"country_code":"IN","call_recording":0,"user_status_label":"Available","call_recording_label":"No"}],"_meta":{"user_status":["1=Available","2=Assigned","3=Expired","4=Inactive"],"call_recording":["0=Disabled","1=Enabled"]},"status":true,"message":"Success"}
+```
+
+### Map DID to Client
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/client/map-did`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Assign an available reseller DID to a client.
+- Parameters:
+  - `client_id` (integer, Mandatory, body): Client ID
+  - `did_id` (integer, Mandatory, body): Available DID ID
+  - `call_recording` (integer, Mandatory, body): 0=disabled, 1=enabled
+  - `user_status` (integer, Mandatory, body): 2=assigned, 4=inactive
+  - `user_expiry_date` (string, Optional, body): YYYY-MM-DD; cannot exceed DID expiry; defaults to DID expiry
+  - `description` (string, Optional, body): Mapping notes
+- Rules:
+  - DID must belong to the authenticated reseller and be available.
+  - Client auto-renew is enabled by default but is forced to 0 server-side unless the active reseller purchase has auto_renew=1.
+- Request example:
+```
+{"did_id":5,"client_id":101,"description":"Primary inbound DID","user_status":2,"call_recording":0,"user_expiry_date":"2026-12-31"}
+```
+- Response example:
+```
+{"data":{"did_id":5,"client_id":101,"did_number":"9876543210"},"status":true,"message":"DID mapped to client successfully."}
+```
+
+### Allocate Wallet Balance to Client
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/client/allocate-wallet/{client_id}`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Transfer balance from reseller wallet to a client wallet.
+- Parameters:
+  - `client_id` (integer, Mandatory, path): Receiving client ID
+  - `amount` (numeric, Mandatory, body): Amount, minimum 0.01
+  - `description` (string, Mandatory, body): 3-500 character transaction note
+- Rules:
+  - Client must belong to the reseller.
+  - reseller_balance - amount must be >= reseller negative_threshold.
+  - Creates a DEBIT on reseller wallet and matching CREDIT on client wallet; both transactions are recorded.
+- Request example:
+```
+{"amount":500,"description":"Initial wallet top-up for client onboarding"}
+```
+- Response example:
+```
+{"data":{"client_id":101,"allocated_amount":500,"client_balance_after":500,"reseller_balance_after":1000},"status":true,"message":"Wallet balance allocated successfully."}
+```
+
+## KYC
+### KYC Status
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/status`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Return current KYC progress and current/latest document state.
+- Parameters:
+  - `client_id` (integer, Optional, query): Owned client ID to inspect
+- Rules:
+  - Omit client_id for reseller KYC.
+  - documents reports the current/latest document per type.
+  - is_complete stays false until every required document is uploaded.
+- Response example:
+```
+{"data":{"documents":{"pan":{"url":null,"type":null,"label":"PAN Card","uploaded":false,"file_name":null,"document_id":null,"uploaded_at":null,"document_number":null},"aadhaar":{"url":null,"type":null,"label":"Aadhaar","uploaded":false,"file_name":null,"document_id":null,"uploaded_at":null,"document_number":null}},"gst_number":null,"kyc_status":0,"pan_number":null,"is_complete":false,"account_type":"individual","current_step":"pan","gst_verified":false,"pan_verified":false,"aadhaar_number":null,"aadhaar_verified":false,"kyc_status_label":"Pending","pan_match_status":0,"pan_match_status_label":"Pending"},"status":true,"message":"KYC status retrieved successfully."}
+```
+
+### Step 1 — Register Details
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/step-1-register-details`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Save initial KYC account and billing details. This is mandatory before verification.
+- Parameters:
+  - `client_id` (integer, Optional, body): Owned client ID
+  - `term_and_condition` (boolean, Mandatory, body): Must be true/1
+  - `account_type` (string, Mandatory, body): individual or business
+  - `business_name` (string, Conditional, body): Required for business account
+  - `full_name` (string, Mandatory, body): Full legal name
+  - `email` (string, Optional, body): Accepted but ignored; KYC email mirrors account email
+  - `phone` (string, Mandatory, body): Contact number
+  - `billing_address` (string, Mandatory, body): Complete billing address
+  - `state` (string, Optional, body): State name, case-insensitive
+  - `city` (string, Optional, body): City name resolved within state
+  - `pincode` (string, Optional, body): 6-digit postal PIN
+- Rules:
+  - Country defaults to India.
+  - To change email, use the separate profile email flow; this endpoint ignores email for KYC identity.
+- Request example:
+```
+{"city":"Ahmedabad","email":"john@example.com","phone":"+919876543210","state":"Gujarat","pincode":"380015","full_name":"John Doe","account_type":"individual","billing_address":"123 Main St, Mumbai, MH 400001","term_and_condition":true}
+```
+- Response example:
+```
+{"data":{"kyc_status":0,"account_type":"individual","current_step":"pan"},"status":true,"message":"Register details saved successfully."}
+```
+
+### Step 2 — PAN Verification
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/step-2-pan-verify`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Verify PAN using the external service and perform holder-name matching.
+- Parameters:
+  - `client_id` (integer, Optional, body): Owned client ID
+  - `pan_holder_name` (string, Mandatory, body): Name exactly as on PAN card
+  - `pan_number` (string, Mandatory, body): PAN format ABCDE1234F
+- Rules:
+  - Step 1 must be complete first.
+  - pan_match_status: 0=not checked, 1=matched, 2=mismatch.
+  - After successful verification current_step remains pan; upload the PAN document before Aadhaar unlocks.
+  - Re-verifying a changed PAN supersedes the current PAN document and requires a new upload.
+- Request example:
+```
+{"pan_number":"ABCDE1234F","pan_holder_name":"JOHN DOE"}
+```
+- Response example:
+```
+{"data":{"kyc_status":0,"current_step":"pan","pan_verified":true,"pan_match_status":1,"pan_verified_name":"JOHN DOE","pan_document_uploaded":false},"status":true,"message":"PAN verified successfully! Name matched. Please upload your PAN card document to continue."}
+```
+
+### Step 3 — Aadhaar Initiate
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/step-3-aadhaar-init`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Initiate DigiLocker Aadhaar verification and return a browser redirect URL.
+- Parameters:
+  - `client_id` (integer, Optional, body): Owned client ID
+  - `redirect_url` (string, Optional, body): Absolute URL, max 500 chars, to forward after callback status page
+- Rules:
+  - PAN must be verified and its document uploaded first; otherwise 422.
+  - No Aadhaar number is sent in this request.
+  - User interaction in a browser/webview is required.
+  - If redirect_url is provided, original DigiLocker query parameters are appended when forwarding.
+- Request example:
+```
+{"redirect_url":"https://merchant.example.com/kyc/done"}
+```
+- Response example:
+```
+{"data":{"request_id":"ref_abc123","current_step":"aadhaar","redirect_url":"https://digilocker.gov.in/..."},"status":true,"message":"Aadhaar verification initiated. Please open the redirect URL to complete DigiLocker verification."}
+```
+
+### Step 3 — Aadhaar DigiLocker Callback
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/step-3-aadhaar-callback`
+- Auth: Public
+- Roles/context: DigiLocker browser redirect
+- Purpose: Handle DigiLocker browser redirect after Aadhaar verification.
+- Content-Type/response type: `text/html`
+- Parameters:
+  - `uid` (string, Mandatory, query): Encrypted user identifier
+  - `status` (string, Optional, query): DigiLocker status, e.g. success
+  - `gateway` (string, Optional, query): DigiLocker gateway identifier
+- Rules:
+  - Returns text/html, not JSON.
+  - On success current_step remains aadhaar; upload document_type=aadhaar before the next step unlocks.
+  - If a redirect_url was stored during initiation, the HTML page forwards there after a short countdown.
+- Response example:
+```
+Renders VoiceLink Aadhaar callback HTML status page; content-type: text/html.
+```
+
+### Step 4 — GST Verification
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/step-4-gst-verify`
+- Auth: Bearer
+- Roles/context: Business KYC; reseller may act for owned client
+- Purpose: Verify GSTIN and business-name match.
+- Parameters:
+  - `client_id` (integer, Optional, body): Owned client ID
+  - `gst_number` (string, Mandatory, body): 15-character GSTIN, e.g. 22AAAAA0000A1Z5
+- Rules:
+  - Only required for business account types.
+  - Aadhaar must be verified and its document uploaded first.
+  - After success current_step remains gst; upload document_type=gst to finish.
+  - Re-verifying a changed GSTIN supersedes the current certificate.
+- Request example:
+```
+{"gst_number":"22AAAAA0000A1Z5"}
+```
+- Response example:
+```
+{"data":{"kyc_status":0,"current_step":"gst","gst_verified":true,"gst_document_uploaded":false},"status":true,"message":"GST verified successfully! Please upload your GST certificate to continue."}
+```
+
+### Upload KYC Document
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/upload-document`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Upload the supporting file after the corresponding number has been verified.
+- Content-Type/response type: `multipart/form-data`
+- Parameters:
+  - `client_id` (integer, Optional, form): Owned client ID
+  - `document_type` (string, Mandatory, form): pan, aadhaar, or gst
+  - `document` (file, Mandatory, form): jpg/jpeg/png/pdf, max 10MB
+- Rules:
+  - Content-Type must be multipart/form-data. JSON or base64 payloads are rejected.
+  - PAN upload is allowed only after PAN verification; Aadhaar after DigiLocker callback; GST after GST verification.
+  - Re-upload replaces the current document: old row remains in history with status=0 and new row becomes status=1.
+- Request example:
+```
+document_type=pan
+document=@/path/to/pan-card.pdf
+```
+- Response example:
+```
+{"data":{"documents":{"pan":{"url":"https://example.com/storage/kyc/documents/pan/5_pan_1787143670.pdf","type":2,"label":"PAN Card","uploaded":true,"file_name":"pan-card.pdf","document_id":12,"uploaded_at":"2026-08-19 18:17:50","document_number":"ABCDE1234F"}},"kyc_status":0,"is_complete":false,"current_step":"pan"},"status":true,"message":"PAN Card document uploaded successfully."}
+```
+
+### Remove KYC Document
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/remove-document`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Detach the current document so a different file can be supplied.
+- Parameters:
+  - `client_id` (integer, Optional, body): Owned client ID
+  - `document_type` (string, Mandatory, body): pan, aadhaar, or gst
+- Rules:
+  - The row/file is not deleted; it stays in history with status=0 and superseded_reason=removed_by_user.
+  - KYC drops back to pending (kyc_status=0) until a replacement is uploaded.
+- Request example:
+```
+{"document_type":"pan"}
+```
+- Response example:
+```
+{"data":{"documents":{"pan":{"url":null,"type":null,"label":"PAN Card","uploaded":false,"file_name":null,"document_id":null,"uploaded_at":null,"document_number":null}},"kyc_status":0,"is_complete":false,"current_step":"pan"},"status":true,"message":"PAN Card document removed successfully."}
+```
+
+### KYC Document History
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/document-history`
+- Auth: Bearer
+- Roles/context: Reseller; optionally on behalf of owned client
+- Purpose: Return full KYC document upload history, newest first.
+- Parameters:
+  - `client_id` (integer, Optional, query): Owned client ID
+  - `document_type` (string, Optional, query): pan, aadhaar, or gst
+- Rules:
+  - Every upload is retained; exactly one row per document type is latest.
+  - type: 1=image, 2=pdf.
+  - superseded_reason explains why a row stopped being latest.
+- Response example:
+```
+{"data":{"current":{"pan":{"url":"https://example.com/storage/kyc/documents/pan/5_pan_1787143670.pdf","type":2,"label":"PAN Card","uploaded":true,"file_name":"pan-card-new.pdf","document_id":12,"uploaded_at":"2026-08-19 18:17:50","document_number":"ABCDE1234F"}},"history":[{"id":12,"url":"https://example.com/storage/kyc/documents/pan/5_pan_1787143670.pdf","kind":"pan","type":2,"label":"PAN Card","source":"api","status":1,"size_kb":310,"kyc_type":1,"file_name":"pan-card-new.pdf","is_latest":true,"mime_type":"application/pdf","uploaded_at":"2026-08-19 18:17:50","document_number":"ABCDE1234F","superseded_reason":null},{"id":8,"url":"https://example.com/storage/kyc/documents/pan/5_pan_1787140021.jpg","kind":"pan","type":1,"label":"PAN Card","source":"web","status":0,"size_kb":148,"kyc_type":1,"file_name":"pan-card-old.jpg","is_latest":false,"mime_type":"image/jpeg","uploaded_at":"2026-08-19 17:20:21","document_number":"ABCDE1234F","superseded_reason":"replaced_by_new_upload"}]},"status":true,"message":"KYC document history retrieved successfully."}
+```
+
+### Final Submit
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/kyc/final-submit`
+- Auth: Bearer
+- Roles/context: Reseller (client behavior not specified in supplied parameters)
+- Purpose: Validate all required KYC steps/documents and mark KYC complete.
+- Rules:
+  - Individual requires PAN + Aadhaar verified and both documents uploaded.
+  - Business requires PAN + Aadhaar + GST verified and all three documents uploaded.
+  - 422 responses list missing document labels in data.missing_documents.
+  - The supplied API definition does not expose a client_id parameter for final-submit; confirm client final-submit behavior before implementing reseller-on-behalf-of-client completion.
+- Response example:
+```
+{"data":{"documents":{"pan":{"url":"https://example.com/storage/kyc/documents/pan/5_pan_1787143670.pdf","type":2,"label":"PAN Card","uploaded":true,"file_name":"pan-card.pdf","document_id":12,"uploaded_at":"2026-08-19 18:17:50","document_number":"ABCDE1234F"}},"kyc_status":1,"is_complete":true,"account_type":"individual","current_step":"complete","gst_verified":false,"pan_verified":true,"aadhaar_verified":true},"status":true,"message":"KYC verification is complete!"}
+```
+
+## DID Catalog & Requests
+### List Active DID Types
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/did-types`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return active DID types and whether each requires an approval request.
+- Parameters:
+  - `requires_request` (integer, Optional, query): 0=direct-purchase only, 1=request-required only
+- Rules:
+  - Use returned id as did_type_id.
+  - requires_request=0: direct purchase via lock-did + confirm.
+  - requires_request=1: submit /reseller/did-purchase-request and wait for admin approval.
+- Response example:
+```
+{"data":[{"id":1,"name":"Toll-Free","requires_request":0},{"id":2,"name":"Mobile","requires_request":0},{"id":3,"name":"Landline","requires_request":0},{"id":4,"name":"140 Series","requires_request":1}],"status":true,"message":"Success"}
+```
+
+### List Purchase Requests
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/did-purchase-request`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: List submitted purchase requests for special/request-required DID series.
+- Parameters:
+  - `status` (integer, Optional, query): 0=pending, 1=approved, 2=rejected
+  - `per_page` (integer, Optional, query): Results per page
+  - `page` (integer, Optional, query): Page number
+- Rules:
+  - DLT confirmed values: 0=No, 1=Yes.
+- Response example:
+```
+{"data":{"data":[{"id":1,"status":0,"remarks":null,"use_case":"Transactional alerts for our banking customers.","created_at":"2026-05-19T10:00:00.000000Z","approved_at":null,"did_type_id":4,"status_label":"Pending","did_type_name":"140 Series","dlt_confirmed":1}],"total":1,"per_page":10,"last_page":1,"current_page":1},"status":true,"message":"Success"}
+```
+
+### Submit Purchase Request
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/did-purchase-request`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Submit a request for a DID series requiring superadmin approval.
+- Parameters:
+  - `did_type_id` (integer, Mandatory, body): Active DID type with requires_request=1
+  - `dlt_confirmed` (integer, Mandatory, body): Must be 1
+  - `use_case` (string, Mandatory, body): 10-2000 characters
+- Rules:
+  - Company name is read from reseller KYC; do not send it.
+  - Direct-purchase DID types are rejected by this endpoint.
+  - dlt_confirmed=0 returns a validation error.
+- Request example:
+```
+{"use_case":"Transactional alerts for our banking customers.","did_type_id":4,"dlt_confirmed":1}
+```
+- Response example:
+```
+{"data":{"id":1,"status":0,"created_at":"2026-05-19T10:00:00.000000Z","did_type_id":4,"status_label":"Pending"},"status":true,"message":"DID purchase request submitted successfully."}
+```
+
+## Purchase
+### List DIDs for Purchase
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/purchase/dids`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Browse available direct-purchase DID inventory with plan-based pricing.
+- Parameters:
+  - `country_code` (string, Mandatory, query): Country code, e.g. +91
+  - `type` (integer, Mandatory, query): 1=Toll-Free, 2=Mobile, 3=Landline
+  - `months` (integer, Mandatory, query): Subscription months
+  - `number` (string, Optional, query): Partial DID search
+  - `per_page` (integer, Optional, query): Results per page
+  - `page` (integer, Optional, query): Page number
+- Rules:
+  - DID proration is disabled: total_price = monthly_rate × months.
+  - Use GET /reseller/did-types as the source of truth for the active catalog before purchase.
+- Response example:
+```
+{"data":{"data":[{"id":1,"did_type":1,"did_number":"+919876543210","type_label":"Toll-Free","expiry_date":"2026-06-30","total_price":90,"country_code":"+91","monthly_rate":30,"expiry_preview":"30 Jun 2026"}]},"status":true,"message":"Success"}
+```
+
+### Lock DIDs
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/purchase/lock-did`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Lock selected DIDs and create a draft order or add them to an existing draft order.
+- Parameters:
+  - `did_ids` (array, Mandatory, body): Array of DID IDs
+  - `months` (integer, Mandatory, body): Subscription months
+  - `order_id` (integer, Optional, body): Existing draft order ID
+- Rules:
+  - Direct-purchase DID types only; request-required types are rejected.
+  - DID type must be included in reseller active plan entitlement.
+  - DID pricing is monthly_rate × months; no proration.
+  - Retain order_id and complete purchase before locked_until expires.
+- Request example:
+```
+{"months":3,"did_ids":[1,2,3]}
+```
+- Response example:
+```
+{"data":{"order_id":5,"locked_dids":[{"did_id":1,"did_number":"+919876543210","total_price":90,"locked_until":"2026-03-25 12:10:00","monthly_rate":30}],"order_number":"ORD-20260325120000-1234"},"status":true,"message":"DIDs locked and order created."}
+```
+
+### Add Channels
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/purchase/add-channel`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Add or replace channel allocation in a draft order.
+- Parameters:
+  - `channel_count` (integer, Mandatory, body): Channels to buy
+  - `months` (integer, Mandatory, body): Subscription months
+  - `order_id` (integer, Optional, body): Existing draft order ID
+- Rules:
+  - When project.purchase.use_proration_channel is enabled (default), the first month is prorated by remaining days; later months bill fully.
+  - When disabled: channel_total = monthly_rate × months × channel_count.
+  - Channel pricing differs from DID pricing.
+- Request example:
+```
+{"months":3,"channel_count":5}
+```
+- Response example:
+```
+{"data":{"order_id":5,"channel_count":5,"channel_total":150,"channel_monthly_rate":10},"status":true,"message":"Channels added to order."}
+```
+
+### Apply/Remove Promocode
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/purchase/promocode`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Apply or remove a coupon on a draft order.
+- Parameters:
+  - `order_id` (integer, Mandatory, body): Draft order ID
+  - `action` (string, Mandatory, body): apply or remove
+  - `code` (string, Conditional, body): Required if action=apply
+- Request example:
+```
+{"code":"SAVE10","action":"apply","order_id":5}
+```
+- Response example:
+```
+{"data":{"discount":50,"coupon_code":"SAVE10"},"status":true,"message":"Coupon applied successfully."}
+```
+
+### Order Summary
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/purchase/summary/{order_id}`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return full pricing breakdown for a draft order before confirmation.
+- Parameters:
+  - `order_id` (integer, Mandatory, path): Draft order ID
+- Rules:
+  - DID lines: full monthly_rate × months; no proration.
+  - Channel lines follow the channel proration setting.
+  - Use server-returned totals instead of reconstructing final payable amount locally.
+- Response example:
+```
+{"data":{"total":330,"months":3,"did_cost":180,"discount":0,"order_id":5,"subtotal":330,"did_count":2,"channel_cost":150,"order_number":"ORD-20260325120000-1234","channel_count":5,"wallet_balance":5000},"status":true,"message":"Success"}
+```
+
+### Confirm Purchase
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/purchase/confirm`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Finalize the draft order after wallet validation.
+- Parameters:
+  - `order_id` (integer, Mandatory, body): Draft order ID
+- Rules:
+  - DID lines are not prorated; channel lines follow channel proration setting.
+  - Purchased DIDs and channels are created with auto_renew enabled. DID client_auto_renew mirrors auto_renew at purchase time.
+  - Resource release/server renewal guards can later force auto-renew off as part of system behavior.
+- Request example:
+```
+{"order_id":5}
+```
+- Response example:
+```
+{"data":{"total":389.4,"order_number":"ORD-20260325120000-1234","purchase_order_id":10},"status":true,"message":"Purchase completed successfully."}
+```
+
+## DID Inventory
+### Purchased DID List
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/did/purchased`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Return paginated purchased/assigned DIDs with filters and embedded routing.
+- Parameters:
+  - `search` (string, Optional, query): Partial DID number
+  - `status` (string, Optional, query): active | expired | available | assigned
+  - `client_id` (integer, Optional, query): Reseller only
+  - `did_type` (integer, Optional, query): 1=Toll-Free, 2=Mobile, 3=Landline
+  - `per_page` (integer, Optional, query): Results per page
+  - `page` (integer, Optional, query): Page number
+- Rules:
+  - Reseller sees DIDs belonging to the reseller; Client sees only DIDs assigned to that client.
+  - DID/user status: 1=Available, 2=Assigned, 3=Expired, 4=Inactive.
+- Response example:
+```
+{"data":{"data":[{"id":1,"status":2,"did_type":2,"client_id":5,"auto_renew":true,"created_at":"2026-01-01T00:00:00.000000Z","did_number":"91987654311","is_expired":false,"type_label":"Mobile","client_name":"client name","description":null,"expiry_date":"2026-03-31","user_status":2,"call_routing":{"status":1,"status_label":"Active","for_inbound_call":2,"for_outbound_call":1,"inbound_trunk_name":"Main Inbound Trunk","outbound_trunk_name":null,"inbound_sip_trunk_id":3,"outbound_sip_trunk_id":null,"for_inbound_call_label":"SIP Trunk","for_outbound_call_label":"Mobile"},"country_code":"91","status_label":"Assigned","call_recording":1,"is_user_expired":false,"user_status_label":"Assigned","client_expiry_date":"2026-03-31","call_recording_label":"Yes"}],"total":1,"per_page":10,"last_page":1,"current_page":1},"status":true,"message":"Success"}
+```
+
+### Release DID
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/did/release`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Release one or more reseller-owned DIDs.
+- Parameters:
+  - `did_number` (string, Mandatory, body): One or more comma-separated DID numbers, digits only; max 100
+- Rules:
+  - Duplicates are ignored. Each number is processed independently.
+  - Partial success returns HTTP 200: inspect released_did_numbers and invalid_did_numbers.
+  - Successful release stores a snapshot for revert, sets status=6 Released, clears client/pricing/expiry/description, sets user_status Available, disables recording, removes call routing, disables auto-renew flags, and writes audit logs.
+- Request example:
+```
+{"did_number":"91987654311,91987654312"}
+```
+- Response example:
+```
+{"data":{"invalid_count":1,"released_count":1,"invalid_did_numbers":["91987654312"],"released_did_numbers":["91987654311"]},"status":true,"message":"1 DID(s) released, 1 invalid."}
+```
+
+## Renewals
+### List Renewable Items
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/renew/list`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Return active DID and channel purchases eligible for renewal with current pricing.
+- Rules:
+  - Direct-purchase DID current_monthly_rate comes from the active plan mapping, converted to wallet currency.
+  - Request-required DID current_monthly_rate is the locked-in rate from original admin approval.
+  - Plan must be active and DID type must still be on the plan; otherwise auto-renew is disabled and the DID expires on its existing window.
+- Response example:
+```
+{"data":{"dids":[{"did_id":5,"months":3,"did_type":1,"client_id":101,"auto_renew":false,"did_number":"+919876543210","new_expiry":"30 Jun 2026","old_expiry":"31 Mar 2026","type_label":"Toll-Free","client_name":"Acme Inc.","purchase_id":12,"country_code":"+91","renewal_cost":96,"old_monthly_rate":30,"client_auto_renew":false,"current_monthly_rate":32}],"channels":[{"months":3,"auto_renew":false,"new_expiry":"30 Jun 2026","old_expiry":"31 Mar 2026","purchase_id":8,"renewal_cost":150,"channel_count":5,"old_monthly_rate":10,"current_monthly_rate":10}]},"status":true,"message":"Success"}
+```
+
+### Renewal Summary
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/renew/summary`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Compute renewal pricing for selected DID/channel purchase records.
+- Parameters:
+  - `did_purchase_ids` (array, Optional, body): Active DID purchase IDs
+  - `channel_purchase_ids` (array, Optional, body): Active channel purchase IDs
+- Rules:
+  - Renewal uses flat monthly_rate × months; no proration.
+  - Direct-purchase DID rate: current plan mapping. Request-required DID rate: locked original purchase rate.
+  - Amounts are returned in reseller wallet currency.
+  - Use purchase IDs, not did_id values.
+- Request example:
+```
+{"did_purchase_ids":[12,13],"channel_purchase_ids":[8]}
+```
+- Response example:
+```
+{"data":{"total":246,"did_cost":96,"subtotal":246,"did_count":2,"did_items":[{"months":3,"did_number":"+919876543210","purchase_id":12,"monthly_rate":32,"renewal_cost":96}],"channel_cost":150,"channel_count":1,"channel_items":[{"months":3,"purchase_id":8,"monthly_rate":10,"renewal_cost":150,"channel_count":5}],"wallet_balance":5000,"currency_symbol":"₹"},"status":true,"message":"Success"}
+```
+
+### Confirm Renewal
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/reseller/renew/confirm`
+- Auth: Bearer
+- Roles/context: Reseller
+- Purpose: Atomically execute renewal for selected DID/channel purchases.
+- Parameters:
+  - `did_purchase_ids` (array, Optional, body): Active DID purchase IDs
+  - `channel_purchase_ids` (array, Optional, body): Active channel purchase IDs
+  - `renew_for_client` (boolean, Optional, body): When true also extend client_expiry_date and reset mapped DID user_status to ASSIGNED; default false
+- Rules:
+  - Validates active reseller plan and DID-type entitlement before wallet debit.
+  - Direct DID rate is read fresh from plan; request-required DID rate is locked original rate.
+  - Multi-currency rates are converted to wallet currency at current exchange rate; transaction stores wallet amount and INR snapshot.
+  - Atomic: creates new active purchase rows, expires old rows, updates expiry, debits wallet and writes renewal_logs; all roll back on failure.
+- Request example:
+```
+{"did_purchase_ids":[12,13],"renew_for_client":true,"channel_purchase_ids":[8]}
+```
+- Response example:
+```
+{"data":{"total":290.28,"order_id":25,"did_count":2,"order_number":"RNW-20260326120000-4521","channel_count":1,"renew_for_client":true},"status":true,"message":"Renewal completed successfully."}
+```
+
+## SIP Trunks
+### List SIP Trunks
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/sip-trunk/list`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Return paginated SIP trunks based on role.
+- Parameters:
+  - `search` (string, Optional, query): Partial trunk name
+  - `status` (integer, Optional, query): 0=Inactive, 1=Active
+  - `client_id` (integer, Optional, query): Reseller only
+  - `per_page` (integer, Optional, query): Default 10
+  - `page` (integer, Optional, query): Page number
+- Rules:
+  - Client sees own trunks only; Reseller sees all under reseller and may filter by client_id.
+  - transport_type: 1=UDP, 2=TCP, 3=TLS.
+  - bot_provider_id=null means Custom trunk; integer means BOT Provider server.
+- Response example:
+```
+{"data":{"data":[{"id":1,"status":1,"username":"trunk_abc123","client_id":101,"created_at":"2025-01-01T00:00:00.000000Z","trunk_name":"Main Trunk","reseller_id":5,"status_label":"Active","transport_type":1,"bot_provider_id":null,"sip_server_host":"sip.provider.com","sip_server_port":5060,"transport_label":"UDP","bot_provider_name":null}],"total":1,"per_page":10,"last_page":1,"current_page":1},"status":true,"message":"Success"}
+```
+
+### Create SIP Trunk
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/sip-trunk/create`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Create a SIP trunk in BOT Provider mode or Custom mode.
+- Parameters:
+  - `client_id` (integer, Conditional, body): Required for Reseller; Client is auto-set from auth
+  - `trunk_name` (string, Mandatory, body): SIP trunk name
+  - `bot_provider_id` (integer|null, Optional, body): Provider ID; omit/null for Custom mode
+  - `status` (integer, Optional, body): 0=Inactive, 1=Active; default 1
+  - `username` (string, Optional, body): Custom: auto-generated if omitted
+  - `registration_password` (string, Optional, body): Custom: auto-generated if omitted
+  - `sip_server_host` (string, Conditional, body): Custom only; required and unique
+  - `sip_server_port` (integer, Optional, body): Custom only; default 5060
+  - `transport_type` (integer, Conditional, body): Custom only; 1=UDP,2=TCP,3=TLS
+  - `audio_format` (string[], Conditional, body): Custom only; at least one of alaw, ulaw, g729, g722
+- Rules:
+  - BOT Provider mode needs trunk_name, status, bot_provider_id, and client_id for resellers.
+  - A client can have only one trunk per BOT Provider.
+  - audio_format is ignored for BOT Provider mode because codec comes from the provider server.
+- Request example:
+```
+{"status":1,"client_id":101,"trunk_name":"Main Custom Trunk","audio_format":["alaw","ulaw","g729","g722"],"transport_type":1,"sip_server_host":"sip.provider.com","sip_server_port":5060}
+```
+- Response example:
+```
+{"data":{"id":1},"status":true,"message":"SIP Trunk created successfully."}
+```
+
+### Update SIP Trunk
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/sip-trunk/update/{id}`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Update an existing SIP trunk without changing ownership.
+- Parameters:
+  - `id` (integer, Mandatory, path): SIP trunk ID
+  - `trunk_name` (string, Mandatory, body): Trunk name
+  - `status` (integer, Mandatory, body): 0=Inactive,1=Active
+  - `bot_provider_id` (integer|null, Optional, body): Pass integer to set/change; omit to keep current; null to switch to Custom
+  - `sip_server_host` (string, Optional, body): Custom only; unique
+  - `sip_server_port` (integer, Optional, body): Custom only
+  - `transport_type` (integer, Optional, body): Custom only; 1=UDP,2=TCP,3=TLS
+  - `audio_format` (string[], Optional, body): Custom only; omit to keep current; cleared for BOT Provider
+- Rules:
+  - Reseller ownership: trunk.reseller_id must match auth. Client ownership: trunk.client_id must match auth.
+  - client_id/reseller_id cannot be changed.
+  - Omitting bot_provider_id is not the same as sending null.
+- Request example:
+```
+{"status":1,"trunk_name":"Updated Custom Trunk","audio_format":["alaw","ulaw","g729","g722"]}
+```
+- Response example:
+```
+{"data":{"id":1},"status":true,"message":"SIP Trunk updated successfully."}
+```
+
+### List BOT Providers
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/sip-trunk/bot-provider/list`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Return active BOT Provider servers for provider-mode SIP trunk creation.
+- Rules:
+  - Use returned id as bot_provider_id; do not hard-code provider IDs.
+- Response example:
+```
+{"data":[{"id":1,"name":"Provider A"},{"id":2,"name":"Provider B"}],"status":true,"message":"Success"}
+```
+
+## WebSocket Bots
+### List WebSocket Bots
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/websocket-bot/list`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Return paginated WebSocket bot configurations.
+- Parameters:
+  - `search` (string, Optional, query): Partial bot name
+  - `status` (integer, Optional, query): 0=Inactive,1=Active
+  - `client_id` (integer, Optional, query): Reseller only
+  - `per_page` (integer, Optional, query): Default 10
+  - `page` (integer, Optional, query): Page number
+- Rules:
+  - Client sees own bots only. Reseller sees bots under reseller and may filter by client_id.
+- Response example:
+```
+{"data":{"data":[{"id":1,"status":1,"bot_name":"Support Bot","client_id":101,"created_at":"2026-01-01T00:00:00.000000Z","reseller_id":5,"webhook_url":"https://example.com/webhook","status_label":"Active","websocket_url":"wss://example.com/ws"}],"total":1,"per_page":10,"last_page":1,"current_page":1},"status":true,"message":"Success"}
+```
+
+### Create WebSocket Bot
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/websocket-bot/create`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Create a WebSocket bot; server_id is assigned automatically from the first active internal server.
+- Parameters:
+  - `bot_name` (string, Mandatory, body): Bot name
+  - `websocket_url` (string, Mandatory, body): Valid WebSocket URL
+  - `webhook_url` (string, Optional, body): Valid callback URL
+  - `client_id` (integer, Conditional, body): Reseller context; must belong to reseller. Supplied description and parameter table disagree on optional vs required.
+  - `status` (integer, Optional, body): 0=Inactive,1=Active; default 1
+- Rules:
+  - Reseller reseller_id is auto-set. Client reseller_id/client_id are auto-set from auth.
+  - Confirm whether reseller client_id is optional or mandatory before implementing: supplied description says optional, parameter table says required.
+- Request example:
+```
+{"status":1,"bot_name":"Support Bot","webhook_url":"https://example.com/webhook","websocket_url":"wss://example.com/ws"}
+```
+- Response example:
+```
+{"data":{"id":1},"status":true,"message":"WebSocket Bot created successfully."}
+```
+
+### Update WebSocket Bot
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/websocket-bot/update/{id}`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Update an existing WebSocket bot without changing ownership.
+- Parameters:
+  - `id` (integer, Mandatory, path): WebSocket bot ID
+  - `bot_name` (string, Mandatory, body): Bot name
+  - `websocket_url` (string, Mandatory, body): Valid WebSocket URL
+  - `webhook_url` (string, Optional, body): Valid callback URL
+  - `status` (integer, Mandatory, body): 0=Inactive,1=Active
+- Rules:
+  - Reseller: bot.reseller_id must match auth. Client: bot.client_id must match auth.
+  - client_id/reseller_id cannot be changed after creation.
+- Request example:
+```
+{"status":1,"bot_name":"Updated Bot","webhook_url":"https://example.com/webhook-v2","websocket_url":"wss://example.com/ws-v2"}
+```
+- Response example:
+```
+{"data":{"id":1},"status":true,"message":"WebSocket Bot updated successfully."}
+```
+
+## Call Routing
+### List Call Routings
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/call-routing/list`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Return DID call-routing records based on role.
+- Parameters:
+  - `client_id` (integer, Optional, query): Reseller only; filter by client ID
+- Rules:
+  - Client: routing for all client DIDs. Reseller without client_id: all reseller DIDs. Reseller with client_id: that client only.
+  - Inbound: 1=Mobile, 2=SIP Trunk, 3=WebSocket Bot.
+  - Outbound definition says 2=SIP Trunk, 3=WebSocket Bot, 4=Only Answer; supplied response examples also show 1=Mobile. Treat outbound Mobile as unresolved until platform confirmation.
+  - status: 0=Inactive,1=Active.
+- Response example:
+```
+{"data":[{"id":1,"did_id":3,"status":1,"created_at":"2025-01-01T00:00:00.000000Z","did_number":"9876543210","status_label":"Active","for_inbound_call":2,"for_outbound_call":1,"inbound_trunk_name":"Main Inbound Trunk","outbound_trunk_name":null,"inbound_sip_trunk_id":1,"outbound_sip_trunk_id":null,"for_inbound_call_label":"SIP Trunk","for_outbound_call_label":"Mobile","inbound_websocket_bot_id":null,"outbound_websocket_bot_id":null,"inbound_websocket_bot_name":null,"outbound_websocket_bot_name":null}],"status":true,"message":"Success"}
+```
+
+### Create Call Routing
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/call-routing/create`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Create the single inbound/outbound routing record for a DID.
+- Parameters:
+  - `did_id` (integer, Conditional, body): Required if did_number not provided
+  - `did_number` (string, Conditional, body): Required if did_id not provided
+  - `for_inbound_call` (integer, Mandatory, body): 1=Mobile,2=SIP Trunk,3=WebSocket Bot
+  - `inbound_sip_trunk_id` (integer, Conditional, body): Required when inbound=2
+  - `inbound_websocket_bot_id` (integer, Conditional, body): Required when inbound=3
+  - `for_outbound_call` (integer, Mandatory, body): Documented: 2=SIP Trunk,3=WebSocket Bot,4=Only Answer
+  - `outbound_sip_trunk_id` (integer, Conditional, body): Required when outbound=2
+  - `outbound_websocket_bot_id` (integer, Conditional, body): Required when outbound=3
+  - `status` (integer, Optional, body): 0=Inactive,1=Active; default 1
+- Rules:
+  - Client DID must be assigned to auth client. Reseller DID must belong to auth reseller.
+  - Each DID can have only one call-routing record.
+  - Selected trunks/bots must be active and belong to the DID assigned client.
+  - Only Answer is not valid inbound; Mobile is documented as not valid outbound, although list samples show legacy/outlier Mobile outbound value.
+- Request example:
+```
+{"did_id":3,"status":1,"for_inbound_call":2,"for_outbound_call":2,"inbound_sip_trunk_id":1,"outbound_sip_trunk_id":2}
+```
+- Response example:
+```
+{"data":{"id":1},"status":true,"message":"Call routing created successfully."}
+```
+
+### Update Call Routing
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/call-routing/update/{id}`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Update an existing routing rule. DID cannot be changed.
+- Parameters:
+  - `id` (integer, Mandatory, path): Routing record ID
+  - `for_inbound_call` (integer, Mandatory, body): 1=Mobile,2=SIP Trunk,3=WebSocket Bot
+  - `inbound_sip_trunk_id` (integer, Conditional, body): Required when inbound=2
+  - `inbound_websocket_bot_id` (integer, Conditional, body): Required when inbound=3
+  - `for_outbound_call` (integer, Mandatory, body): Documented: 2=SIP Trunk,3=WebSocket Bot,4=Only Answer
+  - `outbound_sip_trunk_id` (integer, Conditional, body): Required when outbound=2
+  - `outbound_websocket_bot_id` (integer, Conditional, body): Required when outbound=3
+  - `status` (integer, Mandatory, body): 0=Inactive,1=Active
+- Rules:
+  - Ownership is verified via the linked DID.
+  - Switching away from SIP/WebSocket automatically clears the respective ID.
+  - Selected trunks/bots must be active and belong to the DID assigned client.
+- Request example:
+```
+{"status":1,"for_inbound_call":3,"for_outbound_call":3,"inbound_websocket_bot_id":1,"outbound_websocket_bot_id":2}
+```
+- Response example:
+```
+{"data":{"id":1},"status":true,"message":"Call routing updated successfully."}
+```
+
+## Outbound Calling
+### Add Outbound Lead
+- Method: `POST`
+- Endpoint: `https://app.voicelink.co.in/api/v1/add_lead`
+- Auth: Bearer
+- Roles/context: User with valid DID/outbound WebSocket routing
+- Purpose: Create one or more outbound call leads and push them to the outbound queue.
+- Parameters:
+  - `did_number` (string, Mandatory, body): Single DID to call from; validated once for all leads
+  - `customer_number` (string, Conditional, body): 10-digit destination number when leads array is not provided
+  - `leads` (array, Conditional, body): Bulk leads; required when customer_number not provided
+  - `leads[].customer_number` (string, Mandatory per item, body): 10-digit destination number
+  - `leads[].custom_parameters` (string, Optional, body): Valid JSON string; preserved if parseable
+  - `country_code` (string, Optional, body): Country code applied to all leads; for India use 91
+  - `custom_parameters` (string, Optional, body): Legacy single-lead JSON string only
+  - `websocket_url` (string, Optional, body): Valid URL override for all leads
+  - `webhook_url` (string, Optional, body): Valid URL override for all leads
+  - `call_limit` (integer, Optional, body): Maximum call limit for all leads
+- Rules:
+  - Critical India number rule from the provided integration note: customer_number must be 10 digits only. Do not prefix 91 or +91; pass country_code="91" separately.
+  - DID must be correctly assigned, not expired and have an active outbound WebSocket bot configured. DID/channel/wallet checks run once.
+  - If leads is provided, top-level customer_number/custom_parameters are ignored.
+  - Legacy single lead is inserted directly and returns outbound_queue_id. Bulk leads are queued through a background job and return accepted_leads immediately.
+  - Malformed custom_parameters are repaired when possible; if still invalid the lead is queued with custom_parameters=null.
+- Request example:
+```
+{"leads":[{"customer_number":"9876543210","custom_parameters":"{\"name\":\"John Doe\"}"},{"customer_number":"9876543211","custom_parameters":"{\"name\":\"Jane Doe\"}"}],"call_limit":5,"did_number":"18001234567","webhook_url":"https://example.com/webhook","country_code":"91","websocket_url":"wss://example.com/ws"}
+```
+- Response example:
+```
+{"data":{"bot_id":5,"client_id":3,"carrier_id":1,"reseller_id":2,"accepted_leads":2},"status":true,"message":"Leads queued successfully"}
+```
+
+## Call Logs
+### Get Call Details
+- Method: `GET`
+- Endpoint: `https://app.voicelink.co.in/api/v1/call-log/details`
+- Auth: Bearer
+- Roles/context: Reseller, Client
+- Purpose: Return the full detail of a single call within the authenticated account scope.
+- Parameters:
+  - `call_id` (string, Mandatory, query): call_id or unique_id to fetch
+- Rules:
+  - Lookup order: call_id first, then unique_id.
+  - Reseller scope matches reseller_id; Client scope matches client_id. Calls outside scope are never revealed.
+  - No in-scope match returns Call logs not found.
+  - bot_type: 2=SIP Bot, 3=WebSocket Bot.
+  - WebSocket bot recordings and already-full URLs are returned as-is; other recordings use the recording resolver URL.
+- Response example:
+```
+{"data":{"bot_id":7,"did_id":5,"call_id":"1718000000.123","bot_name":"Sales Bot","bot_type":3,"call_type":"VL-OUT","client_id":3,"unique_id":"1718000000.123","created_at":"2026-06-19 10:00:00","did_number":"918001234567","total_cost":"1.5000","call_status":"Answered","client_name":"Jane Smith","reseller_id":2,"agent_number":"919812345678","call_duration":42,"call_end_time":"2026-06-19 10:00:47","hangup_reason":"Normal Clearing","recording_url":"https://example.com/recordings/clean_1718000000.123.mp3","reseller_name":"Acme Telecom","talk_duration":30,"bot_type_label":"WebSocket Bot","currency_symbol":"₹","customer_number":"919876543210","disconnect_reason":"Normal Clearing","call_answered_time":"2026-06-19 10:00:05"},"status":true,"message":"Success"}
+```
+
+## Unresolved items — do not guess
+- Outbound routing values: API descriptions say outbound supports 2=SIP Trunk, 3=WebSocket Bot, 4=Only Answer and Mobile is invalid, but List Routing / Purchased DID sample responses show for_outbound_call=1 with label Mobile.
+- Request-required DID series wording differs across supplied descriptions: some say 140/160, others 140/180. Use GET /reseller/did-types at runtime and confirm catalog naming.
+- Create WebSocket Bot: prose says reseller client_id is optional, parameter table says mandatory. Confirm before strict validation.
+- Create/Confirm purchase says auto-renew is mandatory for active purchases; renewal guards and DID release may force it off server-side. Documented here as a server-enforced exception, not a user toggle.
+- Update Client wallet_balance semantics are not explicit (replacement vs increment). Use allocate-wallet for explicit balance transfer.
+- KYC Final Submit definition contains no client_id parameter even though earlier KYC steps support reseller-on-behalf-of-client. Confirm how client KYC final submission is performed.
