@@ -67,7 +67,9 @@ create or replace function protect_number_billing()
 returns trigger language plpgsql security definer set search_path = public as $$
 begin
   if coalesce(auth.role(), '') <> 'authenticated' then return coalesce(new, old); end if;
-  if tg_op <> 'DELETE' and exists (select 1 from reserved_dids r where right(r.did_number, 10) = right(new.did_number, 10)) then
+  -- Only a new number, or a changed one: a number already held before it was reserved keeps working.
+  if tg_op <> 'DELETE' and (tg_op = 'INSERT' or new.did_number is distinct from old.did_number)
+     and exists (select 1 from reserved_dids r where right(r.did_number, 10) = right(new.did_number, 10)) then
     raise exception 'That number cannot be connected to an account.';
   end if;
   if tg_op = 'DELETE' then
