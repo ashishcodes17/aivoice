@@ -15,7 +15,16 @@ const AGENT_DEFAULT = "agent";
 const NUMBER_AGENT = "number";
 const providerItems = [{ value: AGENT_DEFAULT, label: "Agent's own voice" }, ...CALL_PROVIDERS];
 
-export function CallbackForm({ numbers, agents }: { numbers: { value: string; label: string }[]; agents: { value: string; label: string }[] }) {
+export function CallbackForm({
+  numbers,
+  agents,
+  fixedAgentId,
+}: {
+  numbers: { value: string; label: string }[];
+  agents: { value: string; label: string }[];
+  /** Inside the agent builder the call is always for that agent, so the agent picker is hidden. */
+  fixedAgentId?: string;
+}) {
   const agentItems = [{ value: NUMBER_AGENT, label: "The number's own agent" }, ...agents];
   const [state, action, pending] = useActionState<ActionState, FormData>(requestCallback, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -33,12 +42,15 @@ export function CallbackForm({ numbers, agents }: { numbers: { value: string; la
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
-      className="space-y-5 rounded-xl border bg-card p-5"
+      className={fixedAgentId ? "space-y-4" : "space-y-4 rounded-2xl border bg-card p-5"}
     >
-      <div>
-        <h2 className="font-medium text-sm">Get a call from your agent</h2>
-        <p className="mt-1 text-muted-foreground text-sm">Enter a phone number and your agent will call it, so you can hear how it sounds.</p>
-      </div>
+      {!fixedAgentId && (
+        <div>
+          <h2 className="font-heading font-semibold text-base tracking-tight">Test call</h2>
+          <p className="mt-0.5 text-muted-foreground text-sm">Your agent will ring a phone so you can hear how it sounds.</p>
+        </div>
+      )}
+      {fixedAgentId && <input type="hidden" name="agent_id" value={fixedAgentId} />}
       {state.error && (
         <Alert variant="error">
           <AlertCircleIcon />
@@ -56,7 +68,7 @@ export function CallbackForm({ numbers, agents }: { numbers: { value: string; la
           </AlertDescription>
         </Alert>
       )}
-      <div className="grid gap-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+      <div className="space-y-4">
         <Field>
           <FieldLabel>Call from</FieldLabel>
           <Select name="phone_number_id" items={numbers} defaultValue={numbers[0]?.value}>
@@ -77,11 +89,19 @@ export function CallbackForm({ numbers, agents }: { numbers: { value: string; la
           <Input name="to" required inputMode="tel" autoComplete="tel" placeholder="98765 43210" />
           <FieldDescription>Indian mobile number.</FieldDescription>
         </Field>
-        <Button type="submit" size="lg" loading={pending} className="sm:mb-[1.1rem]">
+        <label className="flex items-start gap-2.5 text-muted-foreground text-sm">
+          <input type="checkbox" name="consent" className="mt-0.5 size-4 rounded border-input" />
+          <span>This number is mine, or I have permission to call it.</span>
+        </label>
+        <Button type="submit" loading={pending} className="w-full">
           <PhoneOutgoingIcon />
           Call me
         </Button>
       </div>
+      <details className="group rounded-xl border bg-muted/30 px-3.5 py-2.5 open:pb-4">
+        <summary className="cursor-pointer select-none text-sm font-medium text-muted-foreground group-open:mb-4 group-open:text-foreground">Advanced options</summary>
+      <div className="space-y-4">
+      {!fixedAgentId && (
       <Field>
         <FieldLabel>Agent on this call</FieldLabel>
         <Select name="agent_id" items={agentItems} defaultValue={NUMBER_AGENT}>
@@ -98,12 +118,11 @@ export function CallbackForm({ numbers, agents }: { numbers: { value: string; la
         </Select>
         <FieldDescription>Pick a different agent for this call only, without changing the number.</FieldDescription>
       </Field>
+      )}
       {/* Remounted after a call is placed, which puts both dropdowns back to the agent's own settings. */}
       <VoiceFields key={state.message ?? "idle"} />
-      <label className="flex items-start gap-2.5 text-muted-foreground text-sm">
-        <input type="checkbox" name="consent" className="mt-0.5 size-4 rounded border-input" />
-        <span>This number is mine, or I have permission to call it.</span>
-      </label>
+      </div>
+      </details>
     </form>
   );
 }
@@ -117,7 +136,7 @@ function VoiceFields() {
     ...CALL_LANGUAGES.filter((l) => provider === AGENT_DEFAULT || isSupported(provider, l.value)),
   ];
   return (
-    <div className="grid gap-5 sm:grid-cols-2">
+    <div className="space-y-4">
         <Field>
           <FieldLabel>Voice</FieldLabel>
           <Select

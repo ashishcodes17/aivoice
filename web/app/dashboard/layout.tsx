@@ -38,10 +38,11 @@ async function Shell({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <AppSidebar orgName={org.name} email={user.email ?? ""} balance={rupees(Number(bal?.balance_paise ?? 0))} />
       <SidebarInset>
-        <header className="flex h-14 shrink-0 items-center gap-2 border-b px-4">
+        <header className="sticky top-0 z-30 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
           <SidebarTrigger className="-ms-1" />
           <Separator orientation="vertical" className="me-1 data-[orientation=vertical]:h-4" />
           <Breadcrumbs />
+          <div id="header-actions" className="ml-auto flex min-w-0 items-center gap-2" />
         </header>
         <div className="flex-1">{children}</div>
       </SidebarInset>

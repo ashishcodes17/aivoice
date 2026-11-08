@@ -1,15 +1,16 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { BotIcon, PhoneIcon, Trash2Icon } from "lucide-react";
+import { ArrowUpRightIcon, BotIcon, PhoneIcon } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
-import { CallbackForm } from "@/components/dashboard/callback-form";
 import { NumberForm } from "@/components/dashboard/number-form";
 import { Page, PageFallback, PageHeader } from "@/components/dashboard/page-header";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { AgentAvatar } from "@/components/dashboard/agent-avatar";
+import { DisconnectNumber } from "@/components/dashboard/disconnect-number";
 import { removeNumber } from "@/app/dashboard/actions";
 import { requireOrg } from "@/lib/dashboard";
 import { formatDateTime } from "@/lib/format";
+import { formatDid } from "@/lib/phone";
 import type { PhoneNumber } from "@/lib/types";
 
 export const metadata = { title: "Numbers" };
@@ -46,46 +47,48 @@ async function Numbers() {
     );
   }
 
-  const callable = numbers
-    .filter((n) => n.agent_id)
-    .map((n) => ({ value: n.id, label: `+${n.did_number} → ${n.agents?.name ?? "agent"}` }));
-
   return (
-    <>
-      <NumberForm agents={agents} />
-      {callable.length > 0 && <CallbackForm numbers={callable} agents={agents} />}
-      {numbers.length ? (
-        <div className="overflow-hidden rounded-xl border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Number</TableHead>
-                <TableHead>Agent</TableHead>
-                <TableHead>Connected</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {numbers.map((n) => (
-                <TableRow key={n.id}>
-                  <TableCell className="font-medium tabular-nums">+{n.did_number}</TableCell>
-                  <TableCell className="text-muted-foreground">{n.agents?.name ?? "No agent"}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDateTime(n.created_at)}</TableCell>
-                  <TableCell>
-                    <form action={removeNumber.bind(null, n.id)}>
-                      <Button type="submit" variant="ghost" size="icon-xs" aria-label={`Disconnect ${n.did_number}`}>
-                        <Trash2Icon />
-                      </Button>
-                    </form>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <EmptyState icon={PhoneIcon} title="No numbers connected" description="Add a number above and route it to your telephony provider's voice endpoint." />
-      )}
-    </>
+    <div className="space-y-8">
+      <section className="space-y-3">
+        <h2 className="font-heading font-semibold text-base tracking-tight">
+          Your numbers <span className="font-normal text-muted-foreground text-sm">· {numbers.length}</span>
+        </h2>
+        {numbers.length ? (
+          <ul className="space-y-3">
+            {numbers.map((n) => (
+              <li key={n.id} className="flex flex-col gap-3 rounded-2xl border bg-card p-4 shadow-black/[0.03] shadow-xs sm:flex-row sm:items-center sm:gap-4 sm:p-5">
+                <div className="flex min-w-0 flex-1 items-center gap-3.5">
+                  <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <PhoneIcon className="size-5" />
+                  </span>
+                  <div className="min-w-0">
+                    <p className="whitespace-nowrap font-heading font-semibold text-lg tabular-nums tracking-tight">{formatDid(n.did_number)}</p>
+                    <p className="truncate text-muted-foreground text-xs">Connected {formatDateTime(n.created_at)}</p>
+                  </div>
+                </div>
+                <div className="flex min-w-0 items-center justify-between gap-2 sm:justify-end">
+                  {n.agent_id ? (
+                    <Link href={`/dashboard/agents/${n.agent_id}`} className="group flex min-w-0 items-center gap-2.5 rounded-full border py-1 pr-3 pl-1 text-sm transition-colors hover:border-primary/30 hover:bg-primary/5">
+                      <AgentAvatar seed={n.agent_id} className="size-7" />
+                      <span className="truncate">{n.agents?.name ?? "Agent"}</span>
+                      <ArrowUpRightIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    </Link>
+                  ) : (
+                    <span className="rounded-full bg-warning/15 px-3 py-1 text-warning-foreground text-sm">No agent</span>
+                  )}
+                  <DisconnectNumber label={formatDid(n.did_number)} action={removeNumber.bind(null, n.id)} />
+                </div>
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState icon={PhoneIcon} title="No numbers connected" description="Connect a number below, then point it at your telephony provider's voice endpoint." />
+        )}
+      </section>
+
+      <div className="max-w-xl">
+        <NumberForm agents={agents} />
+      </div>
+    </div>
   );
 }

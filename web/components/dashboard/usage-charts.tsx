@@ -1,6 +1,6 @@
 "use client";
 
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, LabelList, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
 import {
   ChartContainer,
   ChartLegend,
@@ -9,7 +9,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
-import type { AgentUsage, CallDay, MessageDay } from "@/lib/usage";
+import type { CallDay, MessageDay } from "@/lib/usage";
 
 const shortDate = (day: string) =>
   new Date(day + "T00:00:00Z").toLocaleDateString("en-IN", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -87,24 +87,6 @@ export function MessagesChart({ data }: { data: MessageDay[] }) {
         <ChartLegend content={<ChartLegendContent />} />
         <Bar dataKey="customers" stackId="m" fill="var(--color-customers)" stroke="var(--card)" strokeWidth={2} radius={[0, 0, 4, 4]} maxBarSize={28} />
         <Bar dataKey="agent" stackId="m" fill="var(--color-agent)" stroke="var(--card)" strokeWidth={2} radius={[4, 4, 0, 0]} maxBarSize={28} />
-      </BarChart>
-    </ChartContainer>
-  );
-}
-
-const agentConfig = { minutes: { label: "Talk time (min)", color: "var(--viz-1)" } } satisfies ChartConfig;
-
-export function AgentChart({ data }: { data: AgentUsage[] }) {
-  const rows = data.slice(0, 6).map((a) => ({ ...a, minutes: Math.round(a.minutes * 10) / 10 }));
-  return (
-    <ChartContainer config={agentConfig} className="w-full" style={{ height: 56 + rows.length * 40 }}>
-      <BarChart data={rows} layout="vertical" margin={{ left: 0, right: 40 }} accessibilityLayer>
-        <XAxis type="number" hide />
-        <YAxis type="category" dataKey="name" {...AXIS} width={110} />
-        <ChartTooltip cursor={{ fillOpacity: 0.06 }} content={<ChartTooltipContent hideLabel />} />
-        <Bar dataKey="minutes" fill="var(--color-minutes)" radius={[0, 4, 4, 0]} maxBarSize={22}>
-          <LabelList dataKey="minutes" position="right" className="fill-foreground text-xs tabular-nums" />
-        </Bar>
       </BarChart>
     </ChartContainer>
   );

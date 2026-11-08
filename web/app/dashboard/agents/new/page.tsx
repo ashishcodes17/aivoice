@@ -7,7 +7,7 @@ export default async function NewAgentPage({ searchParams }: PageProps<"/dashboa
   const raw = (await searchParams).template;
   const template = templateById(typeof raw === "string" ? raw : undefined);
   return (
-    <div className="mx-auto w-full max-w-[96rem] px-4 py-5 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-6 sm:px-6 sm:py-8">
       <AgentForm template={template} />
     </div>
   );

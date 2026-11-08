@@ -4,16 +4,13 @@ import { RANGES, type Range } from "@/lib/usage";
 
 export function RangeTabs({ current }: { current: Range }) {
   return (
-    <nav aria-label="Date range" className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+    <nav aria-label="Date range" className="inline-flex gap-1 rounded-full bg-muted p-1">
       {RANGES.map((r) => (
         <Link
           key={r}
           href={`/dashboard/usage?range=${r}`}
           aria-current={r === current ? "page" : undefined}
-          className={cn(
-            "rounded-md px-3 py-1 text-sm transition-colors",
-            r === current ? "bg-background font-medium shadow-xs" : "text-muted-foreground hover:text-foreground",
-          )}
+          className={cn("rounded-full px-3.5 py-1.5 text-sm transition-colors", r === current ? "bg-background font-medium shadow-sm" : "text-muted-foreground hover:text-foreground")}
         >
           {r} days
         </Link>

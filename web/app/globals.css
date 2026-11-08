@@ -266,3 +266,84 @@
 @media (prefers-reduced-motion: reduce) {
   .wave-bar { animation: none; transform: scaleY(0.6); }
 }
+
+/* ───────── Landing page motion ───────── */
+
+/* Aurora blobs drifting behind the dark hero and CTA. */
+@keyframes aurora-a {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6%, 4%, 0) scale(1.12); }
+}
+@keyframes aurora-b {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1.05); }
+  50% { transform: translate3d(-8%, -3%, 0) scale(0.92); }
+}
+.aurora-a { animation: aurora-a 18s ease-in-out infinite; }
+.aurora-b { animation: aurora-b 22s ease-in-out infinite; }
+
+/* Infinite horizontal strip. The track holds the items twice, so -50% loops seamlessly. */
+@keyframes marquee { to { transform: translate3d(-50%, 0, 0); } }
+.marquee-track { animation: marquee var(--marquee-speed, 40s) linear infinite; }
+.marquee-track[data-reverse] { animation-direction: reverse; }
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+/* Scroll reveal: elements fade up once they enter the viewport (see components/landing/reveal.tsx). */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+.reveal[data-visible] { opacity: 1; transform: none; }
+
+/* Chat lines in the hero call appear one after another, then loop. */
+@keyframes line-in {
+  0%, 4% { opacity: 0; transform: translate3d(0, 8px, 0); }
+  10%, 88% { opacity: 1; transform: none; }
+  96%, 100% { opacity: 0; transform: none; }
+}
+.line-in { opacity: 0; animation: line-in 12s cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+/* Gentle float for the chips around the hero call. */
+@keyframes float-y {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
+}
+.float-y { animation: float-y 6s ease-in-out infinite; }
+
+/* Rotating word: each word fades through its slot in turn. */
+@keyframes word-cycle {
+  0% { opacity: 0; transform: translate3d(0, 40%, 0); filter: blur(4px); }
+  4%, 16% { opacity: 1; transform: none; filter: none; }
+  20%, 100% { opacity: 0; transform: translate3d(0, -40%, 0); filter: blur(4px); }
+}
+.word-cycle { animation: word-cycle var(--cycle, 15s) cubic-bezier(0.22, 1, 0.36, 1) infinite; }
+
+/* Moving sheen on gradient text and borders. */
+@keyframes sheen { to { background-position: 200% center; } }
+.text-sheen {
+  background-size: 200% auto;
+  animation: sheen 6s linear infinite;
+}
+
+/* Signal travelling along the "how it works" line. */
+@keyframes travel { from { transform: translateX(-100%); } to { transform: translateX(400%); } }
+.travel { animation: travel 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a, .aurora-b, .marquee-track, .float-y, .text-sheen, .travel { animation: none; }
+  .line-in { animation: none; opacity: 1; }
+  .word-cycle { animation: none; opacity: 0; }
+  .word-cycle:first-child { opacity: 1; }
+  .reveal { opacity: 1; transform: none; transition: none; }
+}
+
+/* Agent avatars: soft colour blobs drifting inside a circle. */
+@keyframes blob-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(var(--bx, 12%), var(--by, -10%)) scale(1.15); }
+}
+.agent-blob { animation: blob-drift var(--bd, 9s) ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .agent-blob { animation: none; }
+}

@@ -2,16 +2,17 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { AgentForm } from "@/components/dashboard/agent-form";
 import { PageFallback } from "@/components/dashboard/page-header";
-import { Button } from "@/components/ui/button";
+import { DeleteAgent } from "@/components/dashboard/delete-agent";
 import { deleteAgent } from "@/app/dashboard/actions";
 import { requireOrg } from "@/lib/dashboard";
+import { formatDid } from "@/lib/phone";
 import type { Agent } from "@/lib/types";
 
 export const metadata = { title: "Edit agent" };
 
 export default function EditAgentPage({ params }: PageProps<"/dashboard/agents/[id]">) {
   return (
-    <div className="mx-auto w-full max-w-[96rem] px-4 py-5 sm:px-6">
+    <div className="mx-auto w-full max-w-[96rem] px-4 py-6 sm:px-6 sm:py-8">
       <Suspense fallback={<PageFallback />}>
         <Editor params={params} />
       </Suspense>
@@ -25,21 +26,10 @@ async function Editor({ params }: { params: PageProps<"/dashboard/agents/[id]">[
   const { data } = await supabase.from("agents").select("*").eq("id", id).eq("org_id", org.id).maybeSingle();
   if (!data) notFound();
   const agent = data as Agent;
+  const { data: nums } = await supabase.from("phone_numbers").select("id, did_number, agents(name)").eq("org_id", org.id).not("agent_id", "is", null);
+  const testNumbers = (nums ?? []).map((n) => ({ value: n.id as string, label: formatDid(n.did_number as string) }));
 
   return (
-    <>
-      <AgentForm agent={agent} />
-      <section id="danger" className="mt-12 max-w-2xl scroll-mt-6 border-t pt-8">
-        <h2 className="font-medium text-sm">Delete agent</h2>
-        <p className="mt-1 text-muted-foreground text-sm">
-          Numbers connected to this agent will stop being answered until you connect them to another agent.
-        </p>
-        <form action={deleteAgent.bind(null, agent.id)} className="mt-4">
-          <Button type="submit" variant="destructive-outline">
-            Delete agent
-          </Button>
-        </form>
-      </section>
-    </>
+    <AgentForm agent={agent} testNumbers={testNumbers} dangerZone={<DeleteAgent name={agent.name} action={deleteAgent.bind(null, agent.id)} />} />
   );
 }

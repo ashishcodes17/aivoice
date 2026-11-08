@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { PhoneCallIcon } from "lucide-react";
-import { CallsTable } from "@/components/dashboard/calls-table";
+import { CallsList } from "@/components/dashboard/calls-list";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Page, PageFallback, PageHeader } from "@/components/dashboard/page-header";
 import { requireOrg } from "@/lib/dashboard";
@@ -29,7 +29,7 @@ async function CallList() {
     .limit(100);
   const calls = (data ?? []) as unknown as Call[];
   return calls.length ? (
-    <CallsTable calls={calls} />
+    <CallsList calls={calls} />
   ) : (
     <EmptyState icon={PhoneCallIcon} title="No calls yet" description="Calls to your connected numbers will show up here, with their transcripts." />
   );

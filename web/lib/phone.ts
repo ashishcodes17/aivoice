@@ -7,3 +7,9 @@ export function parseIndianMobile(input: string): { national: string } | { error
   if (!/^[6-9]\d{9}$/.test(digits)) return { error: "Enter a valid 10-digit Indian mobile number." };
   return { national: digits };
 }
+
+/** 919876543210 -> "+91 98765 43210". Anything else is shown as +digits. */
+export function formatDid(did: string): string {
+  const d = did.replace(/\D/g, "");
+  return d.length === 12 && d.startsWith("91") ? `+91 ${d.slice(2, 7)} ${d.slice(7)}` : `+${d}`;
+}

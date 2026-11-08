@@ -30,16 +30,19 @@ export function NumberForm({ agents }: { agents: { value: string; label: string 
         const data = new FormData(e.currentTarget);
         startTransition(() => action(data));
       }}
-      className="space-y-5 rounded-xl border bg-card p-5"
+      className="space-y-4 rounded-2xl border bg-card p-5"
     >
-      <h2 className="font-medium text-sm">Connect a number</h2>
+      <div>
+        <h2 className="font-heading font-semibold text-base tracking-tight">Connect a number</h2>
+        <p className="mt-0.5 text-muted-foreground text-sm">Choose which agent answers calls to it.</p>
+      </div>
       {state.error && (
         <Alert variant="error">
           <AlertCircleIcon />
           <AlertDescription>{state.error}</AlertDescription>
         </Alert>
       )}
-      <div className="grid gap-5 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
+      <div className="space-y-4">
         <Field>
           <FieldLabel>Phone number</FieldLabel>
           <Input name="did_number" required inputMode="tel" placeholder="919876543210" />
@@ -60,7 +63,7 @@ export function NumberForm({ agents }: { agents: { value: string; label: string 
             </SelectPopup>
           </Select>
         </Field>
-        <Button type="submit" size="lg" loading={pending} className="sm:mb-[1.1rem]">
+        <Button type="submit" loading={pending} className="w-full">
           <PlusIcon />
           Connect
         </Button>

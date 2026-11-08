@@ -10,7 +10,7 @@ import { parseIndianMobile } from "@/lib/phone";
 import { placeCall } from "@/lib/voicelink";
 import { CALL_LANGUAGES, CALL_PROVIDERS, isSupported } from "@/lib/call-voices";
 import { findVoice, languageLabel, providerLabel, voiceConfig } from "@/lib/voices";
-import { LANGUAGES, SARVAM_TTS_MODELS, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
+import { LANGUAGES, STT_PROVIDERS, TTS_PROVIDERS } from "@/lib/languages";
 
 export type ActionState = { error?: string; message?: string };
 
@@ -38,7 +38,6 @@ const AgentSchema = z.object({
   stt_provider: z.enum(STT_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_provider: z.enum(TTS_PROVIDERS.map((p) => p.value) as [string, ...string[]]),
   tts_voice: z.string().trim().max(120),
-  tts_model: z.enum(SARVAM_TTS_MODELS.map((m) => m.value) as [string, ...string[]]),
   outbound_first_message: z.string().trim().max(500),
   variables: z.string().max(10000).optional(),
   tts_pace: z.coerce.number().min(0.5, "Speed must be between 0.5 and 2.").max(2, "Speed must be between 0.5 and 2."),
@@ -64,12 +63,32 @@ export async function saveAgent(_prev: ActionState, formData: FormData): Promise
 
   const { supabase, org } = await requireOrg();
   const id = String(formData.get("id") ?? "");
-  const { tts_model, tts_pace, outbound_first_message, variables, ...fields } = parsed.data;
+  const { tts_pace, outbound_first_message, variables, ...fields } = parsed.data;
   const vars = parseVariables(variables);
+
+  // The builder only asks for a voice. The provider, model and style follow from the voice chosen.
+  const VOICE_KEYS = ["tts_model", "tts_pace", "tts_description", "tts_temperature"];
+  let existing: Record<string, unknown> = {};
+  if (id) {
+    const { data } = await supabase.from("agents").select("config").eq("id", id).eq("org_id", org.id).maybeSingle();
+    existing = (data?.config ?? {}) as Record<string, unknown>;
+  }
+  const kept = Object.fromEntries(Object.entries(existing).filter(([k]) => ![...VOICE_KEYS, "outbound_first_message", "variables"].includes(k)));
+  const choice = findVoice(fields.tts_provider, fields.tts_voice, fields.language);
+  const voiceCfg = choice
+    ? voiceConfig(choice, fields.language)
+    : Object.fromEntries(VOICE_KEYS.filter((k) => k in existing).map((k) => [k, existing[k]])); // an older custom voice: leave as it was
   const row = {
     ...fields,
     tts_voice: fields.tts_voice || null,
-    config: { tts_model, tts_pace, ...(outbound_first_message ? { outbound_first_message } : {}), ...(Object.keys(vars).length ? { variables: vars } : {}) },
+    config: {
+      ...kept,
+      tts_model: "bulbul:v3",
+      ...voiceCfg,
+      tts_pace,
+      ...(outbound_first_message ? { outbound_first_message } : {}),
+      ...(Object.keys(vars).length ? { variables: vars } : {}),
+    },
   };
 
   // RLS also enforces org membership; org_id comes from the session, never the form.
