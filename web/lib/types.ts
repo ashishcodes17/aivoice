@@ -17,6 +17,11 @@ export type PhoneNumber = {
   did_number: string;
   agent_id: string | null;
   created_at: string;
+  source: "manual" | "purchased";
+  monthly_fee_paise: number;
+  renews_at: string | null;
+  grace_until: string | null;
+  cancel_at_period_end: boolean;
   agents: { name: string } | null;
 };
 
@@ -65,7 +70,7 @@ export type Call = {
 
 export type LedgerEntry = {
   id: number;
-  kind: "topup" | "call_debit" | "refund" | "adjustment";
+  kind: "topup" | "call_debit" | "refund" | "adjustment" | "number_rental";
   amount_paise: number;
   note: string | null;
   created_at: string;

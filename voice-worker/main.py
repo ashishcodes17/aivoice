@@ -161,7 +161,12 @@ async def voicelink_ws(websocket: WebSocket, token: str = ""):
     try:
         # The person on the other end: whoever we called, or whoever called us.
         customer = start.get("to") if direction == "outbound" else start.get("from")
-        await run_bot(websocket, start, agent, org_id, call_id, store, direction=direction, customer_number=customer)
+        # A test call is short: it spends the free credit and rings from a shared number.
+        is_test = bool(callback and (callback.get("metadata") or {}).get("kind") == "test")
+        await run_bot(
+            websocket, start, agent, org_id, call_id, store, direction=direction, customer_number=customer,
+            max_call_secs=settings.test_call_max_secs if is_test else None,
+        )
     except Exception as e:  # keep the process alive; the log line explains what went wrong
         events.log("call.error", "ERROR", call_sid=call_sid, error=f"{type(e).__name__}: {e}")
         raise

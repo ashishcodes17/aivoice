@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDownLeftIcon, ArrowUpRightIcon, PhoneCallIcon, RotateCcwIcon, SlidersHorizontalIcon, WalletIcon } from "lucide-react";
+import { ArrowDownLeftIcon, ArrowUpRightIcon, PhoneCallIcon, RotateCcwIcon, GiftIcon, HashIcon, SlidersHorizontalIcon, WalletIcon } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { formatDateTime, rupees } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ const KIND = {
   call_debit: { label: "Call usage", icon: PhoneCallIcon, tone: "bg-muted text-muted-foreground" },
   refund: { label: "Refund", icon: RotateCcwIcon, tone: "bg-info/10 text-info-foreground" },
   adjustment: { label: "Adjustment", icon: SlidersHorizontalIcon, tone: "bg-warning/15 text-warning-foreground" },
+  number_rental: { label: "Number rent", icon: HashIcon, tone: "bg-muted text-muted-foreground" },
 } as const;
 
 const FILTERS = [
@@ -46,8 +47,10 @@ export function LedgerList({ entries }: { entries: LedgerEntry[] }) {
       {shown.length ? (
         <ul className="divide-y overflow-hidden rounded-2xl border bg-card">
           {shown.map((e) => {
-            const k = KIND[e.kind];
-            const Icon = e.amount_paise > 0 ? k.icon : e.kind === "call_debit" ? k.icon : ArrowUpRightIcon;
+            // The free credit is stored as an adjustment with a fixed note; show it for what it is.
+            const gift = e.kind === "adjustment" && e.note === "Free test credit";
+            const k = gift ? { label: "Free test credit", icon: GiftIcon, tone: "bg-success/10 text-success-foreground" } : KIND[e.kind];
+            const Icon = e.amount_paise > 0 || e.kind === "call_debit" || e.kind === "number_rental" ? k.icon : ArrowUpRightIcon;
             return (
               <li key={e.id} className="flex items-center gap-3.5 px-4 py-3.5 sm:px-5">
                 <span className={cn("flex size-10 shrink-0 items-center justify-center rounded-full", k.tone)}>
@@ -57,7 +60,7 @@ export function LedgerList({ entries }: { entries: LedgerEntry[] }) {
                   <p className="truncate font-medium text-sm">{k.label}</p>
                   <p className="truncate text-muted-foreground text-xs">
                     {formatDateTime(e.created_at)}
-                    {e.note ? ` · ${e.note}` : ""}
+                    {e.note && !gift ? ` · ${e.note}` : ""}
                   </p>
                 </div>
                 <p className={cn("shrink-0 font-medium tabular-nums", e.amount_paise > 0 ? "text-success-foreground" : "text-foreground")}>

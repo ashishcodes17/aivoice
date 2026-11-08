@@ -275,6 +275,7 @@ async def run_bot(
     store: Store,
     direction: str = "inbound",
     customer_number: str | None = None,
+    max_call_secs: int | None = None,
 ) -> None:
     call_sid = start.get("call_sid")
     language = _language(agent.get("language") or "en-IN")
@@ -541,7 +542,7 @@ async def run_bot(
 
     guard = asyncio.create_task(
         guard_call(
-            clock, task, call_sid, settings.max_call_secs, settings.silence_hangup_secs,
+            clock, task, call_sid, max_call_secs or settings.max_call_secs, settings.silence_hangup_secs,
             settings.nudge_secs, _nudge, settings.hangup_after_nudge_secs, settings.goodbye_grace_secs,
         )
     )

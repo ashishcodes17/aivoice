@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { createPortal } from "react-dom";
 import { Fragment, startTransition, useActionState, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { AlertCircleIcon, BracesIcon, CheckCircle2Icon, CircleIcon, CheckIcon, ChevronDownIcon, ChevronUpIcon, PauseIcon, PencilIcon, Trash2Icon, PlayIcon, EllipsisIcon, LanguagesIcon, PhoneIcon, PlusIcon, SettingsIcon, TypeIcon, WrenchIcon, XIcon, type LucideIcon } from "lucide-react";
@@ -851,17 +850,10 @@ export function AgentForm({ agent, template, dangerZone, testNumbers = [] }: { a
         <DialogPopup>
           <DialogHeader>
             <DialogTitle>Test {agent.name}</DialogTitle>
-            <DialogDescription>Enter your phone number and this agent will call it, so you can hear how it sounds.{dirty ? " The call uses the last saved version, so save first to hear your changes." : ""}</DialogDescription>
+            <DialogDescription>Enter your phone number and this agent will ring it, so you can hear how it sounds. The test number is free to use with your test credit. Calls last up to 3 minutes.{dirty ? " The call uses the last saved version, so save first to hear your changes." : ""}</DialogDescription>
           </DialogHeader>
           <DialogPanel>
-            {testNumbers.length ? (
-              <CallbackForm numbers={testNumbers} agents={[]} fixedAgentId={agent.id} />
-            ) : (
-              <p className="text-muted-foreground text-sm">
-                To place a test call, connect a phone number first.{" "}
-                <Link href="/dashboard/numbers" className="font-medium text-foreground underline underline-offset-4">Go to Numbers</Link>
-              </p>
-            )}
+            <CallbackForm numbers={testNumbers} agents={[]} fixedAgentId={agent.id} />
           </DialogPanel>
         </DialogPopup>
       </Dialog>

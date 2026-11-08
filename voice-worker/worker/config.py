@@ -53,6 +53,8 @@ class Settings(BaseSettings):
 
     # Safety nets for calls the agent does not end itself (VoiceLink never hangs up on its own).
     max_call_secs: int = 600
+    # Test calls ring from a number every account shares and are paid from a small free credit.
+    test_call_max_secs: int = 180
     silence_hangup_secs: int = 25
     # A quiet line gets one "can you hear me?" after this long, then a hangup if still quiet.
     nudge_secs: int = 7

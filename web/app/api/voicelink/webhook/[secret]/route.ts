@@ -100,22 +100,34 @@ export async function POST(req: Request, ctx: { params: Promise<{ secret: string
     return NextResponse.json({ ok: true });
   }
 
-  // The org owns the DID: the callee on inbound calls, the caller on outbound ones.
-  // For outbound calls it is not certain which side VoiceLink reports the DID on, so try both.
-  const side = e.direction === "inbound" ? [e.to] : [e.from, e.to];
-  const { data: number } = await supabase
-    .from("phone_numbers")
-    .select("org_id, did_number")
-    .in("did_number", didCandidates(...side))
-    .limit(1)
-    .maybeSingle();
-  if (!number) {
+  // Who to charge. A call the dashboard placed has a call row our own server created, so that row's
+  // organization is the answer. This matters for the shared test number, which no organization owns.
+  // Otherwise the org owns the DID: the callee on inbound calls, the caller on outbound ones (it is
+  // not certain which side VoiceLink reports the DID on for outbound, so try both).
+  let orgId: string | undefined;
+  let didForLog: string | undefined;
+  if (rowId) {
+    const { data: row } = await supabase.from("calls").select("org_id").eq("id", rowId).maybeSingle();
+    orgId = row?.org_id as string | undefined;
+  }
+  if (!orgId) {
+    const side = e.direction === "inbound" ? [e.to] : [e.from, e.to];
+    const { data: number } = await supabase
+      .from("phone_numbers")
+      .select("org_id, did_number")
+      .in("did_number", didCandidates(...side))
+      .limit(1)
+      .maybeSingle();
+    orgId = number?.org_id as string | undefined;
+    didForLog = number?.did_number as string | undefined;
+  }
+  if (!orgId) {
     log("IGNORED unknown DID", { callId: e.callId, from: e.from, to: e.to, direction: e.direction });
     return NextResponse.json({ ok: true, ignored: "unknown DID" });
   }
 
   const { error } = await supabase.rpc("settle_call", {
-    p_org: number.org_id,
+    p_org: orgId,
     p_call_sid: e.callId,
     p_direction: e.direction === "outbound" ? "outbound" : "inbound",
     p_from: e.from ?? null,
@@ -131,6 +143,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ secret: string
 
   const status = e.event === "call.failed" ? "failed" : e.event === "call.completed" ? "completed" : "ended";
   await supabase.from("calls").update({ status }).eq("voicelink_call_sid", e.callId);
-  log("SETTLED", { callId: e.callId, did: number.did_number, seconds: e.duration, status, hangup: e.hangup });
+  log("SETTLED", { callId: e.callId, did: didForLog, org: orgId, seconds: e.duration, status, hangup: e.hangup });
   return NextResponse.json({ ok: true });
 }
