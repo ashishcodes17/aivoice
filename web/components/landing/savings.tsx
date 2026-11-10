@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 import { ArrowRightIcon, BotIcon, MoonIcon, PhoneMissedIcon, ShieldCheckIcon, TrendingDownIcon, UsersIcon, ZapIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { RATE_INR_PER_MINUTE } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { Accent, Section, SectionHeading } from "./section";
 
@@ -109,11 +110,13 @@ function Calculator() {
   const [calls, setCalls] = useState(1500);
   const [minutes, setMinutes] = useState(3);
   const [hourly, setHourly] = useState(200);
-  const [rate, setRate] = useState(8);
+  const [talkShare, setTalkShare] = useState(50);
+  const [rate, setRate] = useState(RATE_INR_PER_MINUTE);
   const [preset, setPreset] = useState<string | null>(null);
 
   const totalMin = calls * minutes;
-  const human = (totalMin / 60) * hourly;
+  // Staff are paid for the whole shift, not only the minutes they talk: dialling, waiting, notes and breaks fill the rest.
+  const human = (totalMin / 60 / (talkShare / 100)) * hourly;
   const ai = totalMin * rate;
   const saved = Math.max(human - ai, 0);
   const pct = human > 0 ? Math.round((saved / human) * 100) : 0;
@@ -161,13 +164,14 @@ function Calculator() {
             <RangeField num={1} label="Calls per month" value={calls} onChange={(v) => { setCalls(v); setPreset(null); }} min={100} max={20000} step={100} format={(v) => v.toLocaleString("en-IN")} ends={["100", "20,000"]} />
             <RangeField num={2} label="Average call length" value={minutes} onChange={(v) => { setMinutes(v); setPreset(null); }} min={1} max={15} step={1} format={(v) => `${v} min`} ends={["1 min", "15 min"]} />
             <RangeField num={3} label="Human caller cost per hour" hint="salary + overheads" value={hourly} onChange={(v) => { setHourly(v); setPreset(null); }} min={80} max={800} step={10} format={inr} ends={["₹80", "₹800"]} />
+            <RangeField num={4} label="Share of a shift spent talking" hint="the rest is dialling, waiting, notes" value={talkShare} onChange={(v) => { setTalkShare(v); setPreset(null); }} min={20} max={90} step={5} format={(v) => `${v}%`} ends={["20%", "90%"]} />
             <label className="flex items-center justify-between gap-3 rounded-xl border border-dashed bg-muted/30 p-3.5 text-sm">
               <span>
                 <span className="flex items-center gap-2.5 font-medium">
-                  <span className="flex size-5 items-center justify-center rounded-full bg-primary/10 font-mono text-[10px] text-primary">4</span>
-                  Agent rate per minute
+                  <span className="flex size-5 items-center justify-center rounded-full bg-primary/10 font-mono text-[10px] text-primary">5</span>
+                  Lynksy rate per minute
                 </span>
-                <span className="mt-0.5 block pl-[30px] text-muted-foreground text-xs">An assumption. Edit to match your plan.</span>
+                <span className="mt-0.5 block pl-[30px] text-muted-foreground text-xs">Our current price. Billed per started minute.</span>
               </span>
               <span className="flex items-center rounded-lg border bg-background px-2.5 py-1.5 focus-within:ring-4 focus-within:ring-primary/20">
                 <span className="text-muted-foreground text-sm">₹</span>
