@@ -1,8 +1,10 @@
+import gnaniCalls from "./demo-calls.gnani.json";
 // Generated from recorded test calls; the caller side is scripted text, the agent audio is the real output.
 export type DemoLine = { who: "agent" | "caller"; text: string; at?: number };
 export type DemoCall = { id: string; tab: string; agent: string; language: string; outcome: string; audio: string; duration: number; lines: DemoLine[] };
 
-export const demoCalls: DemoCall[] = [
+// Earlier recordings made with other voice providers. Kept for reference, not shown while only Gnani is offered.
+export const legacyDemoCalls: DemoCall[] = [
   {
     "id": "emi-hi",
     "tab": "EMI reminder",
@@ -107,3 +109,7 @@ export const demoCalls: DemoCall[] = [
     ]
   }
 ];
+
+// Scenario calls scripted by hand and spoken entirely by Gnani Timbre v3 (agent and caller).
+// Regenerate with: python3 voice-worker/tools/make_demo_calls.py
+export const demoCalls: DemoCall[] = gnaniCalls as DemoCall[];

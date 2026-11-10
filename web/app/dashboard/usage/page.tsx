@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import { BarChart3Icon, ClockIcon, MessageCircleIcon, PhoneCallIcon, WalletIcon } from "lucide-react";
+import { BarChart3Icon, ClockIcon, PhoneCallIcon, WalletIcon } from "lucide-react";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { Page, PageFallback, PageHeader } from "@/components/dashboard/page-header";
 import { RangeTabs } from "@/components/dashboard/range-tabs";
@@ -71,17 +71,16 @@ async function Usage({ searchParams }: { searchParams: PageProps<"/dashboard/usa
 
   return (
     <>
-      <PageHeader title="Usage & reports" description={`Calls, spend and WhatsApp activity for ${org.name}.`} action={<RangeTabs current={days} />} />
+      <PageHeader title="Usage & reports" description={`Calls and spend for ${org.name}.`} action={<RangeTabs current={days} />} />
 
-      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <section className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
         <StatCard label="Calls" value={String(totals.calls)} hint={`Last ${days} days`} icon={PhoneCallIcon} trend={change(totals.calls, before.calls, vs)} />
         <StatCard label="Talk time" value={`${Math.round(totals.minutes)} min`} hint={`Average call ${duration(Math.round(totals.avgSeconds))}`} icon={ClockIcon} trend={change(totals.minutes, before.minutes, vs)} />
         <StatCard label="Call spend" value={rupee(totals.spend)} hint="Charged to your wallet" icon={WalletIcon} trend={change(totals.spend, before.spend, vs, true)} />
-        <StatCard label="WhatsApp messages" value={String(totals.messages)} hint="Customers and agent replies" icon={MessageCircleIcon} trend={change(totals.messages, before.messages, vs)} />
       </section>
 
       {totals.calls === 0 && totals.messages === 0 ? (
-        <EmptyState icon={BarChart3Icon} title="No activity in this period" description="Charts appear here once your agents take calls or answer WhatsApp messages." />
+        <EmptyState icon={BarChart3Icon} title="No activity in this period" description="Charts appear here once your agents take calls." />
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
           <ChartCard title="Calls per day" description="Inbound and outbound." total={`${totals.calls} calls`}>
@@ -89,9 +88,6 @@ async function Usage({ searchParams }: { searchParams: PageProps<"/dashboard/usa
           </ChartCard>
           <ChartCard title="Spend per day" description="Wallet charges for calls, in rupees." total={rupee(totals.spend)}>
             <SpendChart data={callSeries} />
-          </ChartCard>
-          <ChartCard title="WhatsApp per day" description="Customer messages and your agent's replies." total={`${totals.messages} messages`}>
-            <MessagesChart data={messageSeries} />
           </ChartCard>
           <ChartCard title="By agent" description="Who handled the most talk time.">
             {byAgent.length ? (

@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LANGUAGES } from "@/lib/languages";
+import { PoweredByGnani } from "@/components/powered-by-gnani";
 import { CATALOG, findVoice, liveliness, voiceConfig, type CatalogVoice } from "@/lib/voices";
 import type { AgentTemplate } from "@/lib/agent-templates";
 import { cn } from "@/lib/utils";
@@ -22,10 +23,10 @@ const defaults: Omit<Agent, "id" | "created_at"> = {
   name: "",
   language: "en-IN",
   llm_model: "openai/gpt-4o-mini",
-  stt_provider: "sarvam",
-  tts_provider: "sarvam",
-  tts_voice: "shubh",
-  config: { tts_model: "bulbul:v3", tts_pace: 1 } as Agent["config"],
+  stt_provider: "gnani",
+  tts_provider: "gnani",
+  tts_voice: "Lakshmi",
+  config: { tts_model: "timbre-v3.0", tts_pace: 1 } as Agent["config"],
   first_message: "Hello! Thanks for calling. How can I help you today?",
   system_prompt: `# Persona
 A friendly front-desk receptionist. Tone: warm, efficient, patient. If asked whether you are an AI, say you are a virtual assistant and continue.
@@ -735,7 +736,7 @@ export function AgentForm({ agent, template, dangerZone, testNumbers = [] }: { a
               <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
                 <div>
                   <h2 className="font-heading font-semibold text-lg tracking-tight">Voice</h2>
-                  <p className="mt-0.5 text-muted-foreground text-sm">Listen and pick how your agent sounds.</p>
+                  <p className="mt-0.5 flex flex-wrap items-center gap-2 text-muted-foreground text-sm">Listen and pick how your agent sounds. <PoweredByGnani /></p>
                 </div>
                 {picked && (
                   <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-primary text-sm">

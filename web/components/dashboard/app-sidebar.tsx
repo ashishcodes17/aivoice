@@ -9,11 +9,11 @@ import {
   ChevronsUpDownIcon,
   LayoutDashboardIcon,
   LogOutIcon,
-  MessageCircleIcon,
   PhoneCallIcon,
   PhoneIcon,
   WalletIcon,
 } from "lucide-react";
+import { PoweredByGnani } from "@/components/powered-by-gnani";
 import { LogoMark } from "@/components/landing/logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Menu, MenuGroup, MenuGroupLabel, MenuItem, MenuLinkItem, MenuPopup, MenuSeparator, MenuTrigger } from "@/components/ui/menu";
@@ -50,7 +50,7 @@ export const NAV: { label: string; items: Item[] }[] = [
     label: "Conversations",
     items: [
       { href: "/dashboard/calls", label: "Calls", icon: PhoneCallIcon },
-      { href: "/dashboard/whatsapp", label: "WhatsApp", icon: MessageCircleIcon },
+      // WhatsApp is not shown for now (the page and worker code are kept).
     ],
   },
   {
@@ -108,6 +108,9 @@ export function AppSidebar({ orgName, email, balance }: { orgName: string; email
       </SidebarContent>
 
       <SidebarFooter>
+        <div className="px-2 group-data-[collapsible=icon]:hidden">
+          <PoweredByGnani className="w-full justify-center" />
+        </div>
         <SidebarMenu>
           <SidebarMenuItem>
             <Menu>

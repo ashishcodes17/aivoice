@@ -1,0 +1,150 @@
+[
+  {
+    "id": "emi-hi",
+    "tab": "EMI reminder",
+    "agent": "Reena · Mitra Finance",
+    "language": "Hindi",
+    "outcome": "Customer promised to pay on the 7th by UPI",
+    "audio": "/demo/emi-hi.m4a",
+    "duration": 52.3,
+    "lines": [
+      {
+        "who": "caller",
+        "text": "हेलो?",
+        "at": 0.0
+      },
+      {
+        "who": "agent",
+        "text": "नमस्ते जी! मैं रीना बोल रही हूँ, मित्र फाइनेंस से। आपकी ईएमआई की डेट पास आ रही है, उसी के बारे में कॉल किया है। क्या अभी दो मिनट बात हो सकती है?",
+        "at": 1.74
+      },
+      {
+        "who": "caller",
+        "text": "हाँ बोलिए, पर जल्दी बताइए, मैं थोड़ा बिज़ी हूँ।",
+        "at": 11.64
+      },
+      {
+        "who": "agent",
+        "text": "जी, आपकी दो पहिया गाड़ी की लोन ईएमआई तीन हज़ार दो सौ रुपये इस महीने की पाँच तारीख को देय है। आप भुगतान कैसे करेंगे, ऐप से, यूपीआई से या ब्रांच जाकर?",
+        "at": 15.62
+      },
+      {
+        "who": "caller",
+        "text": "देखिए, सैलरी लेट हो गई है, पैसा सात तारीख को आएगा। लेट फीस माफ़ हो सकती है क्या?",
+        "at": 26.48
+      },
+      {
+        "who": "agent",
+        "text": "समझ सकती हूँ। देय तारीख के बाद भुगतान होने पर दो सौ रुपये लेट फीस लग सकती है। मैं माफ़ी का वादा नहीं कर सकती, पर अगर परेशानी हो तो हमारी टीम विकल्पों पर बात कर लेगी।",
+        "at": 33.34
+      },
+      {
+        "who": "caller",
+        "text": "ठीक है, सात तारीख को यूपीआई से पे कर दूँगा। बाय!",
+        "at": 45.08
+      },
+      {
+        "who": "agent",
+        "text": "ठीक है जी, धन्यवाद! नमस्ते!",
+        "at": 48.98
+      }
+    ]
+  },
+  {
+    "id": "clinic-en",
+    "tab": "Clinic appointment",
+    "agent": "Aarti · Sunrise Clinic",
+    "language": "English",
+    "outcome": "Consultation booked, Wednesday 6:15 PM",
+    "audio": "/demo/clinic-en.m4a",
+    "duration": 35.0,
+    "lines": [
+      {
+        "who": "caller",
+        "text": "Hello, I'd like to book an appointment with the doctor.",
+        "at": 0.0
+      },
+      {
+        "who": "agent",
+        "text": "Hi, this is Aarti from Sunrise Clinic. Of course, which day suits you?",
+        "at": 3.1
+      },
+      {
+        "who": "caller",
+        "text": "Tomorrow evening, if possible. Around six.",
+        "at": 7.64
+      },
+      {
+        "who": "agent",
+        "text": "Tomorrow, Wednesday the eleventh, has a six fifteen slot open. Shall I book that for you?",
+        "at": 10.9
+      },
+      {
+        "who": "caller",
+        "text": "Yes please. The name is Rahul Verma.",
+        "at": 16.4
+      },
+      {
+        "who": "agent",
+        "text": "Done, Rahul. Your consultation is booked for tomorrow at six fifteen. The fee is five hundred rupees, and please carry any previous reports.",
+        "at": 19.66
+      },
+      {
+        "who": "caller",
+        "text": "Great, thank you.",
+        "at": 28.2
+      },
+      {
+        "who": "agent",
+        "text": "You're welcome. You'll get a reminder message before the visit. Have a lovely day!",
+        "at": 29.94
+      }
+    ]
+  },
+  {
+    "id": "realty-te",
+    "tab": "Site visit booking",
+    "agent": "Priya · Green Valley Homes",
+    "language": "Telugu",
+    "outcome": "Site visit booked, Sunday 11 AM",
+    "audio": "/demo/realty-te.m4a",
+    "duration": 36.7,
+    "lines": [
+      {
+        "who": "caller",
+        "text": "హలో?",
+        "at": 0.0
+      },
+      {
+        "who": "agent",
+        "text": "నమస్కారం అండి, నేను గ్రీన్ వ్యాలీ హోమ్స్ నుండి ప్రియ మాట్లాడుతున్నాను. మీరు మా ప్రాజెక్ట్ గురించి అడిగారు కదా, ఇప్పుడు రెండు నిమిషాలు మాట్లాడవచ్చా?",
+        "at": 1.1
+      },
+      {
+        "who": "caller",
+        "text": "అవును చెప్పండి. రెండు బెడ్రూమ్ ఫ్లాట్ గురించి తెలుసుకోవాలి.",
+        "at": 11.0
+      },
+      {
+        "who": "agent",
+        "text": "తప్పకుండా అండి. రెండు బెడ్రూమ్ ఫ్లాట్లు ఇప్పుడు అందుబాటులో ఉన్నాయి. మీరు ఎప్పుడైనా వచ్చి సైట్ చూడాలనుకుంటున్నారా?",
+        "at": 14.66
+      },
+      {
+        "who": "caller",
+        "text": "ఈ ఆదివారం ఉదయం పదకొండు గంటలకు వస్తాను.",
+        "at": 22.16
+      },
+      {
+        "who": "agent",
+        "text": "చాలా బాగుంది అండి. ఆదివారం ఉదయం పదకొండు గంటలకు సైట్ విజిట్ బుక్ చేశాను. మా ప్రతినిధి మిమ్మల్ని అక్కడ కలుస్తారు. ధన్యవాదాలు!",
+        "at": 25.58
+      },
+      {
+        "who": "caller",
+        "text": "సరే, ధన్యవాదాలు.",
+        "at": 34.68
+      }
+    ]
+  }
+]

@@ -3,7 +3,7 @@ import { ArrowRightIcon, CheckIcon, PlayIcon, SparklesIcon } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { CallCard } from "./call-card";
 
-const TRUST = ["11 Indian languages", "Billed per minute in ₹", "No code to write"];
+const TRUST = ["11 Indian languages", "Billed per minute in ₹", "No code to write", "Powered by Gnani AI"];
 
 export function Hero() {
   return (

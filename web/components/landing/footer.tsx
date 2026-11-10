@@ -1,5 +1,6 @@
 import { cacheLife } from "next/cache";
 import Link from "next/link";
+import { PoweredByGnani } from "@/components/powered-by-gnani";
 import { LogoMark } from "./logo";
 
 async function Year() {
@@ -57,6 +58,7 @@ export function Footer() {
               AI voice agents that answer and make phone calls in your customers' language, any time
               of day.
             </p>
+            <PoweredByGnani className="mt-4" />
           </div>
           {columns.map((col) => (
             <nav key={col.title} aria-label={col.title}>

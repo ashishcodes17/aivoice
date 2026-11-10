@@ -8,7 +8,9 @@ export const CALL_LANGUAGES = [
   { value: "hi-IN", label: "Hindi" },
 ] as const;
 
-export const CALL_PROVIDERS = [
+import { isVisibleProvider } from "./providers";
+
+export const ALL_CALL_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },
   { value: "rumik", label: "Rumik" },
@@ -17,7 +19,8 @@ export const CALL_PROVIDERS = [
 ] as const;
 
 export type CallLanguage = (typeof CALL_LANGUAGES)[number]["value"];
-export type CallProvider = (typeof CALL_PROVIDERS)[number]["value"];
+export const CALL_PROVIDERS = ALL_CALL_PROVIDERS.filter((p) => isVisibleProvider(p.value));
+export type CallProvider = (typeof ALL_CALL_PROVIDERS)[number]["value"];
 
 // Which providers speak which language well enough to offer. Filled in from tests of each pair.
 export const SUPPORTED: Record<CallProvider, CallLanguage[]> = {

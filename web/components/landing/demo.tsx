@@ -31,7 +31,7 @@ export function Demo() {
     const next = call.lines.slice(i + 1).find((n) => n.at !== undefined);
     return next?.at ?? call.duration;
   });
-  const active = starts.reduce((n, st, i) => (call.lines[i].who === "agent" && time >= st ? i : n), -1);
+  const active = starts.reduce((n, st, i) => (time >= st ? i : n), -1);
   const progress = Math.min(100, (time / call.duration) * 100);
 
   // Keep the live line in view inside the transcript only, never scrolling the whole page.
@@ -68,10 +68,10 @@ export function Demo() {
         eyebrow="Hear it live"
         title={
           <>
-            Listen to a real call before you <Accent>sign up</Accent>.
+            Hear how it sounds before you <Accent>sign up</Accent>.
           </>
         }
-        description="Recordings of our agents on test calls. Pick a use case and press play. Tap any line to jump to it."
+        description="Scripted scenario calls spoken end to end by Gnani Timbre v3, agent and caller. Pick a use case and press play. Tap any line to jump to it."
       />
 
       <div className="mx-auto mt-12 max-w-3xl">
@@ -218,7 +218,7 @@ export function Demo() {
               <Badge variant="outline">{call.language}</Badge>
               <Badge variant="outline">{call.outcome}</Badge>
               <span className="ml-auto text-muted-foreground text-xs">
-                Test call · agent voice recorded, caller shown as text
+                Voices by Gnani AI · scripted scenario
               </span>
             </div>
           )}

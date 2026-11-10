@@ -13,12 +13,16 @@ export const LANGUAGES = [
   { value: "od-IN", label: "Odia" },
 ];
 
-export const STT_PROVIDERS = [
+import { isVisibleProvider } from "./providers";
+
+const ALL_STT_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },
+  { value: "gnani", label: "Gnani" },
 ];
+export const STT_PROVIDERS = ALL_STT_PROVIDERS.filter((p) => isVisibleProvider(p.value));
 
-export const SARVAM_TTS_MODELS = [
+const ALL_TTS_MODELS = [
   { value: "bulbul:v3", label: "Sarvam Bulbul v3" },
   { value: "bulbul:v4-flash", label: "Sarvam Bulbul v4 Flash" },
   { value: "mulberry", label: "Rumik Mulberry (Hindi, English)" },
@@ -27,10 +31,12 @@ export const SARVAM_TTS_MODELS = [
   { value: "timbre-v3.0", label: "Gnani Timbre v3" },
 ];
 
-export const TTS_PROVIDERS = [
+const ALL_TTS_PROVIDERS = [
   { value: "sarvam", label: "Sarvam" },
   { value: "elevenlabs", label: "ElevenLabs" },
   { value: "rumik", label: "Rumik" },
   { value: "smallest", label: "Smallest AI" },
   { value: "gnani", label: "Gnani" },
 ];
+export const TTS_PROVIDERS = ALL_TTS_PROVIDERS.filter((p) => isVisibleProvider(p.value));
+export const SARVAM_TTS_MODELS = ALL_TTS_MODELS.filter((m) => m.value.startsWith("timbre"));

@@ -19,7 +19,7 @@ const principles = [
   { icon: LanguagesIcon, title: "Language first", body: "India speaks hundreds of languages and mixes them freely. An agent should answer in the language the caller chose, not the one that was easiest to build." },
   { icon: ZapIcon, title: "Fast enough to feel human", body: "A pause that is too long breaks a conversation. We stream speech and replies so callers are answered quickly and can interrupt naturally." },
   { icon: ShieldCheckIcon, title: "Reliable and responsible", body: "Providers fail, so we build backups. Calls are conversations with real people, so we build for consent, clear hand-offs and honest limits." },
-  { icon: PhoneCallIcon, title: "Built for the phone", body: "Most of India still does business by phone and WhatsApp. We meet people there, with Indian numbers and rupee pricing." },
+  { icon: PhoneCallIcon, title: "Built for the phone", body: "Most of India still does business by phone. We meet people there, with Indian numbers and rupee pricing." },
 ];
 
 export default function AboutPage() {

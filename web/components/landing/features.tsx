@@ -2,7 +2,6 @@ import {
   ArrowRightIcon,
   BotIcon,
   FileTextIcon,
-  MessageCircleIcon,
   PhoneIncomingIcon,
   PhoneOutgoingIcon,
   SlidersHorizontalIcon,
@@ -136,13 +135,10 @@ export function Features() {
         <Card className="md:col-span-2" delay={80} icon={SlidersHorizontalIcon} title="Pick any model" body="Hundreds of language models through OpenRouter, chosen per agent.">
           <ModelsVisual />
         </Card>
-        <Card className="md:col-span-2" delay={0} icon={FileTextIcon} title="Every call, on record" body="Transcript, outcome and the details collected, saved with the call.">
+        <Card className="md:col-span-3" delay={0} icon={FileTextIcon} title="Every call, on record" body="Transcript, outcome and the details collected, saved with the call.">
           <TranscriptVisual />
         </Card>
-        <Card className="md:col-span-2" delay={80} icon={MessageCircleIcon} title="WhatsApp too" body="The same agent replies to WhatsApp messages and voice notes.">
-          <WhatsAppVisual />
-        </Card>
-        <Card className="md:col-span-2" delay={160} icon={WalletIcon} title="Pay as you talk" body="A rupee wallet topped up with UPI or cards, and a ledger line for every call.">
+        <Card className="md:col-span-3" delay={160} icon={WalletIcon} title="Pay as you talk" body="A rupee wallet topped up with UPI or cards, and a ledger line for every call.">
           <WalletVisual />
         </Card>
       </div>

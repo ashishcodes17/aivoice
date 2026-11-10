@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowRightIcon, AudioLinesIcon, BarChart3Icon, BotIcon, ClockIcon, MessageCircleIcon, PhoneCallIcon, PhoneIcon, PlusIcon, WalletIcon } from "lucide-react";
+import { ArrowRightIcon, AudioLinesIcon, BarChart3Icon, BotIcon, ClockIcon, PhoneCallIcon, PhoneIcon, PlusIcon, WalletIcon } from "lucide-react";
 import { AgentTemplates } from "@/components/dashboard/agent-templates";
 import { GetStarted } from "@/components/dashboard/get-started";
 import { AgentAvatar } from "@/components/dashboard/agent-avatar";
@@ -132,7 +132,6 @@ async function Overview() {
         {[
           { href: "/dashboard/agents", label: "Test an agent", icon: PhoneIcon },
           { href: "/dashboard/voices", label: "Browse voices", icon: AudioLinesIcon },
-          { href: "/dashboard/whatsapp", label: "WhatsApp", icon: MessageCircleIcon },
           { href: "/dashboard/usage", label: "Usage & reports", icon: BarChart3Icon },
         ].map(({ href, label, icon: Icon }) => (
           <Link key={href} href={href} className="group flex items-center gap-3 rounded-xl border bg-card px-3.5 py-3 text-sm transition-colors hover:border-primary/30 hover:bg-primary/5">
