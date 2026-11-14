@@ -16,6 +16,17 @@ A full-stack platform where a business owner:
 3. Lets the agent answer and place calls. Every call gets a transcript, an outcome summary with the details collected, and a cost breakdown.
 4. Pays per minute in rupees from a prepaid wallet (Razorpay). No plans or seats.
 
+## Screenshots
+
+| Landing | Scenario call spoken by Gnani |
+|---|---|
+| ![Landing page](docs/screenshots/landing.jpg) | ![Demo call player](docs/screenshots/demo-call.jpg) |
+| **Agent builder: Gnani voice picker** | **Voices page** |
+| ![Voice picker](docs/screenshots/agent-voice-picker.jpg) | ![Voices](docs/screenshots/voices.jpg) |
+
+Demo video: see the submission form. The three scenario calls (Hindi, English, Telugu) are scripted in
+`voice-worker/tools/make_demo_calls.py` and spoken entirely by Gnani Timbre v3.
+
 ## How a call works
 
 ```
