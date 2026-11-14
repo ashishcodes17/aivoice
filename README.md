@@ -1,6 +1,9 @@
 # Lynksy (AI Voice): phone agents that speak every Indian language
 
 **Build, launch and bill AI phone agents on Indian numbers in minutes, with no code.**
+
+**Live demo: https://app.lynksy.xyz** (sign up and use the free ₹20 test credit to try an agent).
+
 Built for the Great Indian Internship Challenge. Gnani Timbre v3 and Gnani STT are integrated as a first-class voice provider and as the automatic failover for speech.
 
 ## The problem
